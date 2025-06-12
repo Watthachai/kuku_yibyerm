@@ -3,7 +3,7 @@
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { type ReactNode, useEffect, useState } from "react";
-import { type Role } from "../types";
+import { type Role } from "@/features/auth/types";
 import { useUiStore } from "@/features/ui/store";
 
 interface ProtectedRouteProps {
