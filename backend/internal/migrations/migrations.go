@@ -1,45 +1,39 @@
 package migrations
 
 import (
-	"time"
+	"kuku-yipyerm/internal/models"
 
 	"github.com/go-gormigrate/gormigrate/v2"
+
 	"gorm.io/gorm"
 )
 
-// GetAllMigrations returns all available migrations
-func GetAllMigrations() []*gormigrate.Migration {
-	return []*gormigrate.Migration{
-		// Add your existing migrations here
-		m1749201982CreateUsersTable(),
-		// m1749201983CreateOtherTable(), // Example
-
-		// New OAuth migration
-		m1749699695AddOAuthFields(),
-	}
+// AutoMigrate runs automatic migrations for all models
+func AutoMigrate(db *gorm.DB) error {
+	return db.AutoMigrate(
+		&models.User{},
+		// เพิ่ม models อื่นๆ ตรงนี้
+	)
 }
 
-// Example: Create Users Table Migration
-func m1749201982CreateUsersTable() *gormigrate.Migration {
-	return &gormigrate.Migration{
-		ID: "1749201982",
-		Migrate: func(tx *gorm.DB) error {
-			type User struct {
-				ID        uint    `gorm:"primaryKey"`
-				Email     string  `gorm:"uniqueIndex;not null"`
-				Name      string  `gorm:"not null"`
-				Password  string  `gorm:"not null"`
-				Avatar    *string `gorm:"type:text"`
-				Role      string  `gorm:"type:varchar(20);default:'USER'"`
-				CreatedAt time.Time
-				UpdatedAt time.Time
-				DeletedAt gorm.DeletedAt `gorm:"index"`
-			}
+// CreateTables creates all tables manually (alternative to AutoMigrate)
+func CreateTables(db *gorm.DB) error {
+	// Create users table
+	if err := db.AutoMigrate(&models.User{}); err != nil {
+		return err
+	}
 
-			return tx.AutoMigrate(&User{})
-		},
-		Rollback: func(tx *gorm.DB) error {
-			return tx.Migrator().DropTable("users")
-		},
+	// Add any custom table modifications here
+
+	return nil
+}
+
+// GetAllMigrations returns all migrations in chronological order
+func GetAllMigrations() []*gormigrate.Migration {
+	return []*gormigrate.Migration{
+		// Migration files will be added here
+		// Example:
+		// Migration20250612120000, // create_users_table
+		// Migration20250612120001, // create_posts_table
 	}
 }

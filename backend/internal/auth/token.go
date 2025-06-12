@@ -2,7 +2,6 @@ package auth
 
 import (
 	"errors"
-	"os"
 	"strconv"
 	"time"
 
@@ -11,17 +10,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var jwtSecret = []byte(getJWTSecret())
-
-func getJWTSecret() string {
-	secret := os.Getenv("JWT_SECRET")
-	if secret == "" {
-		return "your-super-secret-jwt-key-change-in-production"
-	}
-	return secret
-}
-
-// Claims defines the JWT claims.
+// Claims represents the JWT claims
 type Claims struct {
 	UserID uint        `json:"user_id"`
 	Role   models.Role `json:"role"`
@@ -29,54 +18,42 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-// GenerateAccessToken generates a JWT access token
-func GenerateAccessToken(userID uint, role models.Role) (string, error) {
-	expirationTime := time.Now().Add(15 * time.Minute) // 15 minutes
+var jwtSecret = []byte("your-secret-key") // ในการใช้งานจริงควรอ่านจาก ENV
 
+// GenerateAccessToken generates a new access token
+func GenerateAccessToken(userID uint, role models.Role) (string, error) {
 	claims := &Claims{
 		UserID: userID,
 		Role:   role,
 		Type:   "access",
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(expirationTime),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(15 * time.Minute)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			Subject:   strconv.Itoa(int(userID)),
 		},
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString(jwtSecret)
-	if err != nil {
-		return "", err
-	}
-
-	return tokenString, nil
+	return token.SignedString(jwtSecret)
 }
 
-// GenerateRefreshToken generates a JWT refresh token
+// GenerateRefreshToken generates a new refresh token
 func GenerateRefreshToken(userID uint) (string, error) {
-	expirationTime := time.Now().Add(7 * 24 * time.Hour) // 7 days
-
 	claims := &Claims{
 		UserID: userID,
 		Type:   "refresh",
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(expirationTime),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(7 * 24 * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			Subject:   strconv.Itoa(int(userID)),
 		},
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString(jwtSecret)
-	if err != nil {
-		return "", err
-	}
-
-	return tokenString, nil
+	return token.SignedString(jwtSecret)
 }
 
-// ValidateToken validates a JWT token and returns the claims
+// ValidateToken validates a JWT token and returns claims
 func ValidateToken(tokenString string) (*Claims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
 		return jwtSecret, nil
@@ -93,7 +70,7 @@ func ValidateToken(tokenString string) (*Claims, error) {
 	return nil, errors.New("invalid token")
 }
 
-// RefreshAccessToken generates a new access token from a valid refresh token
+// RefreshAccessToken generates a new access token using refresh token
 func RefreshAccessToken(refreshTokenString string) (string, error) {
 	claims, err := ValidateToken(refreshTokenString)
 	if err != nil {
@@ -104,6 +81,9 @@ func RefreshAccessToken(refreshTokenString string) (string, error) {
 		return "", errors.New("invalid token type")
 	}
 
-	// Generate new access token
+	// Get user from database to get current role
+	// For now, we'll use the role from refresh token
+	// In production, you should fetch fresh user data
+
 	return GenerateAccessToken(claims.UserID, claims.Role)
 }

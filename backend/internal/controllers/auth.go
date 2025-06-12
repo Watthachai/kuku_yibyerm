@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"kuku-yipyerm/internal/auth"
+	"kuku-yipyerm/internal/auth" // เปลี่ยนจาก domain/auth
 	"kuku-yipyerm/internal/models"
 
 	"github.com/gin-gonic/gin"
@@ -59,7 +59,6 @@ func (ac *AuthController) SignIn(c *gin.Context) {
 	// Find the user by email
 	var user models.User
 	if err := ac.DB.Where("email = ?", input.Email).First(&user).Error; err != nil {
-		// User not found or other database error
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
 		return
 	}
@@ -74,7 +73,6 @@ func (ac *AuthController) SignIn(c *gin.Context) {
 
 	// Check if the password is correct
 	if err := user.CheckPassword(input.Password); err != nil {
-		// Wrong password
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
 		return
 	}
@@ -145,9 +143,9 @@ func (ac *AuthController) SignUp(c *gin.Context) {
 	user := models.User{
 		Name:      input.Name,
 		Email:     input.Email,
-		Password:  &hashedPasswordStr, // Use pointer since it's nullable
-		Role:      models.UserRole,    // Default role
-		Provider:  "local",            // Local registration
+		Password:  &hashedPasswordStr,
+		Role:      models.UserRole,
+		Provider:  "local",
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
