@@ -1,8 +1,8 @@
 # Use a lean Go image
-FROM golang:1.22-alpine AS build
+FROM golang:1.24.4 AS build
 
 # Set the working directory inside the container
-WORKDIR /src
+WORKDIR /app
 
 # Copy the go.mod and go.sum files to download dependencies first
 COPY go.mod go.sum ./
