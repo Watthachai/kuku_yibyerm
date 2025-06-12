@@ -1,0 +1,35 @@
+# .air.toml
+# This is the configuration file for the 'air' live-reloader.
+
+# The root directory of the project relative to this file.
+# "." means the current directory (/backend).
+root = "."
+tmp_dir = "tmp"
+
+[build]
+# This is the MOST IMPORTANT line.
+# It tells 'air' how to build your specific project structure.
+# It will build the package in ./cmd/server and output the compiled
+# program to ./tmp/main.
+cmd = "go build -o ./tmp/main ./cmd/server"
+
+# The name of the binary 'air' will run after building.
+# This must match the output file in the 'cmd' line above.
+bin = "tmp/main"
+
+# Directories to watch for file changes.
+include_dir = ["cmd", "internal"]
+
+# Directories to ignore. 'tmp' is where the binary is, so we must ignore it.
+exclude_dir = ["tmp"]
+
+# Add any other file extensions you want to watch.
+include_ext = ["go", "tpl", "tmpl", "html"]
+
+[log]
+# Show log time
+time = true
+
+[misc]
+# Delete the tmp directory on exit
+clean_on_exit = true

@@ -1,0 +1,82 @@
+version: '3.8'
+
+services:
+  # 3. Database Service (Postgres) - เริ่มต้นก่อนเสมอ
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=kuku_yibyerm_admin
+      - POSTGRES_PASSWORD=kuku_yibyerm_passw0rd
+      - POSTGRES_DB=kuku_yibyerm_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kuku_yibyerm_admin -d kuku_yibyerm_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - kuku_network
+
+  # 1. Backend Service (Go)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev # ใช้ Dockerfile สำหรับ Development ที่มี air
+    ports:
+      - "8080:8080"
+    environment:
+      # --- นี่คือส่วนที่แก้ไขให้ตรงกับ db.go ของคุณ ---
+      - DB_HOST=postgres # ใช้ชื่อ service 'postgres' เป็น host name
+      - DB_USER=kuku_yibyerm_admin
+      - DB_PASSWORD=kuku_yibyerm_passw0rd
+      - DB_NAME=kuku_yibyerm_db
+      - DB_PORT=5432
+      - DB_SSLMODE=disable # สำหรับ local development
+      - DB_TIMEZONE=Asia/Bangkok
+      - PORT=8080
+    volumes:
+      - ./backend:/app # Mount code เพื่อให้ air live-reload ทำงาน
+    depends_on:
+      postgres:
+        condition: service_healthy # รอจนกว่า Postgres จะพร้อมจริงๆ
+    restart: unless-stopped
+    networks:
+      - kuku_network
+
+  # 2. Frontend Service (Next.js)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile # สมมติว่ามี Dockerfile สำหรับ Next.js
+    ports:
+      - "3000:3000"
+    environment:
+      # Browser ของผู้ใช้จะเรียก API ผ่าน localhost ที่เรา map port ไว้
+      - NEXT_PUBLIC_API_URL=http://localhost:8080/api
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - kuku_network
+
+  # Database Admin Tool
+  adminer:
+    image: adminer:latest
+    ports:
+      - "8081:8080"
+    depends_on:
+      - postgres
+    restart: unless-stopped
+    networks:
+      - kuku_network
+
+volumes:
+  postgres_data:
+
+networks:
+  kuku_network:
+    driver: bridge
