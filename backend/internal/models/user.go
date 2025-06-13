@@ -7,30 +7,35 @@ import (
 	"gorm.io/gorm"
 )
 
+// User represents a user in the system
+type User struct {
+	ID           uint           `json:"id" gorm:"primaryKey"`
+	Email        string         `json:"email" gorm:"uniqueIndex;not null"`
+	Name         string         `json:"name" gorm:"not null"`
+	Password     *string        `json:"-" gorm:"type:varchar(255)"` // Nullable for OAuth
+	Avatar       *string        `json:"avatar" gorm:"type:text"`
+	Role         Role           `json:"role" gorm:"type:varchar(20);default:'USER'"`
+	Provider     string         `json:"provider" gorm:"type:varchar(50);default:'local'"`
+	ProviderID   *string        `json:"provider_id" gorm:"type:varchar(255)"`
+	DepartmentID *uint          `json:"department_id" gorm:"index"`
+	Department   *Department    `json:"department,omitempty" gorm:"foreignKey:DepartmentID"`
+	Phone        *string        `json:"phone" gorm:"type:varchar(20)"`
+	IsActive     bool           `json:"is_active" gorm:"default:true"`
+	LastLoginAt  *time.Time     `json:"last_login_at"`
+	CreatedAt    time.Time      `json:"created_at"`
+	UpdatedAt    time.Time      `json:"updated_at"`
+	DeletedAt    gorm.DeletedAt `json:"-" gorm:"index"`
+}
+
+// Role enum for user roles
 type Role string
 
 const (
-	AdminRole Role = "ADMIN"
-	UserRole  Role = "USER"
-	StaffRole Role = "STAFF"
+	RoleAdmin Role = "ADMIN"
+	RoleUser  Role = "USER"
 )
 
-// User defines the user model
-type User struct {
-	ID         uint           `json:"id" gorm:"primaryKey"`
-	Email      string         `json:"email" gorm:"uniqueIndex;not null"`
-	Name       string         `json:"name" gorm:"not null"`
-	Password   *string        `json:"-" gorm:"type:varchar(255)"` // Nullable for OAuth users
-	Avatar     *string        `json:"avatar" gorm:"type:text"`
-	Role       Role           `json:"role" gorm:"type:varchar(20);default:'USER'"`
-	Provider   string         `json:"provider" gorm:"type:varchar(50);default:'local'"` // 'local', 'google', etc.
-	ProviderID *string        `json:"providerId" gorm:"type:varchar(255)"`              // OAuth provider user ID
-	CreatedAt  time.Time      `json:"createdAt"`
-	UpdatedAt  time.Time      `json:"updatedAt"`
-	DeletedAt  gorm.DeletedAt `json:"-" gorm:"index"`
-}
-
-// TableName returns the table name for the User model
+// TableName specifies the table name for User model
 func (User) TableName() string {
 	return "users"
 }
@@ -38,7 +43,7 @@ func (User) TableName() string {
 // BeforeCreate hook to set default values
 func (u *User) BeforeCreate(tx *gorm.DB) error {
 	if u.Role == "" {
-		u.Role = UserRole
+		u.Role = RoleUser
 	}
 	if u.Provider == "" {
 		u.Provider = "local"
