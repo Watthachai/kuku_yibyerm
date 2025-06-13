@@ -11,6 +11,7 @@ import (
 // AutoMigrate runs automatic migrations for all models
 func AutoMigrate(db *gorm.DB) error {
 	return db.AutoMigrate(
+		&models.Department{},
 		&models.User{},
 		// เพิ่ม models อื่นๆ ตรงนี้
 	)
@@ -18,12 +19,15 @@ func AutoMigrate(db *gorm.DB) error {
 
 // CreateTables creates all tables manually (alternative to AutoMigrate)
 func CreateTables(db *gorm.DB) error {
+	// Create departments table first (foreign key dependency)
+	if err := db.AutoMigrate(&models.Department{}); err != nil {
+		return err
+	}
+
 	// Create users table
 	if err := db.AutoMigrate(&models.User{}); err != nil {
 		return err
 	}
-
-	// Add any custom table modifications here
 
 	return nil
 }
@@ -31,9 +35,8 @@ func CreateTables(db *gorm.DB) error {
 // GetAllMigrations returns all migrations in chronological order
 func GetAllMigrations() []*gormigrate.Migration {
 	return []*gormigrate.Migration{
-		// Migration files will be added here
-		// Example:
-		// Migration20250612120000, // create_users_table
-		// Migration20250612120001, // create_posts_table
+		m1749700000CreateDepartmentsTable(),
+		m1749700001AddDepartmentToUsers(),
+		m1749700002SeedDepartments(),
 	}
 }
