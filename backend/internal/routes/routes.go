@@ -13,11 +13,10 @@ import (
 func SetupRouter(db *gorm.DB) *gin.Engine {
 	r := gin.Default()
 
-	// CORS Middleware: Allow requests from your Next.js frontend
+	// CORS Middleware
 	config := cors.DefaultConfig()
 	config.AllowOrigins = []string{
 		"http://localhost:3000",
-		//"https://your-frontend-domain.com", // Replace with your actual domain
 	}
 	config.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
 	config.AllowHeaders = []string{
@@ -29,12 +28,13 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 	r.Use(cors.New(config))
 
 	// Create controllers
-	authController := controllers.NewAuthController(db)
+	//authController := controllers.NewAuthController(db)
 	oauthController := controllers.NewOAuthController(db)
 	userController := controllers.NewUserController(db)
 	healthController := controllers.NewHealthController(db)
+	departmentController := controllers.NewDepartmentController(db)
 
-	// Health check route (no versioning, simple path)
+	// Health check route
 	r.GET("/health", healthController.HealthCheck)
 
 	// Group routes under /api/v1
@@ -43,15 +43,23 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 		// Public auth routes
 		authRoutes := apiV1.Group("/auth")
 		{
-			authRoutes.POST("/sign-up", authController.SignUp)
-			authRoutes.POST("/sign-in", authController.SignIn)
-			authRoutes.POST("/refresh", authController.RefreshToken)
+			//authRoutes.POST("/sign-up", authController.SignUp)
+			//authRoutes.POST("/sign-in", authController.SignIn)
+			//authRoutes.POST("/refresh", authController.RefreshToken)
 
 			// OAuth routes
 			oauth := authRoutes.Group("/oauth")
 			{
 				oauth.POST("/google", oauthController.GoogleOAuth)
 			}
+		}
+
+		// Department routes (public - for registration)
+		departments := apiV1.Group("/departments")
+		{
+			departments.GET("", departmentController.GetDepartments)
+			departments.GET("/:id", departmentController.GetDepartment)
+			departments.GET("/faculties", departmentController.GetFaculties)
 		}
 
 		// Protected routes (require authentication)
@@ -71,14 +79,6 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 			{
 				admin.GET("/users", userController.GetAllUsers)
 			}
-		}
-
-		// Optional auth routes (work with or without authentication)
-		public := apiV1.Group("/")
-		public.Use(middleware.OptionalAuthMiddleware())
-		{
-			// Add public routes that can optionally use authentication
-			// Example: public.GET("/posts", postController.GetPosts)
 		}
 	}
 

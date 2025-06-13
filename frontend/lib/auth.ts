@@ -1,12 +1,21 @@
-import NextAuth from "next-auth";
-import GoogleProvider from "next-auth/providers/google";
+// lib/auth.ts
+import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import GoogleProvider from "next-auth/providers/google";
+import { Role } from "@/features/auth/types";
 
-export default NextAuth({
+export const authOptions: NextAuthOptions = {
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      authorization: {
+        params: {
+          prompt: "consent",
+          access_type: "offline",
+          response_type: "code",
+        },
+      },
     }),
     CredentialsProvider({
       name: "credentials",
@@ -16,42 +25,44 @@ export default NextAuth({
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          return null;
+          throw new Error("กรุณากรอกอีเมลและรหัสผ่าน");
         }
 
         try {
-          const API_BASE_URL =
-            process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
-
-          const response = await fetch(`${API_BASE_URL}/api/v1/auth/sign-in`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              email: credentials.email,
-              password: credentials.password,
-            }),
-          });
+          // Call backend API for authentication
+          const response = await fetch(
+            `${process.env.BACKEND_URL}/api/v1/auth/login`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                email: credentials.email,
+                password: credentials.password,
+              }),
+            }
+          );
 
           if (!response.ok) {
-            return null;
+            const error = await response.json();
+            throw new Error(error.message || "การเข้าสู่ระบบล้มเหลว");
           }
 
           const data = await response.json();
 
           return {
-            id: data.user.id,
+            id: data.user.id.toString(),
             email: data.user.email,
             name: data.user.name,
-            image: data.user.avatar,
             role: data.user.role,
-            accessToken: data.accessToken,
-            refreshToken: data.refreshToken,
+            departmentId: data.user.department_id || "1", // Default department
+            accessToken: data.access_token,
+            refreshToken: data.refresh_token,
           };
         } catch (error) {
-          console.error("Auth error:", error);
-          return null;
+          console.error("Authentication error:", error);
+          throw new Error("เกิดข้อผิดพลาดในการเข้าสู่ระบบ");
         }
       },
     }),
@@ -59,12 +70,12 @@ export default NextAuth({
   callbacks: {
     async signIn({ user, account }) {
       if (account?.provider === "google") {
-        try {
-          const API_BASE_URL =
-            process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+        // Validate Google account domain
 
+        try {
+          // Send Google OAuth data to backend
           const response = await fetch(
-            `${API_BASE_URL}/api/v1/auth/oauth/google`,
+            `${process.env.BACKEND_URL}/api/v1/auth/oauth/google`,
             {
               method: "POST",
               headers: {
@@ -75,26 +86,27 @@ export default NextAuth({
                 name: user.name,
                 avatar: user.image,
                 providerId: user.id,
-                accessToken: account.access_token,
+                accessToken: account.access_token || "",
               }),
             }
           );
 
           if (!response.ok) {
-            console.error("Failed to sync user with backend");
+            console.error("Google OAuth backend error");
             return false;
           }
 
           const data = await response.json();
 
-          user.accessToken = data.accessToken;
-          user.refreshToken = data.refreshToken;
-          user.role = data.user.role;
-          user.id = data.user.id;
+          // Store additional user data
+          user.role = data.user.role || Role.USER;
+          user.departmentId = data.user.department_id || "1";
+          user.accessToken = data.access_token;
+          user.refreshToken = data.refresh_token;
 
           return true;
         } catch (error) {
-          console.error("OAuth sync error:", error);
+          console.error("Google OAuth error:", error);
           return false;
         }
       }
@@ -103,32 +115,32 @@ export default NextAuth({
     },
     async jwt({ token, user }) {
       if (user) {
+        token.role = user.role;
         token.accessToken = user.accessToken;
         token.refreshToken = user.refreshToken;
-        token.role = user.role;
         token.userId = user.id;
+        token.departmentId = user.departmentId;
       }
-
       return token;
     },
     async session({ session, token }) {
       if (token) {
-        // แก้ไข TypeScript errors โดยใช้ type assertion
-        session.user.id = (token.userId as string) || "";
-        session.user.role = (token.role as string) || "";
-        session.accessToken = (token.accessToken as string) || "";
-        session.refreshToken = (token.refreshToken as string) || "";
+        session.user.id = token.userId;
+        session.user.role = token.role;
+        session.user.departmentId = token.departmentId;
+        session.accessToken = token.accessToken;
+        session.refreshToken = token.refreshToken;
       }
-
       return session;
     },
   },
   pages: {
-    signIn: "/auth/sign-in",
-    error: "/auth/error",
+    signIn: "/sign-in",
+    error: "/error",
   },
   session: {
     strategy: "jwt",
+    maxAge: 24 * 60 * 60, // 24 hours
   },
   secret: process.env.NEXTAUTH_SECRET,
-});
+};

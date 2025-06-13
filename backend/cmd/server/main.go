@@ -1,47 +1,66 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 
-	"kuku-yipyerm/internal/config"
-	"kuku-yipyerm/internal/models"
-	"kuku-yipyerm/internal/routes"
-
-	"github.com/joho/godotenv"
+	"kuku-yipyerm/internal/app"
+	"kuku-yipyerm/internal/database"
 )
 
 func main() {
-	// Load environment variables from .env file
-	err := godotenv.Load()
+	// Parse command line flags
+	migrate := flag.Bool("migrate", false, "Run database migrations")
+	rollback := flag.String("rollback", "", "Rollback to specific migration ID")
+	flag.Parse()
+
+	// Load environment variables
+	// loadEnv() // ถ้ามี
+
+	// Handle migration commands
+	if *migrate {
+		fmt.Println("📊 Running migrations...")
+		database.ConnectDatabase() // This will run migrations automatically
+		fmt.Println("✅ Migrations completed")
+		return
+	}
+
+	if *rollback != "" {
+		fmt.Printf("⏪ Rolling back to migration: %s\n", *rollback)
+		database.ConnectDatabase()
+		if err := database.RollbackMigration(database.GetDatabase(), *rollback); err != nil {
+			log.Fatal("Migration rollback failed:", err)
+		}
+		fmt.Println("✅ Rollback completed")
+		return
+	}
+
+	// Initialize application
+	application, err := app.Initialize()
 	if err != nil {
-		log.Println("No .env file found, using default environment variables")
+		log.Fatalf("Failed to initialize application: %v", err)
 	}
 
-	// Initialize database connection.
-	// The InitDB function now handles its own error logging with log.Fatal.
-	config.InitDB()
+	// Graceful shutdown
+	go func() {
+		quit := make(chan os.Signal, 1)
+		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+		<-quit
 
-	// Get the database instance using the GetDB function
-	db := config.GetDB()
+		log.Println("🛑 Shutting down server...")
+		if err := application.Shutdown(); err != nil {
+			log.Printf("Error during shutdown: %v", err)
+		}
+		os.Exit(0)
+	}()
 
-	// Auto-migrate the schema for the User model
-	log.Println("Running database migrations...")
-	err = db.AutoMigrate(&models.User{})
-	if err != nil {
-		log.Fatalf("Failed to migrate database: %v", err)
-	}
-
-	// Setup router
-	r := routes.SetupRouter(db)
-
-	// Start the server
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080" // Default port
-	}
-	log.Printf("Server starting on port %s", port)
-	if err := r.Run(":" + port); err != nil {
-		log.Fatalf("Failed to run server: %v", err)
+	// Start server
+	fmt.Println("🚀 Starting Kuku Yipyerm Backend Server...")
+	if err := application.Run(); err != nil {
+		log.Fatalf("Failed to start server: %v", err)
 	}
 }

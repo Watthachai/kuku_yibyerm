@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strings"
 
-	"kuku-yipyerm/internal/auth"
+	"kuku-yipyerm/internal/auth" // ใช้ auth package แทน
 
 	"github.com/gin-gonic/gin"
 )

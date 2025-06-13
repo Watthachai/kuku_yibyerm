@@ -1,47 +1,35 @@
-// ไม่มี "use client" ที่หัวไฟล์นี้
+// app/layout.tsx
 import type { Metadata } from "next";
-import "./globals.css";
-
 import { Geist, Geist_Mono } from "next/font/google";
-import { ThemeProvider } from "@/components/theme-provider";
-import { Providers } from "@/components/provider";
-import { Toaster } from "sonner";
+import "./globals.css";
+import { Providers } from "./providers";
 
-const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
-  title: "YibYerm",
-  authors: [{ name: "Itswatthachai", url: "https://github.com/itswatthachai" }],
-  description:
-    "YibYerm is a platform for sharing and borrowing items for Kasetsart University staff.",
+  title: "KU Asset - ระบบจัดการครุภัณฑ์ มหาวิทยาลัยเกษตรศาสตร์",
+  description: "ระบบบริหารจัดการและเบิกจ่ายครุภัณฑ์ออนไลน์",
 };
 
 export default function RootLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
+}>) {
   return (
-    <html lang="th" suppressHydrationWarning>
+    <html lang="th">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          {/* Providers เป็น Client Component แล้ว */}
-          <Providers>
-            {children}
-            <Toaster position="top-right" />
-          </Providers>
-        </ThemeProvider>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
