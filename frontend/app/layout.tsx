@@ -1,68 +1,35 @@
+// app/layout.tsx
 import type { Metadata } from "next";
-import "./globals.css";
 import { Geist, Geist_Mono } from "next/font/google";
-import { ThemeProvider } from "@/components/theme-provider";
-import { Providers } from "@/components/provider";
-import { Toaster } from "sonner";
-import { cn } from "@/lib/utils";
+import "./globals.css";
+import { Providers } from "./providers";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
-  display: "swap",
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
-  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: {
-    default: "YibYerm - ระบบจัดการการยืม-คืน",
-    template: "%s | YibYerm",
-  },
-  description:
-    "ระบบจัดการการยืม-คืนอุปกรณ์และทรัพยากรศึกษา สำหรับบุคลากรมหาวิทยาลัยเกษตรศาสตร์",
-  keywords: ["ยืม-คืน", "มหาวิทยาลัยเกษตรศาสตร์", "KU", "อุปกรณ์"],
-  authors: [
-    {
-      name: "Itswatthachai",
-      url: "https://github.com/itswatthachai",
-    },
-  ],
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#059669" },
-    { media: "(prefers-color-scheme: dark)", color: "#10b981" },
-  ],
+  title: "KU Asset - ระบบจัดการครุภัณฑ์ มหาวิทยาลัยเกษตรศาสตร์",
+  description: "ระบบบริหารจัดการและเบิกจ่ายครุภัณฑ์ออนไลน์",
 };
 
 export default function RootLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
+}>) {
   return (
-    <html lang="th" suppressHydrationWarning>
+    <html lang="th">
       <body
-        className={cn(
-          geistSans.variable,
-          geistMono.variable,
-          "antialiased font-sans min-h-screen bg-background text-foreground",
-          "transition-colors duration-300"
-        )}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ThemeProvider
-          defaultTheme="system"
-          enableSystem
-          storageKey="ku-yibyerm-theme"
-        >
-          <Providers>
-            <div className="relative min-h-screen">{children}</div>
-            <Toaster position="top-right" richColors closeButton />
-          </Providers>
-        </ThemeProvider>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

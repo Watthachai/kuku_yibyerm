@@ -62,7 +62,7 @@ func (oc *OAuthController) GoogleOAuth(c *gin.Context) {
 			Avatar:     &req.Avatar,
 			Provider:   "google",
 			ProviderID: &req.ProviderID,
-			Role:       models.UserRole, // Default role
+			Role:       models.RoleUser, // Default role is USER
 			CreatedAt:  time.Now(),
 			UpdatedAt:  time.Now(),
 		}

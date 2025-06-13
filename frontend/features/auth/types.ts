@@ -1,5 +1,3 @@
-import { DefaultSession } from "next-auth";
-
 export interface User {
   id: string;
   email: string;
@@ -8,6 +6,7 @@ export interface User {
   avatar?: string;
   provider?: "local" | "google";
   providerId?: string;
+  departmentId?: string;
   createdAt: string;
   updatedAt: string;
   accessToken?: string;
@@ -33,33 +32,54 @@ export interface AuthResponse {
 
 export enum Role {
   ADMIN = "ADMIN",
+  APPROVER = "APPROVER", // เปลี่ยนจาก STAFF เป็น APPROVER
   USER = "USER",
-  STAFF = "STAFF",
 }
 
-// Extend NextAuth types
-declare module "next-auth" {
-  interface Session extends DefaultSession {
-    user: {
-      id: string;
-      role: string;
-    } & DefaultSession["user"];
-    accessToken?: string;
-    refreshToken?: string;
-  }
-
-  interface User {
-    role?: string;
-    accessToken?: string;
-    refreshToken?: string;
-  }
+export interface OAuthProvider {
+  id: "google" | "microsoft";
+  name: string;
+  icon: React.ComponentType<{ className?: string }>;
+  color: string;
+  bgColor: string;
+  textColor: string;
 }
 
-declare module "next-auth/jwt" {
-  interface JWT {
-    role?: string;
-    accessToken?: string;
-    refreshToken?: string;
-    userId?: string;
-  }
+// Department interface for KU Asset system
+export interface Department {
+  id: string;
+  name: string;
+  faculty: string;
+  code?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Auth validation schemas
+export interface LoginCredentials {
+  email: string;
+  password: string;
+}
+
+export interface GoogleOAuthData {
+  email: string;
+  name: string;
+  avatar?: string;
+  providerId: string;
+}
+
+// Error types
+export interface AuthError {
+  code: string;
+  message: string;
+  details?: string;
+}
+
+// API Response types
+export interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  error?: AuthError;
+  message?: string;
 }
