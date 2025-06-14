@@ -11,8 +11,13 @@ export default function MainLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { data: session, status } = useSession();
+  const { data: session, status, update } = useSession();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // ✅ Function สำหรับ refresh session
+  const refreshSession = async () => {
+    await update();
+  };
 
   if (status === "loading") {
     return (
@@ -28,10 +33,18 @@ export default function MainLayout({
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <Sidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        session={session} // ส่ง session ไป
+        onRefreshSession={refreshSession} // ส่ง refresh function ไป
+      />
 
       <div className="lg:pl-64">
-        <Header onMenuClick={() => setSidebarOpen(true)} />
+        <Header
+          onMenuClick={() => setSidebarOpen(true)}
+          onRefreshSession={refreshSession} // ส่งไป Header ด้วย
+        />
 
         <main className="p-6">{children}</main>
       </div>
