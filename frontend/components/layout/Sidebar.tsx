@@ -1,9 +1,12 @@
 "use client";
 
 import { useSession, signOut } from "next-auth/react";
+import { Session } from "next-auth";
 import { useRouter, usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { ErrorBoundary } from "@/components/error-boundary";
 import {
   LayoutDashboard,
   Package,
@@ -19,12 +22,43 @@ import {
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
+  session?: Session | null; // เพิ่ม session prop
+  onRefreshSession?: () => void; // เพิ่ม refresh function
 }
 
-export function Sidebar({ isOpen, onClose }: SidebarProps) {
-  const { data: session } = useSession();
+function SidebarComponent({ isOpen, onClose, session }: SidebarProps) {
+  // ใช้ session จาก props แทน useSession ถ้ามี
+  const { data: sessionData, status } = useSession();
+  const currentSession = session || sessionData;
   const router = useRouter();
   const pathname = usePathname();
+
+  // ✅ Add state to prevent render issues
+  const [isReady, setIsReady] = useState(false);
+
+  // ✅ Use useEffect to handle ready state
+  useEffect(() => {
+    if (status !== "loading") {
+      setIsReady(true);
+    }
+  }, [status]);
+
+  // ✅ Show loading while not ready
+  if (!isReady || status === "loading") {
+    return (
+      <div className="fixed inset-0 z-50 bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-ku-green mx-auto"></div>
+          <p className="mt-4 text-gray-600">กำลังโหลด...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ✅ Return null for unauthenticated users
+  if (status === "unauthenticated") {
+    return null;
+  }
 
   const navigation = [
     {
@@ -70,8 +104,19 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   );
 
   const handleSignOut = async () => {
-    await signOut({ redirect: false });
-    router.push("/sign-in");
+    try {
+      onClose();
+
+      await signOut({
+        redirect: false,
+        callbackUrl: "/sign-in",
+      });
+
+      router.replace("/sign-in");
+    } catch (error) {
+      console.error("Sign out error:", error);
+      window.location.href = "/sign-in";
+    }
   };
 
   return (
@@ -143,15 +188,18 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           <div className="flex items-center space-x-3 mb-4">
             <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
               <span className="text-sm font-medium">
-                {session?.user?.name?.charAt(0) || "U"}
+                {currentSession?.user?.name?.charAt(0) || "U"}
               </span>
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-900 truncate">
-                {session?.user?.name}
+                {currentSession?.user?.name}
               </p>
               <p className="text-xs text-gray-600 truncate">
-                {session?.user?.email}
+                {currentSession?.user?.email}
+              </p>
+              <p className="text-xs text-gray-500">
+                Role: {currentSession?.user?.role}
               </p>
             </div>
           </div>
@@ -168,5 +216,13 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         </div>
       </div>
     </>
+  );
+}
+
+export function Sidebar({ isOpen, onClose }: SidebarProps) {
+  return (
+    <ErrorBoundary>
+      <SidebarComponent isOpen={isOpen} onClose={onClose} />
+    </ErrorBoundary>
   );
 }

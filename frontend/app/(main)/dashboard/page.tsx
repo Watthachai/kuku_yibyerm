@@ -1,12 +1,31 @@
 "use client";
 
 import { useSession } from "next-auth/react";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Package, Users, CheckCircle, Clock } from "lucide-react";
+import { Package, CheckCircle, Clock } from "lucide-react";
 
 export default function DashboardPage() {
   const { data: session } = useSession();
+  const router = useRouter();
   const userRole = session?.user?.role;
+
+  // Auto-redirect ADMIN users to admin dashboard
+  useEffect(() => {
+    if (userRole === "ADMIN") {
+      router.push("dashboard/admin");
+    }
+  }, [userRole, router]);
+
+  // If user is admin, show loading while redirecting
+  if (userRole === "ADMIN") {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-ku-green"></div>
+      </div>
+    );
+  }
 
   // Mock data - ในการใช้งานจริงจะต้อง fetch จาก API
   const stats = {
@@ -17,98 +36,6 @@ export default function DashboardPage() {
     totalUsers: 89,
     myBorrowedItems: 3,
   };
-
-  const renderAdminDashboard = () => (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              ครุภัณฑ์ทั้งหมด
-            </CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalItems}</div>
-            <p className="text-xs text-muted-foreground">รายการ</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">คำขอรออนุมัติ</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.pendingRequests}</div>
-            <p className="text-xs text-muted-foreground">รายการ</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">ผู้ใช้ทั้งหมด</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalUsers}</div>
-            <p className="text-xs text-muted-foreground">คน</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">อนุมัติแล้ว</CardTitle>
-            <CheckCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.approvedRequests}</div>
-            <p className="text-xs text-muted-foreground">รายการ</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>คำขอล่าสุด</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {/* Mock recent requests */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">เครื่องพิมพ์ HP LaserJet</p>
-                  <p className="text-sm text-gray-600">โดย นาย ก. ข.</p>
-                </div>
-                <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs">
-                  รออนุมัติ
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>สถิติการใช้งาน</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span>คำขออนุมัติแล้ว</span>
-                <span className="font-bold">{stats.approvedRequests}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>คำขอปฏิเสธ</span>
-                <span className="font-bold">{stats.rejectedRequests}</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
 
   const renderUserDashboard = () => (
     <div className="space-y-6">
@@ -178,7 +105,7 @@ export default function DashboardPage() {
         <p className="text-gray-600">ภาพรวมการใช้งานระบบ KU Asset</p>
       </div>
 
-      {userRole === "ADMIN" ? renderAdminDashboard() : renderUserDashboard()}
+      {renderUserDashboard()}
     </div>
   );
 }
