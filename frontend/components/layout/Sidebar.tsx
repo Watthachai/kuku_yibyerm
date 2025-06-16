@@ -108,14 +108,15 @@ function SidebarComponent({ isOpen, onClose, session }: SidebarProps) {
       onClose();
 
       await signOut({
-        redirect: false,
+        redirect: true,
         callbackUrl: "/sign-in",
       });
-
+      //router.prefetch("/sign-in");
       router.replace("/sign-in");
+      //window.location.href = "/sign-in";
     } catch (error) {
       console.error("Sign out error:", error);
-      window.location.href = "/sign-in";
+      router.replace("/sign-in");
     }
   };
 
