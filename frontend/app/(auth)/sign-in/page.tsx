@@ -40,6 +40,8 @@ export default function SignInPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  //TODO // make if user has a session, redirect to dashboard
+  // Initialize form with zod validation
   const form = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
