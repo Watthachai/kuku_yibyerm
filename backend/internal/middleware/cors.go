@@ -5,15 +5,23 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func CORS(allowedOrigins []string) gin.HandlerFunc {
+// CORSMiddleware returns a CORS middleware with appropriate configuration
+func CORSMiddleware() gin.HandlerFunc {
 	config := cors.DefaultConfig()
-	config.AllowOrigins = allowedOrigins
+	config.AllowOrigins = []string{
+		"http://localhost:3000",
+		"http://localhost:3001",
+		"https://your-frontend-domain.com",
+	}
 	config.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
 	config.AllowHeaders = []string{
-		"Origin", "Content-Type", "Accept", "Authorization",
-		"X-Requested-With", "Access-Control-Request-Method",
-		"Access-Control-Request-Headers",
+		"Origin",
+		"Content-Type",
+		"Accept",
+		"Authorization",
+		"Cache-Control",
 	}
+	config.ExposeHeaders = []string{"Content-Length"}
 	config.AllowCredentials = true
 
 	return cors.New(config)

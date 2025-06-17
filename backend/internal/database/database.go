@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"kuku-yipyerm/internal/migrations"
+	"ku-asset/internal/migrations"
 
 	"github.com/go-gormigrate/gormigrate/v2"
 	"gorm.io/driver/postgres"

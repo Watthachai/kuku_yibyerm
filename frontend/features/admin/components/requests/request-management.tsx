@@ -167,8 +167,8 @@ export function RequestManagement() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">จัดการคำขอยืม-คืน</h1>
-        <p className="text-gray-600">อนุมัติและติดตามคำขอยืมครุภัณฑ์</p>
+        <h1 className="text-3xl font-bold text-gray-900">จัดการคำขอเบิก</h1>
+        <p className="text-gray-600">อนุมัติและติดตามคำขอเบิกครุภัณฑ์</p>
       </div>
 
       {/* Stats Cards */}
@@ -237,8 +237,8 @@ export function RequestManagement() {
           <TabsTrigger value="all">ทั้งหมด</TabsTrigger>
           <TabsTrigger value="PENDING">รออนุมัติ ({stats.pending})</TabsTrigger>
           <TabsTrigger value="APPROVED">อนุมัติแล้ว</TabsTrigger>
-          <TabsTrigger value="BORROWED">กำลังยืม</TabsTrigger>
-          <TabsTrigger value="OVERDUE">เกินกำหนด</TabsTrigger>
+          <TabsTrigger value="ISSUED">เบิกแล้ว</TabsTrigger>
+          <TabsTrigger value="COMPLETED">เสร็จสิ้น</TabsTrigger>
         </TabsList>
 
         <TabsContent value={activeTab} className="space-y-4">

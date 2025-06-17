@@ -8,8 +8,13 @@ import (
 	"os/signal"
 	"syscall"
 
-	"kuku-yipyerm/internal/app"
-	"kuku-yipyerm/internal/database"
+	"ku-asset/internal/config"
+	"ku-asset/internal/controllers"
+	"ku-asset/internal/database"
+	"ku-asset/internal/routes"
+	"ku-asset/internal/services"
+
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
@@ -39,11 +44,33 @@ func main() {
 		return
 	}
 
-	// Initialize application
-	application, err := app.Initialize()
+	// Load configuration
+	cfg, err := config.Load()
 	if err != nil {
-		log.Fatalf("Failed to initialize application: %v", err)
+		log.Fatal("Failed to load configuration:", err)
 	}
+
+	// Initialize database
+	db, err := database.Connect(cfg.Database)
+	if err != nil {
+		log.Fatal("Failed to initialize database:", err)
+	}
+
+	// Initialize services
+	services := services.NewServices(db)
+
+	// Initialize controllers
+	controllers := controllers.NewControllers(services)
+
+	// Setup Gin
+	if cfg.Server.Env == "release" {
+		gin.SetMode(gin.ReleaseMode)
+	}
+
+	r := gin.Default()
+
+	// Setup routes
+	routes.SetupRoutes(r, controllers)
 
 	// Graceful shutdown
 	go func() {
@@ -52,15 +79,19 @@ func main() {
 		<-quit
 
 		log.Println("🛑 Shutting down server...")
-		if err := application.Shutdown(); err != nil {
-			log.Printf("Error during shutdown: %v", err)
+		// Close database connection
+		if sqlDB, err := db.DB(); err == nil {
+			sqlDB.Close()
 		}
 		os.Exit(0)
 	}()
 
 	// Start server
 	fmt.Println("🚀 Starting Kuku Yipyerm Backend Server...")
-	if err := application.Run(); err != nil {
+	log.Printf("Server starting on port %s", cfg.Server.Port)
+	if err := r.Run(":" + cfg.Server.Port); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
 }
+
+

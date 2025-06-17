@@ -1,86 +1,166 @@
 package routes
 
 import (
-	"kuku-yipyerm/internal/controllers"
-	"kuku-yipyerm/internal/middleware"
+	"ku-asset/internal/controllers"
+	"ku-asset/internal/middleware"
 
-	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
-// SetupRouter configures the application's routes.
-func SetupRouter(db *gorm.DB) *gin.Engine {
-	r := gin.Default()
+// SetupRoutes sets up all routes for the application
+func SetupRoutes(r *gin.Engine, controllers *controllers.Controllers) {
+	// Add CORS middleware
+	r.Use(middleware.CORSMiddleware())
 
-	// CORS Middleware
-	config := cors.DefaultConfig()
-	config.AllowOrigins = []string{
-		"http://localhost:3000",
-	}
-	config.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
-	config.AllowHeaders = []string{
-		"Origin", "Content-Type", "Accept", "Authorization",
-		"X-Requested-With", "Access-Control-Request-Method",
-		"Access-Control-Request-Headers",
-	}
-	config.AllowCredentials = true
-	r.Use(cors.New(config))
+	// Health check
+	r.GET("/health", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"status":  "ok",
+			"message": "KU Asset Management API is running",
+		})
+	})
 
-	// Create controllers
-	//authController := controllers.NewAuthController(db)
-	oauthController := controllers.NewOAuthController(db)
-	userController := controllers.NewUserController(db)
-	healthController := controllers.NewHealthController(db)
-	departmentController := controllers.NewDepartmentController(db)
+	// API routes
+	api := r.Group("/api/v1")
 
-	// Health check route
-	r.GET("/health", healthController.HealthCheck)
+	// Setup API routes
+	setupAPIRoutes(api, controllers)
 
-	// Group routes under /api/v1
-	apiV1 := r.Group("/api/v1")
+	// Setup web routes (if needed)
+	setupWebRoutes(r)
+}
+
+// setupAPIRoutes sets up API routes
+func setupAPIRoutes(api *gin.RouterGroup, controllers *controllers.Controllers) {
+	// Public routes
+	auth := api.Group("/auth")
 	{
-		// Public auth routes
-		authRoutes := apiV1.Group("/auth")
-		{
-			//authRoutes.POST("/sign-up", authController.SignUp)
-			//authRoutes.POST("/sign-in", authController.SignIn)
-			//authRoutes.POST("/refresh", authController.RefreshToken)
+		auth.POST("/login", controllers.Auth.Login)
+		auth.POST("/register", controllers.Auth.Register)
+		auth.POST("/refresh", controllers.Auth.RefreshToken)
+		auth.POST("/forgot-password", controllers.Auth.ForgotPassword)
+		auth.POST("/reset-password", controllers.Auth.ResetPassword)
+	}
 
-			// OAuth routes
-			oauth := authRoutes.Group("/oauth")
-			{
-				oauth.POST("/google", oauthController.GoogleOAuth)
-			}
+	// Protected routes
+	protected := api.Group("")
+	protected.Use(middleware.AuthMiddleware())
+	{
+		// User routes
+		users := protected.Group("/users")
+		{
+			users.GET("/profile", controllers.User.GetProfile)
+			users.PUT("/profile", controllers.User.UpdateProfile)
+			users.POST("/change-password", controllers.User.ChangePassword)
 		}
 
-		// Department routes (public - for registration)
-		departments := apiV1.Group("/departments")
+		// Product routes
+		products := protected.Group("/products")
 		{
-			departments.GET("", departmentController.GetDepartments)
-			departments.GET("/:id", departmentController.GetDepartment)
-			departments.GET("/faculties", departmentController.GetFaculties)
+			products.GET("", controllers.Product.GetProducts)
+			products.GET("/:id", controllers.Product.GetProduct)
 		}
 
-		// Protected routes (require authentication)
-		protected := apiV1.Group("/")
-		protected.Use(middleware.AuthMiddleware())
+		// Category routes
+		categories := protected.Group("/categories")
 		{
-			// User routes
-			users := protected.Group("/users")
+			categories.GET("", controllers.Product.GetCategories)
+		}
+
+		// Department routes
+		departments := protected.Group("/departments")
+		{
+			departments.GET("", controllers.Department.GetDepartments)
+		}
+
+		// Request routes
+		requests := protected.Group("/requests")
+		{
+			requests.POST("", controllers.Request.CreateRequest)
+			requests.GET("/my", controllers.Request.GetMyRequests)
+			requests.GET("/:id", controllers.Request.GetRequest)
+			requests.PUT("/:id/cancel", controllers.Request.CancelRequest)
+		}
+
+		// Admin routes
+		admin := protected.Group("/admin")
+		admin.Use(middleware.AdminMiddleware())
+		{
+			// Admin user management
+			adminUsers := admin.Group("/users")
 			{
-				users.GET("/profile", userController.GetProfile)
-				users.PUT("/profile", userController.UpdateProfile)
+				adminUsers.GET("", controllers.User.GetAllUsers)
+				adminUsers.GET("/:id", controllers.User.GetUser)
+				adminUsers.PUT("/:id", controllers.User.UpdateUser)
+				adminUsers.DELETE("/:id", controllers.User.DeleteUser)
+				adminUsers.PUT("/:id/activate", controllers.User.ActivateUser)
+				adminUsers.PUT("/:id/deactivate", controllers.User.DeactivateUser)
 			}
 
-			// Admin routes (require ADMIN role)
-			admin := protected.Group("/admin")
-			admin.Use(middleware.AuthorizeRole("ADMIN"))
+			// Admin product management
+			adminProducts := admin.Group("/products")
 			{
-				admin.GET("/users", userController.GetAllUsers)
+				adminProducts.POST("", controllers.Product.CreateProduct)
+				adminProducts.PUT("/:id", controllers.Product.UpdateProduct)
+				adminProducts.DELETE("/:id", controllers.Product.DeleteProduct)
+				adminProducts.PUT("/:id/activate", controllers.Product.ActivateProduct)
+				adminProducts.PUT("/:id/deactivate", controllers.Product.DeactivateProduct)
+			}
+
+			// Admin category management
+			adminCategories := admin.Group("/categories")
+			{
+				adminCategories.POST("", controllers.Category.CreateCategory)
+				adminCategories.PUT("/:id", controllers.Category.UpdateCategory)
+				adminCategories.DELETE("/:id", controllers.Category.DeleteCategory)
+			}
+
+			// Admin request management
+			adminRequests := admin.Group("/requests")
+			{
+				adminRequests.GET("", controllers.Request.GetAllRequests)
+				adminRequests.GET("/:id", controllers.Request.GetRequestDetails)
+				adminRequests.PUT("/:id/approve", controllers.Request.ApproveRequest)
+				adminRequests.PUT("/:id/reject", controllers.Request.RejectRequest)
+				adminRequests.PUT("/:id/issue", controllers.Request.IssueRequest)
+				adminRequests.PUT("/:id/complete", controllers.Request.CompleteRequest)
+			}
+
+			// Admin dashboard/statistics
+			adminDashboard := admin.Group("/dashboard")
+			{
+				adminDashboard.GET("/stats", controllers.Dashboard.GetStats)
+				adminDashboard.GET("/recent-requests", controllers.Dashboard.GetRecentRequests)
+				adminDashboard.GET("/popular-products", controllers.Dashboard.GetPopularProducts)
+			}
+
+			// Admin reports
+			adminReports := admin.Group("/reports")
+			{
+				adminReports.GET("/requests", controllers.Report.GetRequestsReport)
+				adminReports.GET("/products", controllers.Report.GetProductsReport)
+				adminReports.GET("/usage", controllers.Report.GetUsageReport)
+				adminReports.GET("/export/requests", controllers.Report.ExportRequestsReport)
 			}
 		}
 	}
+}
 
-	return r
+// setupWebRoutes sets up web routes (for serving static files, etc.)
+func setupWebRoutes(r *gin.Engine) {
+	// Serve static files
+	r.Static("/static", "./static")
+	r.Static("/uploads", "./uploads")
+
+	// Web interface routes (if needed)
+	web := r.Group("")
+	{
+		web.GET("/", func(c *gin.Context) {
+			c.JSON(200, gin.H{
+				"message": "KU Asset Management System",
+				"version": "1.0.0",
+				"docs":    "/api/v1/docs",
+			})
+		})
+	}
 }

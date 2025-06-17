@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	"kuku-yipyerm/internal/models"
+	"ku-asset/internal/models"
 
 	"github.com/golang-jwt/jwt/v5"
 )

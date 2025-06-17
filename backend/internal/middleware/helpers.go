@@ -3,8 +3,8 @@ package middleware
 import (
 	"errors"
 
-	"kuku-yipyerm/internal/auth"
-	"kuku-yipyerm/internal/models"
+	"ku-asset/internal/auth"
+	"ku-asset/internal/models"
 
 	"github.com/gin-gonic/gin"
 )

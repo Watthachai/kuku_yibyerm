@@ -1,72 +1,31 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { RequestService, BorrowRequest } from "@/lib/api/request.service";
+import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Package, Calendar, Clock } from "lucide-react";
 
-interface BorrowRequest {
-  id: string;
-  requestNumber: string;
-  status: "PENDING" | "APPROVED" | "REJECTED" | "BORROWED" | "RETURNED" | "OVERDUE";
-  items: Array<{
-    id: string;
-    product: {
-      id: string;
-      name: string;
-      code: string;
-    };
-    quantity: number;
-  }>;
-  purpose: string;
-  requestDate: string;
-  adminNote?: string;
-  rejectedBy?: {
-    reason: string;
-  };
-}
-
 export function MyRequests() {
   const [requests, setRequests] = useState<BorrowRequest[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<string>("all");
+  const [activeTab, setActiveTab] = useState("all");
 
   useEffect(() => {
-    loadMyRequests();
+    loadRequests();
   }, []);
 
-  const loadMyRequests = async () => {
+  const loadRequests = async () => {
     try {
       setLoading(true);
-      // TODO: Call API to get user's requests
-      
-      // Mock data
-      const mockRequests: BorrowRequest[] = [
-        {
-          id: "1",
-          requestNumber: "REQ-2025-001",
-          status: "PENDING",
-          items: [
-            {
-              id: "i1",
-              product: {
-                id: "p1",
-                name: "เครื่องฉายภาพ Epson EB-X41",
-                code: "EP001-2024",
-              },
-              quantity: 1,
-            },
-          ],
-          purpose: "การสอนในรายวิชา เกษตรเบื้องต้น",
-          requestDate: new Date().toISOString(),
-        },
-      ];
-
-      setRequests(mockRequests);
+      const data = await RequestService.getMyRequests();
+      setRequests(data.requests);
     } catch (error) {
       console.error("Failed to load requests:", error);
+      toast.error("เกิดข้อผิดพลาด: ไม่สามารถโหลดคำขอได้");
     } finally {
       setLoading(false);
     }
@@ -89,9 +48,8 @@ export function MyRequests() {
       case "PENDING": return "รออนุมัติ";
       case "APPROVED": return "อนุมัติแล้ว";
       case "REJECTED": return "ปฏิเสธ";
-      case "BORROWED": return "กำลังยืม";
-      case "RETURNED": return "คืนแล้ว";
-      case "OVERDUE": return "เกินกำหนด";
+      case "ISSUED": return "เบิกแล้ว";
+      case "COMPLETED": return "เสร็จสิ้น";
       default: return status;
     }
   };
@@ -120,8 +78,8 @@ export function MyRequests() {
     <div className="space-y-6">
       {/* Header */}
       <div className="bg-white sticky top-0 z-10 p-4 border-b">
-        <h1 className="text-xl font-bold text-gray-900">คำขอของฉัน</h1>
-        <p className="text-sm text-gray-600">ติดตามสถานะคำขอยืมครุภัณฑ์</p>
+        <h1 className="text-xl font-bold text-gray-900">คำขอเบิกของฉัน</h1>
+        <p className="text-sm text-gray-600">ติดตามสถานะคำขอเบิกครุภัณฑ์</p>
       </div>
 
       {/* Quick Stats */}
@@ -159,8 +117,8 @@ export function MyRequests() {
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="all">ทั้งหมด</TabsTrigger>
             <TabsTrigger value="PENDING">รออนุมัติ</TabsTrigger>
-            <TabsTrigger value="BORROWED">กำลังยืม</TabsTrigger>
-            <TabsTrigger value="RETURNED">คืนแล้ว</TabsTrigger>
+            <TabsTrigger value="ISSUED">เบิกแล้ว</TabsTrigger>
+            <TabsTrigger value="COMPLETED">เสร็จสิ้น</TabsTrigger>
           </TabsList>
 
           <TabsContent value={activeTab} className="space-y-3 mt-4">

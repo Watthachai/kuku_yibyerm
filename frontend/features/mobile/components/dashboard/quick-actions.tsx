@@ -18,13 +18,13 @@ export function QuickActions() {
 			title: "ประวัติการเบิก",
 			icon: Clock,
 			color: "bg-green-500",
-			action: () => router.push("/mobile/requests"),
+			action: () => router.push("/requests"),
 		},
 		{
 			title: "ตะกร้าของฉัน",
 			icon: CheckCircle,
 			color: "bg-orange-500",
-			action: () => router.push("/mobile/cart"),
+			action: () => router.push("/cart"),
 		},
 		{
 			title: "แจ้งปัญหา",

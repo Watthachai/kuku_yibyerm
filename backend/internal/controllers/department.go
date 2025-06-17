@@ -5,7 +5,8 @@ import (
 	"strconv"
 	"strings"
 
-	"kuku-yipyerm/internal/models"
+	"ku-asset/internal/models"
+	"ku-asset/internal/services"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -13,12 +14,16 @@ import (
 
 // DepartmentController handles department-related requests
 type DepartmentController struct {
-	DB *gorm.DB
+	DB                *gorm.DB
+	departmentService *services.DepartmentService
 }
 
 // NewDepartmentController creates a new DepartmentController
-func NewDepartmentController(db *gorm.DB) *DepartmentController {
-	return &DepartmentController{DB: db}
+func NewDepartmentController(db *gorm.DB, departmentService *services.DepartmentService) *DepartmentController {
+	return &DepartmentController{
+		DB:                db,
+		departmentService: departmentService,
+	}
 }
 
 // GetDepartments retrieves all departments with optional filtering

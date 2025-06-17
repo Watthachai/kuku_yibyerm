@@ -3,10 +3,12 @@ package app
 import (
 	"log"
 
-	"kuku-yipyerm/internal/config"
-	"kuku-yipyerm/internal/database"
-	"kuku-yipyerm/internal/migrations"
-	"kuku-yipyerm/internal/routes"
+	"ku-asset/internal/config"
+	"ku-asset/internal/controllers"
+	"ku-asset/internal/database"
+	"ku-asset/internal/migrations"
+	"ku-asset/internal/routes"
+	"ku-asset/internal/services"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -39,8 +41,21 @@ func Initialize() (*App, error) {
 	}
 	log.Println("✅ Database migrations completed")
 
-	// Setup router
-	router := routes.SetupRouter(db)
+	// Initialize services
+	services := services.NewServices(db)
+
+	// Initialize controllers
+	controllers := controllers.NewControllers(services)
+
+	// Setup Gin
+	if cfg.Server.Env == "release" {
+		gin.SetMode(gin.ReleaseMode)
+	}
+
+	router := gin.Default()
+
+	// Setup routes
+	routes.SetupRoutes(router, controllers)
 
 	app := &App{
 		Router: router,

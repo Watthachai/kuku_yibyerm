@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"kuku-yipyerm/internal/config"
+	"ku-asset/internal/config"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"

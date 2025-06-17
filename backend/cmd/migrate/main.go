@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"kuku-yipyerm/internal/database"
+	"ku-asset/internal/database"
 
 	"github.com/joho/godotenv"
 )
