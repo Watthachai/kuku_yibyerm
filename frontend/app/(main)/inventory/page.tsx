@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Search, Plus, Package } from "lucide-react";
-import { useSession } from "next-auth/react";
 import Image from "next/image";
+import { UserCatalogShoppingView } from "@/features/mobile/components/catalog/user-catalog-shopping-view";
 
 interface Item {
   id: number;
@@ -37,8 +38,9 @@ export default function InventoryPage() {
 
   const isAdmin = session?.user?.role === "ADMIN";
   const isApprover = session?.user?.role === "APPROVER";
+  const isUser = session?.user?.role === "USER";
 
-  // Mock data - ในการใช้งานจริงจะต้อง fetch จาก API
+  // Mock data
   useEffect(() => {
     const mockItems: Item[] = [
       {
@@ -69,6 +71,12 @@ export default function InventoryPage() {
     }, 1000);
   }, []);
 
+  // If user role is USER, show catalog view
+  if (isUser) {
+    return <UserCatalogShoppingView items={items} loading={loading} />;
+  }
+
+  // Desktop view for ADMIN and APPROVER
   const getStatusColor = (status: string) => {
     switch (status) {
       case "AVAILABLE":
@@ -215,17 +223,6 @@ export default function InventoryPage() {
                   )}
 
                   <div className="pt-3 space-y-2">
-                    {!isAdmin &&
-                      item.status === "AVAILABLE" &&
-                      item.quantity > 0 && (
-                        <Button
-                          className="w-full bg-ku-green hover:bg-ku-green-dark"
-                          size="sm"
-                        >
-                          ทำเรื่องเบิก
-                        </Button>
-                      )}
-
                     {(isAdmin || isApprover) && (
                       <div className="flex gap-2">
                         <Button variant="outline" size="sm" className="flex-1">
