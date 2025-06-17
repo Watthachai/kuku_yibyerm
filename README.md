@@ -1,6 +1,6 @@
 # YibYerm Project
 
-Welcome to the YibYerm project! This project is a web application built using Next.js for the frontend and Go for the backend. It utilizes Tailwind CSS for styling, along with various libraries to enhance the user experience.
+Welcome to the KU-ASSET project! This project is a web application built using Next.js for the frontend and Go for the backend. It utilizes Tailwind CSS for styling, along with various libraries to enhance the user experience.
 
 ## Table of Contents
 

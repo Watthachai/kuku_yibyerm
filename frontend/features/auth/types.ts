@@ -1,16 +1,13 @@
 export interface User {
   id: string;
-  email: string;
   name: string;
+  email: string;
   role: Role;
-  avatar?: string;
-  provider?: "local" | "google";
-  providerId?: string;
   departmentId?: string;
+  department?: Department;
+  status: "ACTIVE" | "INACTIVE";
   createdAt: string;
-  updatedAt: string;
-  accessToken?: string;
-  refreshToken?: string;
+  lastLogin?: string;
 }
 
 export interface Signin {
@@ -22,41 +19,36 @@ export interface Signup {
   name: string;
   email: string;
   password: string;
+  confirmPassword: string;
+  departmentId: string;
 }
 
 export interface AuthResponse {
-  accessToken: string;
-  refreshToken: string;
   user: User;
+  accessToken: string;
+  refreshToken?: string;
 }
 
+// ลบ APPROVER ออก - เหลือแค่ ADMIN และ USER
 export enum Role {
   ADMIN = "ADMIN",
-  APPROVER = "APPROVER", // เปลี่ยนจาก STAFF เป็น APPROVER
   USER = "USER",
 }
 
 export interface OAuthProvider {
-  id: "google" | "microsoft";
+  id: string;
   name: string;
-  icon: React.ComponentType<{ className?: string }>;
-  color: string;
-  bgColor: string;
-  textColor: string;
+  icon: string;
 }
 
-// Department interface for KU Asset system
 export interface Department {
   id: string;
   name: string;
-  faculty: string;
-  code?: string;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
+  code: string;
+  building?: string;
+  contact?: string;
 }
 
-// Auth validation schemas
 export interface LoginCredentials {
   email: string;
   password: string;
@@ -65,21 +57,17 @@ export interface LoginCredentials {
 export interface GoogleOAuthData {
   email: string;
   name: string;
-  avatar?: string;
-  providerId: string;
+  picture?: string;
 }
 
-// Error types
 export interface AuthError {
-  code: string;
   message: string;
-  details?: string;
+  code?: string;
 }
 
-// API Response types
 export interface ApiResponse<T> {
   success: boolean;
   data?: T;
-  error?: AuthError;
   message?: string;
+  error?: string;
 }

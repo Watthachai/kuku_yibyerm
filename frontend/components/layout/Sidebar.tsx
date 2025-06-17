@@ -1,89 +1,87 @@
 "use client";
 
 import { useSession, signOut } from "next-auth/react";
-import { Session } from "next-auth";
 import { useRouter, usePathname } from "next/navigation";
-import { useState, useEffect } from "react";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { ErrorBoundary } from "@/components/error-boundary";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
   Package,
   FileText,
-  History,
   Users,
+  Building2,
+  BarChart,
+  Settings,
   LogOut,
   X,
-  Building2,
-  BookOpen,
+
 } from "lucide-react";
+import Link from "next/link";
+
+interface SessionUser {
+  name?: string | null;
+  email?: string | null;
+  role?: string;
+}
+
+interface Session {
+  user?: SessionUser;
+}
 
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
-  session?: Session | null; // เพิ่ม session prop
-  onRefreshSession?: () => void; // เพิ่ม refresh function
+  session: Session | null;
+  onRefreshSession: () => void;
 }
 
-function SidebarComponent({ isOpen, onClose, session }: SidebarProps) {
-  // ใช้ session จาก props แทน useSession ถ้ามี
-  const { data: sessionData, status } = useSession();
-  const currentSession = session || sessionData;
+export function Sidebar({ isOpen, onClose, session }: SidebarProps) {
+  const { status } = useSession();
   const router = useRouter();
   const pathname = usePathname();
 
-  // ✅ Add state to prevent render issues
-  const [isReady, setIsReady] = useState(false);
-
-  // ✅ Use useEffect to handle ready state
-  useEffect(() => {
-    if (status !== "loading") {
-      setIsReady(true);
-    }
-  }, [status]);
-
-  // ✅ Show loading while not ready
-  if (!isReady || status === "loading") {
+  if (status === "loading") {
     return (
-      <div className="fixed inset-0 z-50 bg-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-ku-green mx-auto"></div>
-          <p className="mt-4 text-gray-600">กำลังโหลด...</p>
+      <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-64 lg:flex-col">
+        <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-white px-6 border-r border-gray-200">
+          <div className="animate-pulse space-y-4 py-6">
+            <div className="h-8 bg-gray-200 rounded"></div>
+            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+            <div className="space-y-2">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="h-10 bg-gray-200 rounded"></div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
-  // ✅ Return null for unauthenticated users
-  if (status === "unauthenticated") {
+  if (status === "unauthenticated" || !session) {
     return null;
   }
 
+  // Navigation items
   const navigation = [
     {
       name: "แดชบอร์ด",
       href: "/dashboard",
       icon: LayoutDashboard,
-      roles: ["USER", "APPROVER", "ADMIN"],
+      roles: ["ADMIN"],
     },
     {
       name: "คลังครุภัณฑ์",
       href: "/inventory",
       icon: Package,
-      roles: ["USER", "APPROVER", "ADMIN"],
+      roles: ["ADMIN"],
     },
     {
-      name: "จัดการคำขอ",
+      name: "คำขอยืม-คืน",
       href: "/requests",
       icon: FileText,
-      roles: ["APPROVER", "ADMIN"],
-    },
-    {
-      name: "ประวัติการเบิก-คืน",
-      href: "/history",
-      icon: History,
-      roles: ["USER", "APPROVER", "ADMIN"],
+      roles: ["ADMIN"],
     },
     {
       name: "จัดการผู้ใช้",
@@ -97,23 +95,34 @@ function SidebarComponent({ isOpen, onClose, session }: SidebarProps) {
       icon: Building2,
       roles: ["ADMIN"],
     },
+    {
+      name: "รายงาน",
+      href: "/reports",
+      icon: BarChart,
+      roles: ["ADMIN"],
+    },
+    {
+      name: "ตั้งค่าระบบ",
+      href: "/settings",
+      icon: Settings,
+      roles: ["ADMIN"],
+    },
   ];
 
+  // Filter navigation based on user role
+  const userRole = session?.user?.role;
   const filteredNavigation = navigation.filter((item) =>
-    item.roles.includes(session?.user?.role || "USER")
+    item.roles.includes(userRole || "")
   );
 
   const handleSignOut = async () => {
     try {
       onClose();
-
       await signOut({
         redirect: true,
         callbackUrl: "/sign-in",
       });
-      //router.prefetch("/sign-in");
       router.replace("/sign-in");
-      //window.location.href = "/sign-in";
     } catch (error) {
       console.error("Sign out error:", error);
       router.replace("/sign-in");
@@ -122,108 +131,186 @@ function SidebarComponent({ isOpen, onClose, session }: SidebarProps) {
 
   return (
     <>
-      {/* Mobile backdrop */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden"
-          onClick={onClose}
-        />
-      )}
-
-      {/* Sidebar */}
+      {/* Mobile sidebar backdrop */}
       <div
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0",
+          "fixed inset-0 z-40 lg:hidden",
+          isOpen ? "block" : "hidden"
+        )}
+      >
+        <div
+          className="fixed inset-0 bg-gray-600 bg-opacity-75"
+          onClick={onClose}
+        />
+      </div>
+
+      {/* Mobile sidebar */}
+      <div
+        className={cn(
+          "fixed inset-y-0 left-0 z-50 w-64 transform bg-white transition-transform duration-300 ease-in-out lg:hidden",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-ku-green rounded-lg flex items-center justify-center">
-              <BookOpen className="w-6 h-6 text-white" />
+        <div className="flex h-full flex-col">
+          {/* Mobile Header */}
+          <div className="flex items-center justify-between p-6 border-b">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-ku-green rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-sm">KU</span>
+              </div>
+              <div>
+                <h1 className="font-bold text-gray-900">KU Asset</h1>
+                <p className="text-xs text-gray-600">Admin Panel</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-lg font-bold text-gray-900">KU Asset</h1>
-              <p className="text-xs text-gray-600">ระบบจัดการครุภัณฑ์</p>
+            <Button variant="ghost" size="sm" onClick={onClose}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+
+          {/* Mobile User Info */}
+          <div className="p-6 border-b bg-gray-50">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-ku-green rounded-full flex items-center justify-center">
+                <span className="text-white font-semibold">
+                  {session?.user?.name?.charAt(0) || "A"}
+                </span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 truncate">
+                  {session?.user?.name || "ผู้ดูแลระบบ"}
+                </p>
+                <p className="text-xs text-gray-600 truncate">
+                  {session?.user?.email}
+                </p>
+                <Badge variant="default" className="mt-1 text-xs">
+                  ผู้ดูแลระบบ
+                </Badge>
+              </div>
             </div>
           </div>
 
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onClose}
-            className="lg:hidden"
-          >
-            <X className="w-4 h-4" />
-          </Button>
+          {/* Mobile Navigation */}
+          <nav className="flex-1 p-4 space-y-2">
+            {filteredNavigation.map((item) => {
+              const Icon = item.icon;
+              const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  onClick={onClose}
+                  className={cn(
+                    "flex items-center space-x-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-gray-100",
+                    isActive
+                      ? "bg-ku-green text-white hover:bg-ku-green-dark"
+                      : "text-gray-700 hover:text-gray-900"
+                  )}
+                >
+                  <Icon className="h-5 w-5" />
+                  <span>{item.name}</span>
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* Mobile Footer */}
+          <div className="p-4 border-t mt-auto">
+            <Button
+              variant="ghost"
+              onClick={handleSignOut}
+              className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
+            >
+              <LogOut className="h-4 w-4 mr-3" />
+              ออกจากระบบ
+            </Button>
+          </div>
         </div>
+      </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 px-4 py-6 space-y-2">
-          {filteredNavigation.map((item) => {
-            const isActive = pathname === item.href;
-            return (
-              <button
-                key={item.name}
-                onClick={() => {
-                  router.push(item.href);
-                  onClose();
-                }}
-                className={cn(
-                  "w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors",
-                  isActive
-                    ? "bg-ku-green text-white"
-                    : "text-gray-700 hover:bg-gray-100"
-                )}
-              >
-                <item.icon className="w-5 h-5 mr-3" />
-                {item.name}
-              </button>
-            );
-          })}
-        </nav>
-
-        {/* User info and logout */}
-        <div className="border-t border-gray-200 p-4">
-          <div className="flex items-center space-x-3 mb-4">
-            <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-              <span className="text-sm font-medium">
-                {currentSession?.user?.name?.charAt(0) || "U"}
-              </span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">
-                {currentSession?.user?.name}
-              </p>
-              <p className="text-xs text-gray-600 truncate">
-                {currentSession?.user?.email}
-              </p>
-              <p className="text-xs text-gray-500">
-                Role: {currentSession?.user?.role}
-              </p>
+      {/* Desktop sidebar */}
+      <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-64 lg:flex-col">
+        <div className="flex grow flex-col bg-white border-r border-gray-200">
+          {/* Desktop Header */}
+          <div className="flex h-16 shrink-0 items-center px-6">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-ku-green rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-sm">KU</span>
+              </div>
+              <div>
+                <h1 className="font-bold text-gray-900">KU Asset</h1>
+                <p className="text-xs text-gray-600">Admin Panel</p>
+              </div>
             </div>
           </div>
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleSignOut}
-            className="w-full justify-start"
-          >
-            <LogOut className="w-4 h-4 mr-2" />
-            ออกจากระบบ
-          </Button>
+          {/* Desktop User Info */}
+          <div className="px-6 py-4 border-b bg-gray-50">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-ku-green rounded-full flex items-center justify-center">
+                <span className="text-white font-semibold">
+                  {session?.user?.name?.charAt(0) || "A"}
+                </span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 truncate">
+                  {session?.user?.name || "ผู้ดูแลระบบ"}
+                </p>
+                <p className="text-xs text-gray-600 truncate">
+                  {session?.user?.email}
+                </p>
+                <Badge variant="default" className="mt-1 text-xs">
+                  ผู้ดูแลระบบ
+                </Badge>
+              </div>
+            </div>
+          </div>
+
+          {/* Desktop Navigation */}
+          <nav className="flex-1 px-6 py-4">
+            <div className="space-y-1">
+              {filteredNavigation.map((item) => {
+                const Icon = item.icon;
+                const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+
+                return (
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    className={cn(
+                      "group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold transition-colors",
+                      isActive
+                        ? "bg-ku-green text-white"
+                        : "text-gray-700 hover:text-ku-green hover:bg-gray-50"
+                    )}
+                  >
+                    <Icon
+                      className={cn(
+                        "h-6 w-6 shrink-0",
+                        isActive ? "text-white" : "text-gray-400 group-hover:text-ku-green"
+                      )}
+                    />
+                    {item.name}
+                  </Link>
+                );
+              })}
+            </div>
+          </nav>
+
+          {/* Desktop Footer - ปรับให้ใกล้เมนูมากขึ้น */}
+          <div className="px-6 py-4 border-t">
+            <Button
+              variant="ghost"
+              onClick={handleSignOut}
+              className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
+            >
+              <LogOut className="h-4 w-4 mr-3" />
+              ออกจากระบบ
+            </Button>
+          </div>
         </div>
       </div>
     </>
-  );
-}
-
-export function Sidebar({ isOpen, onClose }: SidebarProps) {
-  return (
-    <ErrorBoundary>
-      <SidebarComponent isOpen={isOpen} onClose={onClose} />
-    </ErrorBoundary>
   );
 }
