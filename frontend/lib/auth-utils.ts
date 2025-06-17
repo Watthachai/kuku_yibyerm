@@ -18,16 +18,12 @@ export const isAdmin = (session: Session | null): boolean => {
   return hasRole(session, Role.ADMIN);
 };
 
-export const isApprover = (session: Session | null): boolean => {
-  return hasRole(session, Role.APPROVER);
+export const isUser = (session: Session | null): boolean => {
+  return hasRole(session, Role.USER);
 };
 
 export const canAccessAdminRoutes = (session: Session | null): boolean => {
-  return hasAnyRole(session, [Role.ADMIN]);
-};
-
-export const canAccessApproverRoutes = (session: Session | null): boolean => {
-  return hasAnyRole(session, [Role.ADMIN, Role.APPROVER]);
+  return hasRole(session, Role.ADMIN);
 };
 
 export const getUserDisplayName = (session: Session | null): string => {
@@ -38,8 +34,6 @@ export const getRoleDisplayName = (role?: string): string => {
   switch (role) {
     case Role.ADMIN:
       return "ผู้ดูแลระบบ";
-    case Role.APPROVER:
-      return "หัวหน้าภาควิชา";
     case Role.USER:
       return "ผู้ใช้งาน";
     default:
@@ -48,7 +42,6 @@ export const getRoleDisplayName = (role?: string): string => {
 };
 
 export const getDepartmentDisplayName = (departmentId?: string): string => {
-  // This would typically come from a lookup table or API
   switch (departmentId) {
     case "1":
       return "คณะเกษตร";
@@ -82,9 +75,7 @@ export const isTokenExpired = (token?: string): boolean => {
   }
 };
 
-export const getTokenPayload = (
-  token?: string
-): Record<string, unknown> | null => {
+export const getTokenPayload = (token?: string): Record<string, unknown> | null => {
   if (!token) return null;
 
   try {
