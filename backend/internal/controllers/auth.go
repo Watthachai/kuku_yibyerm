@@ -397,11 +397,3 @@ func (ac *AuthController) generateRefreshToken(user models.User) (string, error)
 	}
 	return token.SignedString([]byte(secret))
 }
-
-// Helper function to safely get string value from pointer
-func getStringValue(ptr *string) string {
-	if ptr == nil {
-		return ""
-	}
-	return *ptr
-}

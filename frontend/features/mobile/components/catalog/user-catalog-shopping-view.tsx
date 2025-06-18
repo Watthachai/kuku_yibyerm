@@ -32,7 +32,7 @@ interface Props {
 export function UserCatalogShoppingView({ className }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { addItem, getItemQuantity, getTotalItems, cart } = useCartStore();
+  const { addItem, getItemQuantity, getTotalItems } = useCartStore();
 
   // State
   const [products, setProducts] = useState<Product[]>([]);

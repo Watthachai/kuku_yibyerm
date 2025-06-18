@@ -16,15 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Settings,
-  Mail,
-  Shield,
-  Database,
-  Bell,
-  Globe,
-  Save,
-} from "lucide-react";
+import { Shield, Database, Bell, Globe, Save } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function SettingsPage() {
@@ -67,7 +59,7 @@ export default function SettingsPage() {
         title: "บันทึกสำเร็จ",
         description: `การตั้งค่า${section}ได้รับการบันทึกแล้ว`,
       });
-    } catch (error) {
+    } catch {
       toast({
         title: "เกิดข้อผิดพลาด",
         description: "ไม่สามารถบันทึกการตั้งค่าได้",

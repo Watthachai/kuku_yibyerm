@@ -10,6 +10,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import type { InventoryFormData } from "@/features/admin/types/inventory";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -42,7 +43,6 @@ import {
   Plus,
   ChevronUp,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 interface AddInventoryFormProps {
   onSuccess?: () => void;
@@ -62,8 +62,7 @@ export function AddInventoryForm({
   } = useInventoryForm();
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
-
-  const handleFormSubmit = async (data: any) => {
+  const handleFormSubmit = async (data: InventoryFormData) => {
     const success = await onSubmit(data);
     if (success && onSuccess) {
       onSuccess();
