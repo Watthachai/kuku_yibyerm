@@ -5,57 +5,32 @@ import {
   SystemStats,
 } from "@/types/admin-dashboard";
 import { getSession } from "next-auth/react";
-import type { Session } from "next-auth";
 
 export class AdminDashboardService {
   private static baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
 
-  // ⭐ แก้ไข type guard ให้ไม่ใช้ any
-  private static isSessionWithTokens(
-    session: Session | null
-  ): session is Session {
-    return (
-      session !== null &&
-      !!(
-        session.accessToken ||
-        session.refreshToken ||
-        session.googleAccessToken
-      )
-    );
-  }
-
   private static async getAuthHeaders(): Promise<Record<string, string>> {
     const session = await getSession();
-    console.log("🔍 Session in service:", session);
 
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
     };
 
     if (!session?.accessToken) {
-      console.warn("❌ No access token in session");
+      // ลอง fallback หา token ใน session properties อื่น
+      const possibleTokens = [
+        (session?.user as any)?.accessToken,
+        (session?.user as any)?.access_token,
+        (session as any)?.token,
+        (session as any)?.jwt,
+      ].filter(Boolean);
 
-      // ⭐ ใช้ type guard แทน any
-      if (this.isSessionWithTokens(session)) {
-        const possibleTokens = [
-          session.refreshToken,
-          session.googleAccessToken,
-        ].filter(Boolean);
-
-        if (possibleTokens.length > 0) {
-          console.log("🔑 Found fallback token");
-          headers.Authorization = `Bearer ${possibleTokens[0]}`;
-        }
+      if (possibleTokens.length > 0) {
+        headers.Authorization = `Bearer ${possibleTokens[0]}`;
       }
 
       return headers;
     }
-
-    console.log("🔑 Using session access token");
-    console.log(
-      "🔍 Token preview:",
-      session.accessToken.substring(0, 50) + "..."
-    );
 
     headers.Authorization = `Bearer ${session.accessToken}`;
     return headers;
