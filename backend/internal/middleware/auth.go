@@ -1,101 +1,108 @@
 package middleware
 
 import (
+	"errors"
+	"log"
 	"net/http"
+	"os"
 	"strings"
 
-	"ku-asset/internal/auth" // ใช้ auth package แทน
-
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 // AuthMiddleware validates JWT tokens and adds user info to context
 func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Get the Authorization header
+		log.Printf("🔍 Auth middleware called for: %s %s", c.Request.Method, c.Request.URL.Path)
+
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
+			log.Println("❌ No Authorization header")
 			c.JSON(http.StatusUnauthorized, gin.H{
-				"error": "Authorization header is required",
+				"success": false,
+				"message": "Authorization header is required",
 			})
 			c.Abort()
 			return
 		}
 
-		// Check if the header starts with "Bearer "
-		if !strings.HasPrefix(authHeader, "Bearer ") {
+		parts := strings.SplitN(authHeader, " ", 2)
+		if len(parts) != 2 || parts[0] != "Bearer" {
+			log.Printf("❌ Invalid auth header format: %s", authHeader)
 			c.JSON(http.StatusUnauthorized, gin.H{
-				"error": "Invalid authorization header format. Expected: Bearer <token>",
+				"success": false,
+				"message": "Invalid authorization header format. Expected: Bearer <token>",
 			})
 			c.Abort()
 			return
 		}
 
-		// Extract the token (remove "Bearer " prefix)
-		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-		if tokenString == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"error": "Token is required",
+		tokenString := parts[1]
+		log.Printf("🔍 Token received: %s...", tokenString[:50])
+
+		jwtSecret := os.Getenv("JWT_SECRET")
+		if jwtSecret == "" {
+			log.Println("❌ JWT_SECRET not found in environment!")
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "Server configuration error",
 			})
 			c.Abort()
 			return
 		}
 
-		// Validate the token
-		claims, err := auth.ValidateToken(tokenString)
+		log.Printf("🔑 Using JWT Secret: %s... (length: %d)", jwtSecret[:10], len(jwtSecret))
+
+		// ⭐ JWT v5 syntax
+		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+			// Check signing method
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				log.Printf("❌ Unexpected signing method: %v", token.Header["alg"])
+				return nil, errors.New("invalid signing method") // ⭐ ใช้ errors.New แทน
+			}
+			return []byte(jwtSecret), nil
+		})
+
 		if err != nil {
+			log.Printf("❌ JWT Parse Error: %v", err)
 			c.JSON(http.StatusUnauthorized, gin.H{
-				"error":   "Invalid or expired token",
+				"success": false,
+				"message": "Invalid or expired token",
 				"details": err.Error(),
 			})
 			c.Abort()
 			return
 		}
 
-		// Check if it's an access token
-		if claims.Type != "access" {
+		if !token.Valid {
+			log.Println("❌ Token is not valid")
 			c.JSON(http.StatusUnauthorized, gin.H{
-				"error": "Invalid token type. Access token required",
+				"success": false,
+				"message": "Token is not valid",
 			})
 			c.Abort()
 			return
 		}
 
-		// Add user information to the context
-		c.Set("userID", claims.UserID)
-		c.Set("userRole", claims.Role)
-		c.Set("claims", claims)
-
-		// Continue to the next handler
-		c.Next()
-	}
-}
-
-// OptionalAuthMiddleware validates JWT tokens but doesn't require them
-// Useful for endpoints that work differently for authenticated vs anonymous users
-func OptionalAuthMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		authHeader := c.GetHeader("Authorization")
-
-		// If no auth header, continue without authentication
-		if authHeader == "" {
-			c.Next()
+		// ⭐ JWT v5 claims syntax
+		claims, ok := token.Claims.(jwt.MapClaims)
+		if !ok {
+			log.Println("❌ Invalid token claims")
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"success": false,
+				"message": "Invalid token claims",
+			})
+			c.Abort()
 			return
 		}
 
-		// If auth header exists, validate it
-		if strings.HasPrefix(authHeader, "Bearer ") {
-			tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+		// Set user info in context
+		c.Set("user_id", claims["user_id"])
+		c.Set("email", claims["email"])
+		c.Set("role", claims["role"])
 
-			if claims, err := auth.ValidateToken(tokenString); err == nil && claims.Type == "access" {
-				// Valid token - add user info to context
-				c.Set("userID", claims.UserID)
-				c.Set("userRole", claims.Role)
-				c.Set("claims", claims)
-				c.Set("authenticated", true)
-			}
-		}
-
+		log.Printf("✅ Token validated successfully for user: %v (role: %v)", claims["email"], claims["role"])
 		c.Next()
 	}
 }
@@ -103,75 +110,41 @@ func OptionalAuthMiddleware() gin.HandlerFunc {
 // AuthorizeRole checks if the authenticated user has the required role
 func AuthorizeRole(requiredRole string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Get user role from context (set by AuthMiddleware)
-		userRole, exists := c.Get("userRole")
+		role, exists := c.Get("role")
 		if !exists {
+			log.Println("❌ User role not found in context")
 			c.JSON(http.StatusUnauthorized, gin.H{
-				"error": "User role not found in context. Make sure AuthMiddleware is used first",
+				"success": false,
+				"message": "User role not found",
 			})
 			c.Abort()
 			return
 		}
 
-		// Convert to string and check role
-		roleStr, ok := userRole.(string)
+		userRole, ok := role.(string)
 		if !ok {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": "Invalid user role format",
+			log.Printf("❌ Invalid role type: %T", role)
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"success": false,
+				"message": "Invalid role type",
 			})
 			c.Abort()
 			return
 		}
 
-		// Check if user has the required role
-		if roleStr != requiredRole {
+		if userRole != requiredRole && userRole != "ADMIN" { // Admin can access everything
+			log.Printf("❌ Insufficient permissions. Required: %s, Got: %s", requiredRole, userRole)
 			c.JSON(http.StatusForbidden, gin.H{
-				"error":    "Insufficient permissions",
+				"success":  false,
+				"message":  "Insufficient permissions",
 				"required": requiredRole,
-				"current":  roleStr,
+				"current":  userRole,
 			})
 			c.Abort()
 			return
 		}
 
+		log.Printf("✅ Role authorization passed: %s", userRole)
 		c.Next()
-	}
-}
-
-// AuthorizeRoles checks if the authenticated user has any of the required roles
-func AuthorizeRoles(requiredRoles ...string) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		userRole, exists := c.Get("userRole")
-		if !exists {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"error": "User role not found in context",
-			})
-			c.Abort()
-			return
-		}
-
-		roleStr, ok := userRole.(string)
-		if !ok {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": "Invalid user role format",
-			})
-			c.Abort()
-			return
-		}
-
-		// Check if user has any of the required roles
-		for _, requiredRole := range requiredRoles {
-			if roleStr == requiredRole {
-				c.Next()
-				return
-			}
-		}
-
-		c.JSON(http.StatusForbidden, gin.H{
-			"error":    "Insufficient permissions",
-			"required": requiredRoles,
-			"current":  roleStr,
-		})
-		c.Abort()
 	}
 }

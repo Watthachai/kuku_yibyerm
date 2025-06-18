@@ -2,22 +2,21 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ProductService, Product, Category as APICategory } from "@/lib/api/product.service";
 import { useCartStore } from "../../stores/cart.store";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { 
-  Search, 
-  Filter, 
-  ShoppingCart, 
-  Plus, 
+import {
+  Search,
+  Filter,
+  ShoppingCart,
+  Plus,
   Minus,
   MapPin,
   Star,
-  Package
+  Package,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -39,32 +38,38 @@ export function UserCatalogShoppingView({ className }: Props) {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
-  const [selectedCategory, setSelectedCategory] = useState<string>(searchParams.get('category') || '');
+  const [searchTerm, setSearchTerm] = useState(
+    searchParams.get("search") || ""
+  );
+  const [selectedCategory, setSelectedCategory] = useState<string>(
+    searchParams.get("category") || ""
+  );
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   // Load data from API
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
-      
+
       const [productsData, categoriesData] = await Promise.all([
         ProductService.getProducts({
           search: searchTerm || undefined,
           categoryId: selectedCategory || undefined,
-          status: 'AVAILABLE',
+          status: "AVAILABLE",
         }),
         ProductService.getCategories(),
       ]);
 
       setProducts(productsData.products);
-      
+
       // Add productCount to categories
-      const categoriesWithCount = categoriesData.map(category => ({
+      const categoriesWithCount = categoriesData.map((category) => ({
         ...category,
-        productCount: productsData.products.filter(p => p.category.id === category.id).length
+        productCount: productsData.products.filter(
+          (p) => p.category.id === category.id
+        ).length,
       }));
-      
+
       setCategories(categoriesWithCount);
     } catch (error) {
       console.error("Failed to load data:", error);
@@ -87,9 +92,9 @@ export function UserCatalogShoppingView({ className }: Props) {
     setSearchTerm(value);
     const params = new URLSearchParams(searchParams);
     if (value) {
-      params.set('search', value);
+      params.set("search", value);
     } else {
-      params.delete('search');
+      params.delete("search");
     }
     router.push(`?${params.toString()}`);
   };
@@ -99,9 +104,9 @@ export function UserCatalogShoppingView({ className }: Props) {
     setSelectedCategory(categoryId);
     const params = new URLSearchParams(searchParams);
     if (categoryId) {
-      params.set('category', categoryId);
+      params.set("category", categoryId);
     } else {
-      params.delete('category');
+      params.delete("category");
     }
     router.push(`?${params.toString()}`);
   };
@@ -162,20 +167,20 @@ export function UserCatalogShoppingView({ className }: Props) {
       <div className="bg-white sticky top-0 z-10 p-4 border-b shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-xl font-bold text-gray-900">เบิกครุภัณฑ์</h1>
-          
+
           {/* Cart Button */}
           <div className="relative">
             <Button
               variant="outline"
               size="sm"
-              onClick={() => router.push('/mobile/cart')}
+              onClick={() => router.push("/mobile/cart")}
               className="relative"
             >
               <ShoppingCart className="w-4 h-4 mr-2" />
               ตะกร้า
               {getTotalItems() > 0 && (
-                <Badge 
-                  variant="destructive" 
+                <Badge
+                  variant="destructive"
                   className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
                 >
                   {getTotalItems()}
@@ -213,7 +218,7 @@ export function UserCatalogShoppingView({ className }: Props) {
                   <Button
                     variant={!selectedCategory ? "default" : "outline"}
                     onClick={() => {
-                      handleCategoryChange('');
+                      handleCategoryChange("");
                       setIsFilterOpen(false);
                     }}
                     className="w-full justify-start"
@@ -223,7 +228,9 @@ export function UserCatalogShoppingView({ className }: Props) {
                   {categories.map((category) => (
                     <Button
                       key={category.id}
-                      variant={selectedCategory === category.id ? "default" : "outline"}
+                      variant={
+                        selectedCategory === category.id ? "default" : "outline"
+                      }
                       onClick={() => {
                         handleCategoryChange(category.id);
                         setIsFilterOpen(false);
@@ -241,7 +248,7 @@ export function UserCatalogShoppingView({ className }: Props) {
 
           {selectedCategory && (
             <Badge variant="secondary" className="text-xs">
-              {categories.find(c => c.id === selectedCategory)?.name}
+              {categories.find((c) => c.id === selectedCategory)?.name}
             </Badge>
           )}
         </div>
@@ -253,12 +260,15 @@ export function UserCatalogShoppingView({ className }: Props) {
           <div className="text-center py-12">
             <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <p className="text-gray-500 text-lg mb-2">ไม่พบครุภัณฑ์</p>
-            <p className="text-gray-400 text-sm">ลองค้นหาด้วยคำอื่นหรือเปลี่ยนหมวดหมู่</p>
+            <p className="text-gray-400 text-sm">
+              ลองค้นหาด้วยคำอื่นหรือเปลี่ยนหมวดหมู่
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-4">
             {products.map((product) => {
-              const isAvailable = product.status === "AVAILABLE" && product.availableQuantity > 0;
+              const isAvailable =
+                product.status === "AVAILABLE" && product.availableQuantity > 0;
               const cartQuantity = getItemQuantity(product.id);
 
               return (
@@ -275,9 +285,9 @@ export function UserCatalogShoppingView({ className }: Props) {
                         <Package className="w-12 h-12 text-gray-400" />
                       </div>
                     )}
-                    
+
                     {/* Status Badge */}
-                    <Badge 
+                    <Badge
                       variant={isAvailable ? "default" : "secondary"}
                       className="absolute top-2 left-2 text-xs"
                     >
@@ -289,10 +299,8 @@ export function UserCatalogShoppingView({ className }: Props) {
                     <h3 className="font-medium text-sm text-gray-900 line-clamp-2 mb-1">
                       {product.name}
                     </h3>
-                    
-                    <p className="text-xs text-gray-500 mb-2">
-                      {product.code}
-                    </p>
+
+                    <p className="text-xs text-gray-500 mb-2">{product.code}</p>
 
                     {/* Category */}
                     <div className="flex items-center text-xs text-gray-600 mb-2">
@@ -304,7 +312,9 @@ export function UserCatalogShoppingView({ className }: Props) {
                     <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
                       <div className="flex items-center">
                         <MapPin className="w-3 h-3 mr-1" />
-                        <span className="truncate">{product.location || "ไม่ระบุ"}</span>
+                        <span className="truncate">
+                          {product.location || "ไม่ระบุ"}
+                        </span>
                       </div>
                       <span>คงเหลือ: {product.availableQuantity}</span>
                     </div>
@@ -330,11 +340,11 @@ export function UserCatalogShoppingView({ className }: Props) {
                         >
                           <Minus className="w-3 h-3" />
                         </Button>
-                        
+
                         <span className="text-sm font-medium px-3">
                           {cartQuantity}
                         </span>
-                        
+
                         <Button
                           variant="outline"
                           size="sm"

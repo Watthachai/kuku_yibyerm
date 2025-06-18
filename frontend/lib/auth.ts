@@ -56,7 +56,7 @@ export const authOptions: NextAuthOptions = {
             email: data.user.email,
             name: data.user.name,
             role: data.user.role,
-            departmentId: data.user.department_id || "1", // Default department
+            departmentId: data.user.department_id || "1",
             accessToken: data.access_token,
             refreshToken: data.refresh_token,
           };
@@ -70,12 +70,13 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async signIn({ user, account }) {
       if (account?.provider === "google") {
-        // Validate Google account domain
-
         try {
-          // Send Google OAuth data to backend
+          console.log("🔍 Google OAuth data:", { user, account });
+
+          // ⭐ แก้ไข URL ให้ถูกต้อง
+          const backendUrl = process.env.BACKEND_URL || "http://localhost:8080";
           const response = await fetch(
-            `${process.env.BACKEND_URL}/api/v1/auth/oauth/google`,
+            `${backendUrl}/api/v1/auth/oauth/google`,
             {
               method: "POST",
               headers: {
@@ -91,29 +92,36 @@ export const authOptions: NextAuthOptions = {
             }
           );
 
+          console.log("📡 Backend response status:", response.status);
+
           if (!response.ok) {
-            console.error("Google OAuth backend error");
+            const errorText = await response.text();
+            console.error("❌ Google OAuth backend error:", errorText);
             return false;
           }
 
           const data = await response.json();
+          console.log("✅ Backend response:", data);
 
           // Store additional user data
           user.role = data.user.role || Role.USER;
           user.departmentId = data.user.department_id || "1";
-          user.accessToken = data.access_token;
-          user.refreshToken = data.refresh_token;
+          user.accessToken = data.access_token; // ⭐ สำคัญ!
+          user.refreshToken = data.refresh_token; // ⭐ สำคัญ!
 
           return true;
         } catch (error) {
-          console.error("Google OAuth error:", error);
+          console.error("❌ Google OAuth error:", error);
           return false;
         }
       }
 
       return true;
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user, account }) {
+      // ⭐ เพิ่ม account parameter
+      console.log("🔍 JWT callback:", { token, user, account });
+
       if (user) {
         token.role = user.role;
         token.accessToken = user.accessToken;
@@ -121,15 +129,23 @@ export const authOptions: NextAuthOptions = {
         token.userId = user.id;
         token.departmentId = user.departmentId;
       }
+
+      // Store Google access token if available
+      if (account?.access_token) {
+        token.googleAccessToken = account.access_token;
+      }
+
       return token;
     },
     async session({ session, token }) {
+      console.log("🔍 Session callback:", { session, token });
+
       if (token) {
         session.user.id = token.userId;
         session.user.role = token.role;
         session.user.departmentId = token.departmentId;
-        session.accessToken = token.accessToken;
-        session.refreshToken = token.refreshToken;
+        session.accessToken = token.accessToken; // ⭐ สำคัญ!
+        session.refreshToken = token.refreshToken; // ⭐ สำคัญ!
       }
       return session;
     },
@@ -143,4 +159,5 @@ export const authOptions: NextAuthOptions = {
     maxAge: 24 * 60 * 60, // 24 hours
   },
   secret: process.env.NEXTAUTH_SECRET,
+  debug: process.env.NODE_ENV === "development", // ⭐ เพิ่ม debug
 };

@@ -1,60 +1,73 @@
 package main
 
 import (
-	"flag"
-	"fmt"
-	"log"
-	"os"
-	"os/signal"
-	"syscall"
-
-	"ku-asset/internal/config"
 	"ku-asset/internal/controllers"
 	"ku-asset/internal/database"
+	"ku-asset/internal/migrations"
 	"ku-asset/internal/routes"
 	"ku-asset/internal/services"
+	"log"
+	"os"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 )
 
 func main() {
-	// Parse command line flags
-	migrate := flag.Bool("migrate", false, "Run database migrations")
-	rollback := flag.String("rollback", "", "Rollback to specific migration ID")
-	flag.Parse()
+	log.Println("🚀 Starting Kuku Yipyerm Backend Server...")
 
-	// Load environment variables
-	// loadEnv() // ถ้ามี
-
-	// Handle migration commands
-	if *migrate {
-		fmt.Println("📊 Running migrations...")
-		database.ConnectDatabase() // This will run migrations automatically
-		fmt.Println("✅ Migrations completed")
-		return
+	// โหลด .env file
+	if err := godotenv.Load(); err != nil {
+		log.Println("Warning: .env file not found, using environment variables")
+	} else {
+		log.Println("✅ .env file loaded successfully")
 	}
 
-	if *rollback != "" {
-		fmt.Printf("⏪ Rolling back to migration: %s\n", *rollback)
-		database.ConnectDatabase()
-		if err := database.RollbackMigration(database.GetDatabase(), *rollback); err != nil {
-			log.Fatal("Migration rollback failed:", err)
+	// Debug environment variables
+	log.Printf("🔑 JWT_SECRET loaded: %s", func() string {
+		secret := os.Getenv("JWT_SECRET")
+		if secret == "" {
+			return "NOT SET"
 		}
-		fmt.Println("✅ Rollback completed")
-		return
-	}
+		return secret[:10] + "..."
+	}())
 
-	// Load configuration
-	cfg, err := config.Load()
-	if err != nil {
-		log.Fatal("Failed to load configuration:", err)
-	}
+	// ⭐ ใช้ helper function จาก database package
+	dbConfig := database.NewConfigFromEnv()
 
 	// Initialize database
-	db, err := database.Connect(cfg.Database)
+	db, err := database.Connect(dbConfig)
 	if err != nil {
-		log.Fatal("Failed to initialize database:", err)
+		log.Fatal("Failed to connect to database:", err)
 	}
+	log.Println("✅ Database connected successfully")
+
+	// Run migrations
+	if err := migrations.AutoMigrate(db); err != nil {
+		log.Printf("Migration error: %v", err)
+	}
+
+	// Set Gin mode
+	ginMode := getEnv("GIN_MODE", "debug")
+	if ginMode == "release" {
+		gin.SetMode(gin.ReleaseMode)
+	}
+
+	// Setup router
+	router := gin.Default()
+
+	// CORS middleware
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:3000"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+	}))
+
+	// Add logging middleware
+	router.Use(gin.Logger())
 
 	// Initialize services
 	services := services.NewServices(db)
@@ -62,36 +75,22 @@ func main() {
 	// Initialize controllers
 	controllers := controllers.NewControllers(services)
 
-	// Setup Gin
-	if cfg.Server.Env == "release" {
-		gin.SetMode(gin.ReleaseMode)
-	}
-
-	r := gin.Default()
-
 	// Setup routes
-	routes.SetupRoutes(r, controllers)
-
-	// Graceful shutdown
-	go func() {
-		quit := make(chan os.Signal, 1)
-		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-		<-quit
-
-		log.Println("🛑 Shutting down server...")
-		// Close database connection
-		if sqlDB, err := db.DB(); err == nil {
-			sqlDB.Close()
-		}
-		os.Exit(0)
-	}()
+	routes.SetupRoutes(router, controllers)
 
 	// Start server
-	fmt.Println("🚀 Starting Kuku Yipyerm Backend Server...")
-	log.Printf("Server starting on port %s", cfg.Server.Port)
-	if err := r.Run(":" + cfg.Server.Port); err != nil {
-		log.Fatalf("Failed to start server: %v", err)
+	port := getEnv("PORT", "8080")
+
+	log.Printf("Server starting on port %s", port)
+	if err := router.Run(":" + port); err != nil {
+		log.Fatal("Failed to start server:", err)
 	}
 }
 
-
+// Helper function to get environment variable with default value
+func getEnv(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
+}

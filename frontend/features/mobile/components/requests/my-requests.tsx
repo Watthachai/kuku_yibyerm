@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { RequestService, BorrowRequest } from "@/lib/api/request.service";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";

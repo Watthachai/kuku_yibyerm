@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"net/http"
+	"strconv"
 
 	"ku-asset/internal/middleware"
 	"ku-asset/internal/models"
@@ -328,5 +329,155 @@ func (uc *UserController) DeactivateUser(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "User deactivated successfully",
+	})
+}
+
+// GetUsers returns paginated list of users for admin management
+func (uc *UserController) GetUsers(c *gin.Context) {
+	pageStr := c.DefaultQuery("page", "1")
+	limitStr := c.DefaultQuery("limit", "10")
+
+	page, _ := strconv.Atoi(pageStr)
+	limit, _ := strconv.Atoi(limitStr)
+
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 {
+		limit = 10
+	}
+
+	offset := (page - 1) * limit
+
+	var users []models.User
+	var total int64
+
+	// Count total users
+	if err := uc.DB.Model(&models.User{}).Count(&total).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"message": "Failed to count users",
+		})
+		return
+	}
+
+	// Get paginated users
+	if err := uc.DB.Offset(offset).Limit(limit).Find(&users).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"message": "Failed to fetch users",
+		})
+		return
+	}
+
+	// Transform users data
+	var responseUsers []gin.H
+	for _, user := range users {
+		userData := gin.H{
+			"id":         user.ID,
+			"name":       user.Name,
+			"email":      user.Email,
+			"role":       user.Role,
+			"created_at": user.CreatedAt,
+			"updated_at": user.UpdatedAt,
+		}
+
+		responseUsers = append(responseUsers, userData)
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data": gin.H{
+			"users": responseUsers,
+			"pagination": gin.H{
+				"current_page": page,
+				"per_page":     limit,
+				"total":        total,
+				"total_pages":  (total + int64(limit) - 1) / int64(limit),
+			},
+		},
+	})
+}
+
+// UpdateUserStatus updates user status
+func (uc *UserController) UpdateUserStatus(c *gin.Context) {
+	userID := c.Param("id")
+
+	var req struct {
+		Status string `json:"status" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": "Invalid request format",
+		})
+		return
+	}
+
+	// Find and update user
+	var user models.User
+	if err := uc.DB.First(&user, userID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"success": false,
+			"message": "User not found",
+		})
+		return
+	}
+
+	// Update status - ปรับตาม field ใน model
+	if err := uc.DB.Model(&user).Update("status", req.Status).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"message": "Failed to update user status",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "User status updated successfully",
+	})
+}
+
+// UpdateUserRole updates user role
+func (uc *UserController) UpdateUserRole(c *gin.Context) {
+	userID := c.Param("id")
+
+	var req struct {
+		Role string `json:"role" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": "Invalid request format",
+		})
+		return
+	}
+
+	// Find and update user
+	var user models.User
+	if err := uc.DB.First(&user, userID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"success": false,
+			"message": "User not found",
+		})
+		return
+	}
+
+	// Update role
+	roleStr := req.Role
+	if err := uc.DB.Model(&user).Update("role", &roleStr).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"message": "Failed to update user role",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "User role updated successfully",
 	})
 }

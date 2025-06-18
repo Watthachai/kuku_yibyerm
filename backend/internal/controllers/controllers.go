@@ -13,19 +13,20 @@ type Controllers struct {
 	Department *DepartmentController
 	Request    *RequestController
 	Dashboard  *DashboardController
-	Report     *ReportController
+	OAuth      *OAuthController
+	// Report     *ReportController  // comment ออกก่อนถ้าไม่มี
 }
 
 // NewControllers creates a new Controllers instance
 func NewControllers(services *services.Services) *Controllers {
 	return &Controllers{
-		Auth:       NewAuthController(services.DB),
-		User:       NewUserController(services.DB),
-		Product:    NewProductController(services.Product),
-		Category:   NewCategoryController(services.DB),
-		Department: NewDepartmentController(services.DB, services.Department),
-		Request:    NewRequestController(services.Request),
-		Dashboard:  NewDashboardController(services.DB),
-		Report:     NewReportController(services.DB),
+		Auth:       NewAuthController(services.Auth, services.DB),             // ใช้ services.DB
+		User:       NewUserController(services.DB),                            // เพิ่ม services.DB
+		Product:    NewProductController(services.Product),                    // เพิ่ม services.DB
+		Category:   NewCategoryController(services.DB),                        // เพิ่ม services.DB
+		Department: NewDepartmentController(services.DB, services.Department), // แก้ไข parameter order
+		Request:    NewRequestController(services.Request),                    // เพิ่ม services.DB
+		Dashboard:  NewDashboardController(),
+		// Report:     NewReportController(services.DB),  // comment ออกก่อนถ้าไม่มี
 	}
 }

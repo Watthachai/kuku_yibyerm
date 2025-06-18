@@ -4,37 +4,128 @@ import {
   UserManagementData,
   SystemStats,
 } from "@/types/admin-dashboard";
+import { getSession } from "next-auth/react";
+import type { Session } from "next-auth";
 
 export class AdminDashboardService {
-  private static baseUrl = process.env.BACKEND_URL || "";
+  private static baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+
+  // ⭐ แก้ไข type guard ให้ไม่ใช้ any
+  private static isSessionWithTokens(
+    session: Session | null
+  ): session is Session {
+    return (
+      session !== null &&
+      !!(
+        session.accessToken ||
+        session.refreshToken ||
+        session.googleAccessToken
+      )
+    );
+  }
+
+  private static async getAuthHeaders(): Promise<Record<string, string>> {
+    const session = await getSession();
+    console.log("🔍 Session in service:", session);
+
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+
+    if (!session?.accessToken) {
+      console.warn("❌ No access token in session");
+
+      // ⭐ ใช้ type guard แทน any
+      if (this.isSessionWithTokens(session)) {
+        const possibleTokens = [
+          session.refreshToken,
+          session.googleAccessToken,
+        ].filter(Boolean);
+
+        if (possibleTokens.length > 0) {
+          console.log("🔑 Found fallback token");
+          headers.Authorization = `Bearer ${possibleTokens[0]}`;
+        }
+      }
+
+      return headers;
+    }
+
+    console.log("🔑 Using session access token");
+    console.log(
+      "🔍 Token preview:",
+      session.accessToken.substring(0, 50) + "..."
+    );
+
+    headers.Authorization = `Bearer ${session.accessToken}`;
+    return headers;
+  }
 
   static async getAdminStats(): Promise<AdminStats> {
     try {
+      const headers = await this.getAuthHeaders();
+
       const response = await fetch(`${this.baseUrl}/api/v1/admin/stats`, {
-        headers: { Authorization: `Bearer ${this.getToken()}` },
+        headers,
+        credentials: "include",
       });
-      if (!response.ok) throw new Error("Failed to fetch admin stats");
-      return response.json();
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
+
+      const data = await response.json();
+      return data.data || data;
     } catch (error) {
       console.error("Error fetching admin stats:", error);
-      // Return mock data for development
       return this.getMockStats();
     }
   }
 
   static async getRecentActivity(limit = 10): Promise<RecentActivity[]> {
     try {
+      const headers = await this.getAuthHeaders();
       const response = await fetch(
         `${this.baseUrl}/api/v1/admin/activity?limit=${limit}`,
         {
-          headers: { Authorization: `Bearer ${this.getToken()}` },
+          headers,
+          credentials: "include",
         }
       );
-      if (!response.ok) throw new Error("Failed to fetch recent activity");
-      return response.json();
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch recent activity");
+      }
+
+      const data = await response.json();
+      return data.data || data;
     } catch (error) {
       console.error("Error fetching recent activity:", error);
       return this.getMockActivity();
+    }
+  }
+
+  static async getSystemStats(): Promise<SystemStats> {
+    try {
+      const headers = await this.getAuthHeaders();
+      const response = await fetch(
+        `${this.baseUrl}/api/v1/admin/system-stats`,
+        {
+          headers,
+          credentials: "include",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch system stats");
+      }
+
+      const data = await response.json();
+      return data.data || data;
+    } catch (error) {
+      console.error("Error fetching system stats:", error);
+      return this.getMockSystemStats();
     }
   }
 
@@ -43,10 +134,12 @@ export class AdminDashboardService {
     limit = 10
   ): Promise<{ users: UserManagementData[]; total: number }> {
     try {
+      const headers = await this.getAuthHeaders();
       const response = await fetch(
         `${this.baseUrl}/api/v1/admin/users?page=${page}&limit=${limit}`,
         {
-          headers: { Authorization: `Bearer ${this.getToken()}` },
+          headers,
+          credentials: "include",
         }
       );
       if (!response.ok) throw new Error("Failed to fetch users");
@@ -61,13 +154,13 @@ export class AdminDashboardService {
     userId: string,
     status: "ACTIVE" | "INACTIVE"
   ): Promise<void> {
+    const headers = await this.getAuthHeaders();
     const response = await fetch(
       `${this.baseUrl}/api/v1/admin/users/${userId}/status`,
       {
         method: "PATCH",
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${this.getToken()}`,
+          ...headers,
         },
         body: JSON.stringify({ status }),
       }
@@ -79,13 +172,13 @@ export class AdminDashboardService {
     userId: string,
     role: "USER" | "APPROVER" | "ADMIN"
   ): Promise<void> {
+    const headers = await this.getAuthHeaders();
     const response = await fetch(
       `${this.baseUrl}/api/v1/admin/users/${userId}/role`,
       {
         method: "PATCH",
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${this.getToken()}`,
+          ...headers,
         },
         body: JSON.stringify({ role }),
       }
@@ -93,28 +186,6 @@ export class AdminDashboardService {
     if (!response.ok) throw new Error("Failed to update user role");
   }
 
-  static async getSystemStats(): Promise<SystemStats> {
-    try {
-      const response = await fetch(
-        `${this.baseUrl}/api/v1/admin/system-stats`,
-        {
-          headers: { Authorization: `Bearer ${this.getToken()}` },
-        }
-      );
-      if (!response.ok) throw new Error("Failed to fetch system stats");
-      return response.json();
-    } catch (error) {
-      console.error("Error fetching system stats:", error);
-      return this.getMockSystemStats();
-    }
-  }
-
-  private static getToken(): string {
-    // Get token from session or localStorage
-    return ""; // Implement based on your auth system
-  }
-
-  // Mock data methods for development
   private static getMockStats(): AdminStats {
     return {
       totalUsers: 89,
@@ -146,22 +217,6 @@ export class AdminDashboardService {
     ];
   }
 
-  private static getMockUsers(): UserManagementData[] {
-    return [
-      {
-        id: "1",
-        name: "นาย สมชาย ใจดี",
-        email: "somchai@ku.ac.th",
-        role: "USER",
-        department: { id: "1", name: "คณะเกษตร" },
-        status: "ACTIVE",
-        lastLogin: new Date().toISOString(),
-        createdAt: new Date().toISOString(),
-        requestCount: 5,
-      },
-    ];
-  }
-
   private static getMockSystemStats(): SystemStats {
     return {
       requestsByMonth: [
@@ -178,5 +233,21 @@ export class AdminDashboardService {
         { department: "คณะวิศวกรรม", count: 15 },
       ],
     };
+  }
+
+  private static getMockUsers(): UserManagementData[] {
+    return [
+      {
+        id: "1",
+        name: "นาย สมชาย ใจดี",
+        email: "somchai@ku.ac.th",
+        role: "USER",
+        department: { id: "1", name: "คณะเกษตร" },
+        status: "ACTIVE",
+        lastLogin: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+        requestCount: 5,
+      },
+    ];
   }
 }
