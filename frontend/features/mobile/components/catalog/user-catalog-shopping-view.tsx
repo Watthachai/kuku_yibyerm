@@ -1,56 +1,35 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useCartStore } from "../../stores/cart.store";
 import { Button } from "@/components/ui/button";
-
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { 
-  Package, 
-  Star, 
-  TrendingUp,
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import {
+  Search,
+  Filter,
   ShoppingCart,
   Plus,
-  Minus
+  Minus,
+  MapPin,
+  Star,
+  Package,
 } from "lucide-react";
-import { useCartStore } from "../../stores/cart.store";
-import { CategoryFilter } from "./category-filter";
-import { SearchHeader } from "./search-header";
+import { toast } from "sonner";
 
-interface Product {
-  id: string;
-  name: string;
-  code: string;
-  description: string;
-  imageUrl?: string;
-  status: "AVAILABLE" | "IN_USE" | "MAINTENANCE" | "DAMAGED";
-  availableQuantity: number;
-  totalQuantity: number;
-  category: {
-    id: string;
-    name: string;
-    icon: string;
-    color: string;
-  };
-  department: {
-    id: string;
-    name: string;
-  };
-  rating?: number;
-  borrowCount?: number;
-  location?: string;
+// Extend API Category to include productCount
+interface Category extends APICategory {
+  productCount?: number;
 }
 
-interface Category {
-  id: string;
-  name: string;
-  icon: string;
-  color: string;
-  productCount: number;
+interface Props {
+  className?: string;
 }
 
-export function UserCatalogShoppingView() {
+export function UserCatalogShoppingView({ className }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { addItem, getItemQuantity, getTotalItems } = useCartStore();
@@ -59,417 +38,339 @@ export function UserCatalogShoppingView() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
-  const [selectedCategory, setSelectedCategory] = useState<string>(searchParams.get('category') || '');
-  const [showFilters, setShowFilters] = useState(false);
+  const [searchTerm, setSearchTerm] = useState(
+    searchParams.get("search") || ""
+  );
+  const [selectedCategory, setSelectedCategory] = useState<string>(
+    searchParams.get("category") || ""
+  );
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-  // Load data
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  useEffect(() => {
-    // Update URL when filters change
-    const params = new URLSearchParams();
-    if (searchTerm) params.set('search', searchTerm);
-    if (selectedCategory) params.set('category', selectedCategory);
-    
-    const newUrl = params.toString() ? `?${params.toString()}` : '/inventory';
-    router.replace(newUrl, { scroll: false });
-  }, [searchTerm, selectedCategory, router]);
-
-  const loadData = async () => {
+  // Load data from API
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
-      
-      // TODO: Replace with actual API calls
-      const mockCategories: Category[] = [
-        {
-          id: "1",
-          name: "อุปกรณ์โสตทัศนูปกรณ์",
-          icon: "📽️",
-          color: "bg-blue-100 text-blue-800",
-          productCount: 15,
-        },
-        {
-          id: "2", 
-          name: "อุปกรณ์สำนักงาน",
-          icon: "🖨️",
-          color: "bg-green-100 text-green-800",
-          productCount: 12,
-        },
-        {
-          id: "3",
-          name: "อุปกรณ์ถ่ายภาพ",
-          icon: "📷",
-          color: "bg-purple-100 text-purple-800",
-          productCount: 8,
-        },
-        {
-          id: "4",
-          name: "อุปกรณ์คอมพิวเตอร์",
-          icon: "💻",
-          color: "bg-orange-100 text-orange-800",
-          productCount: 20,
-        },
-      ];
 
-      const mockProducts: Product[] = [
-        {
-          id: "1",
-          name: "เครื่องฉายภาพ Epson EB-X41",
-          code: "EP001-2024",
-          description: "เครื่องฉายภาพ 3LCD สำหรับห้องเรียน ความสว่าง 3600 ลูเมน",
+      const [productsData, categoriesData] = await Promise.all([
+        ProductService.getProducts({
+          search: searchTerm || undefined,
+          categoryId: selectedCategory || undefined,
           status: "AVAILABLE",
-          availableQuantity: 3,
-          totalQuantity: 5,
-          category: {
-            id: "1",
-            name: "อุปกรณ์โสตทัศนูปกรณ์",
-            icon: "📽️",
-            color: "bg-blue-100 text-blue-800",
-          },
-          department: {
-            id: "1",
-            name: "คณะเกษตร",
-          },
-          rating: 4.8,
-          borrowCount: 156,
-          location: "ห้อง 301 อาคาร A",
-        },
-        {
-          id: "2",
-          name: "เครื่องพิมพ์ HP LaserJet Pro M404n",
-          code: "HP002-2024",
-          description: "เครื่องพิมพ์เลเซอร์ขาวดำ ความเร็วพิมพ์ 38 หน้าต่อนาที",
-          status: "AVAILABLE",
-          availableQuantity: 2,
-          totalQuantity: 3,
-          category: {
-            id: "2",
-            name: "อุปกรณ์สำนักงาน",
-            icon: "🖨️",
-            color: "bg-green-100 text-green-800",
-          },
-          department: {
-            id: "2",
-            name: "คณะวิศวกรรมศาสตร์",
-          },
-          rating: 4.6,
-          borrowCount: 134,
-          location: "ห้อง 205 อาคาร B",
-        },
-        {
-          id: "3",
-          name: "กล้องถ่ายรูป Canon EOS 2000D",
-          code: "CN003-2024",
-          description: "กล้อง DSLR สำหรับงานถ่ายภาพ เซ็นเซอร์ APS-C 24.1 MP",
-          status: "IN_USE",
-          availableQuantity: 0,
-          totalQuantity: 2,
-          category: {
-            id: "3",
-            name: "อุปกรณ์ถ่ายภาพ",
-            icon: "📷",
-            color: "bg-purple-100 text-purple-800",
-          },
-          department: {
-            id: "3",
-            name: "คณะมนุษยศาสตร์",
-          },
-          rating: 4.9,
-          borrowCount: 89,
-          location: "ห้อง 102 อาคาร C",
-        },
-        {
-          id: "4",
-          name: "แล็ปท็อป Lenovo ThinkPad E14",
-          code: "LN004-2024",
-          description: "แล็ปท็อป Intel Core i5 RAM 8GB SSD 256GB",
-          status: "AVAILABLE",
-          availableQuantity: 5,
-          totalQuantity: 8,
-          category: {
-            id: "4",
-            name: "อุปกรณ์คอมพิวเตอร์",
-            icon: "💻",
-            color: "bg-orange-100 text-orange-800",
-          },
-          department: {
-            id: "4",
-            name: "คณะเทคโนโลยีสารสนเทศ",
-          },
-          rating: 4.7,
-          borrowCount: 201,
-          location: "ห้อง 401 อาคาร D",
-        },
-      ];
+        }),
+        ProductService.getCategories(),
+      ]);
 
-      setCategories(mockCategories);
-      setProducts(mockProducts);
+      setProducts(productsData.products);
+
+      // Add productCount to categories
+      const categoriesWithCount = categoriesData.map((category) => ({
+        ...category,
+        productCount: productsData.products.filter(
+          (p) => p.category.id === category.id
+        ).length,
+      }));
+
+      setCategories(categoriesWithCount);
     } catch (error) {
       console.error("Failed to load data:", error);
+      toast({
+        title: "เกิดข้อผิดพลาด",
+        description: "ไม่สามารถโหลดข้อมูลครุภัณฑ์ได้",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchTerm, selectedCategory]);
 
-  // Filter products
-  const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         product.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         product.code.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesCategory = !selectedCategory || product.category.id === selectedCategory;
-    
-    return matchesSearch && matchesCategory;
-  });
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
-  // Get status display
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "AVAILABLE": return "bg-green-100 text-green-800";
-      case "IN_USE": return "bg-blue-100 text-blue-800";
-      case "MAINTENANCE": return "bg-yellow-100 text-yellow-800";
-      case "DAMAGED": return "bg-red-100 text-red-800";
-      default: return "bg-gray-100 text-gray-800";
+  // Handle search
+  const handleSearch = (value: string) => {
+    setSearchTerm(value);
+    const params = new URLSearchParams(searchParams);
+    if (value) {
+      params.set("search", value);
+    } else {
+      params.delete("search");
     }
+    router.push(`?${params.toString()}`);
   };
 
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case "AVAILABLE": return "พร้อมใช้งาน";
-      case "IN_USE": return "กำลังใช้งาน";
-      case "MAINTENANCE": return "ซ่อมบำรุง";
-      case "DAMAGED": return "ชำรุด";
-      default: return status;
+  // Handle category filter
+  const handleCategoryChange = (categoryId: string) => {
+    setSelectedCategory(categoryId);
+    const params = new URLSearchParams(searchParams);
+    if (categoryId) {
+      params.set("category", categoryId);
+    } else {
+      params.delete("category");
     }
+    router.push(`?${params.toString()}`);
   };
 
-  // Cart functions
+  // Handle add to cart
   const handleAddToCart = (product: Product) => {
-    if (product.status === "AVAILABLE" && product.availableQuantity > 0) {
-      addItem(product.id, product.name, 1);
+    if (product.availableQuantity <= 0) {
+      toast({
+        title: "ไม่สามารถเพิ่มได้",
+        description: "ครุภัณฑ์นี้ไม่มีในสต็อก",
+        variant: "destructive",
+      });
+      return;
     }
+
+    addItem(product, 1);
+    toast({
+      title: "เพิ่มลงตะกร้าแล้ว",
+      description: `${product.name} ถูกเพิ่มลงตะกร้าเรียบร้อยแล้ว`,
+    });
   };
 
+  // Handle quantity change
   const handleQuantityChange = (product: Product, change: number) => {
     const currentQuantity = getItemQuantity(product.id);
     const newQuantity = currentQuantity + change;
-    
+
     if (newQuantity <= 0) {
-      // Remove from cart logic will be handled by the store
       return;
     }
-    
-    if (newQuantity <= product.availableQuantity) {
-      if (change > 0) {
-        addItem(product.id, product.name, change);
-      }
-      // For decrease, we'll need to implement updateQuantity in store
+
+    if (newQuantity > product.availableQuantity) {
+      toast({
+        title: "จำนวนเกินที่มีในสต็อก",
+        description: `มีครุภัณฑ์นี้เหลือเพียง ${product.availableQuantity} ชิ้น`,
+        variant: "destructive",
+      });
+      return;
     }
+
+    addItem(product, change);
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="sticky top-0 z-50 bg-white border-b p-4">
-          <div className="h-10 bg-gray-200 rounded animate-pulse" />
-        </div>
-        <div className="p-4 space-y-4">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="h-32 bg-gray-200 rounded-lg animate-pulse" />
-          ))}
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-ku-green border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">กำลังโหลดข้อมูล...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header with Search */}
-      <SearchHeader
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
-        onBack={() => router.back()}
-        onToggleFilters={() => setShowFilters(!showFilters)}
-        showFilters={showFilters}
-      />
+    <div className={`min-h-screen bg-gray-50 ${className}`}>
+      {/* Header */}
+      <div className="bg-white sticky top-0 z-10 p-4 border-b shadow-sm">
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-xl font-bold text-gray-900">เบิกครุภัณฑ์</h1>
 
-      {/* Category Filter */}
-      {showFilters && (
-        <CategoryFilter
-          categories={categories}
-          selectedCategory={selectedCategory}
-          onCategoryChange={setSelectedCategory}
-        />
-      )}
-
-      {/* Content */}
-      <div className="p-4 space-y-4">
-        {/* Results Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900">
-              {searchTerm ? `ผลการค้นหา "${searchTerm}"` : 
-               selectedCategory ? categories.find(c => c.id === selectedCategory)?.name : 
-               'ครุภัณฑ์ทั้งหมด'}
-            </h2>
-            <p className="text-sm text-gray-600">
-              พบ {filteredProducts.length} รายการ
-            </p>
-          </div>
-          
-          {getTotalItems() > 0 && (
+          {/* Cart Button */}
+          <div className="relative">
             <Button
-              onClick={() => router.push('/mobile/cart')}
-              className="bg-ku-green hover:bg-ku-green-dark relative"
+              variant="outline"
+              size="sm"
+              onClick={() => router.push("/mobile/cart")}
+              className="relative"
             >
               <ShoppingCart className="w-4 h-4 mr-2" />
               ตะกร้า
-              <Badge
-                variant="secondary"
-                className="ml-2 bg-white text-ku-green"
-              >
-                {getTotalItems()}
-              </Badge>
+              {getTotalItems() > 0 && (
+                <Badge
+                  variant="destructive"
+                  className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
+                >
+                  {getTotalItems()}
+                </Badge>
+              )}
             </Button>
-          )}
+          </div>
         </div>
 
-        {/* Products Grid */}
-        <div className="space-y-3">
-          {filteredProducts.length === 0 ? (
-            <Card>
-              <CardContent className="p-12 text-center">
-                <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  ไม่พบครุภัณฑ์
-                </h3>
-                <p className="text-gray-600 mb-4">
-                  ลองเปลี่ยนคำค้นหาหรือหมวดหมู่ใหม่
-                </p>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setSearchTerm('');
-                    setSelectedCategory('');
-                  }}
-                >
-                  ล้างตัวกรอง
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            filteredProducts.map((product) => {
-              const inCartQuantity = getItemQuantity(product.id);
-              const canAddMore = inCartQuantity < product.availableQuantity;
-              
+        {/* Search Bar */}
+        <div className="relative mb-4">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <Input
+            type="text"
+            placeholder="ค้นหาครุภัณฑ์..."
+            value={searchTerm}
+            onChange={(e) => handleSearch(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+
+        {/* Filter Button */}
+        <div className="flex items-center gap-2">
+          <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+            <SheetTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Filter className="w-4 h-4 mr-2" />
+                ตัวกรอง
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="bottom" className="h-[80vh]">
+              <div className="py-4">
+                <h3 className="text-lg font-semibold mb-4">หมวดหมู่</h3>
+                <div className="space-y-2">
+                  <Button
+                    variant={!selectedCategory ? "default" : "outline"}
+                    onClick={() => {
+                      handleCategoryChange("");
+                      setIsFilterOpen(false);
+                    }}
+                    className="w-full justify-start"
+                  >
+                    ทั้งหมด ({products.length})
+                  </Button>
+                  {categories.map((category) => (
+                    <Button
+                      key={category.id}
+                      variant={
+                        selectedCategory === category.id ? "default" : "outline"
+                      }
+                      onClick={() => {
+                        handleCategoryChange(category.id);
+                        setIsFilterOpen(false);
+                      }}
+                      className="w-full justify-start"
+                    >
+                      <span className="mr-2">{category.icon}</span>
+                      {category.name} ({category.productCount || 0})
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
+
+          {selectedCategory && (
+            <Badge variant="secondary" className="text-xs">
+              {categories.find((c) => c.id === selectedCategory)?.name}
+            </Badge>
+          )}
+        </div>
+      </div>
+
+      {/* Products Grid */}
+      <div className="p-4">
+        {products.length === 0 ? (
+          <div className="text-center py-12">
+            <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <p className="text-gray-500 text-lg mb-2">ไม่พบครุภัณฑ์</p>
+            <p className="text-gray-400 text-sm">
+              ลองค้นหาด้วยคำอื่นหรือเปลี่ยนหมวดหมู่
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-4">
+            {products.map((product) => {
+              const isAvailable =
+                product.status === "AVAILABLE" && product.availableQuantity > 0;
+              const cartQuantity = getItemQuantity(product.id);
+
               return (
-                <Card key={product.id} className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-4">
-                    <div className="flex space-x-4">
-                      {/* Product Image */}
-                      <div className="w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <span className="text-2xl">
-                          {product.category.icon}
+                <Card key={product.id} className="overflow-hidden">
+                  <div className="aspect-square bg-gray-100 relative">
+                    {product.imageUrl ? (
+                      <img
+                        src={product.imageUrl}
+                        alt={product.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Package className="w-12 h-12 text-gray-400" />
+                      </div>
+                    )}
+
+                    {/* Status Badge */}
+                    <Badge
+                      variant={isAvailable ? "default" : "secondary"}
+                      className="absolute top-2 left-2 text-xs"
+                    >
+                      {isAvailable ? "พร้อมใช้" : "ไม่พร้อมใช้"}
+                    </Badge>
+                  </div>
+
+                  <CardContent className="p-3">
+                    <h3 className="font-medium text-sm text-gray-900 line-clamp-2 mb-1">
+                      {product.name}
+                    </h3>
+
+                    <p className="text-xs text-gray-500 mb-2">{product.code}</p>
+
+                    {/* Category */}
+                    <div className="flex items-center text-xs text-gray-600 mb-2">
+                      <span className="mr-1">{product.category.icon}</span>
+                      {product.category.name}
+                    </div>
+
+                    {/* Location & Quantity */}
+                    <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
+                      <div className="flex items-center">
+                        <MapPin className="w-3 h-3 mr-1" />
+                        <span className="truncate">
+                          {product.location || "ไม่ระบุ"}
                         </span>
                       </div>
-                      
-                      {/* Product Info */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="flex-1">
-                            <h3 className="font-medium text-gray-900 truncate">
-                              {product.name}
-                            </h3>
-                            <p className="text-sm text-gray-600">
-                              {product.code}
-                            </p>
-                          </div>
-                          <Badge className={`ml-2 ${getStatusColor(product.status)}`}>
-                            {getStatusText(product.status)}
-                          </Badge>
-                        </div>
-                        
-                        <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-                          {product.description}
-                        </p>
-                        
-                        {/* Stats */}
-                        <div className="flex items-center space-x-4 mb-3">
-                          <div className="flex items-center text-xs text-gray-500">
-                            <Star className="w-3 h-3 text-yellow-400 fill-current mr-1" />
-                            {product.rating?.toFixed(1)}
-                          </div>
-                          
-                          <div className="flex items-center text-xs text-gray-500">
-                            <TrendingUp className="w-3 h-3 mr-1" />
-                            {product.borrowCount} ครั้ง
-                          </div>
-                          
-                          <div className="flex items-center text-xs text-gray-500">
-                            <Package className="w-3 h-3 mr-1" />
-                            คงเหลือ {product.availableQuantity}/{product.totalQuantity}
-                          </div>
-                        </div>
-                        
-                        {/* Location */}
-                        {product.location && (
-                          <p className="text-xs text-gray-500 mb-3">
-                            📍 {product.location}
-                          </p>
-                        )}
-                        
-                        {/* Add to Cart */}
-                        <div className="flex items-center space-x-2">
-                          {inCartQuantity === 0 ? (
-                            <Button
-                              onClick={() => handleAddToCart(product)}
-                              disabled={product.status !== "AVAILABLE" || product.availableQuantity === 0}
-                              className="bg-ku-green hover:bg-ku-green-dark flex-1"
-                              size="sm"
-                            >
-                              <Plus className="w-4 h-4 mr-2" />
-                              เพิ่มลงตะกร้า
-                            </Button>
-                          ) : (
-                            <div className="flex items-center space-x-2 flex-1">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleQuantityChange(product, -1)}
-                                className="w-8 h-8 p-0"
-                              >
-                                <Minus className="w-4 h-4" />
-                              </Button>
-                              
-                              <div className="flex-1 text-center">
-                                <span className="text-sm font-medium">
-                                  ในตะกร้า: {inCartQuantity}
-                                </span>
-                              </div>
-                              
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleQuantityChange(product, 1)}
-                                disabled={!canAddMore}
-                                className="w-8 h-8 p-0"
-                              >
-                                <Plus className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          )}
-                        </div>
-                      </div>
+                      <span>คงเหลือ: {product.availableQuantity}</span>
                     </div>
+
+                    {/* Rating */}
+                    {product.rating && (
+                      <div className="flex items-center mb-3">
+                        <Star className="w-3 h-3 text-yellow-400 fill-current" />
+                        <span className="text-xs text-gray-600 ml-1">
+                          {product.rating.toFixed(1)}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Action Buttons */}
+                    {cartQuantity > 0 ? (
+                      <div className="flex items-center justify-between">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleQuantityChange(product, -1)}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Minus className="w-3 h-3" />
+                        </Button>
+
+                        <span className="text-sm font-medium px-3">
+                          {cartQuantity}
+                        </span>
+
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleQuantityChange(product, 1)}
+                          disabled={cartQuantity >= product.availableQuantity}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Plus className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button
+                        onClick={() => handleAddToCart(product)}
+                        disabled={!isAvailable}
+                        className="w-full bg-ku-green hover:bg-ku-green-dark text-xs h-8"
+                      >
+                        <Plus className="w-3 h-3 mr-1" />
+                        เพิ่มลงตะกร้า
+                      </Button>
+                    )}
                   </CardContent>
                 </Card>
               );
-            })
-          )}
-        </div>
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

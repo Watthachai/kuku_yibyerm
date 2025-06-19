@@ -16,6 +16,13 @@ interface AdminStatsCardsProps {
 }
 
 export function AdminStatsCards({ stats }: AdminStatsCardsProps) {
+  // เพิ่มฟังก์ชันสำหรับจัดการค่าที่อาจเป็น undefined
+  const formatValue = (value: number | undefined) => {
+    if (value == null || value === undefined) return "ไม่มีข้อมูล";
+    if (typeof value === "number") return value.toLocaleString();
+    return String(value);
+  };
+
   const statItems = [
     {
       title: "ผู้ใช้ทั้งหมด",
@@ -96,7 +103,7 @@ export function AdminStatsCards({ stats }: AdminStatsCardsProps) {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {item.value.toLocaleString()}
+                {formatValue(item.value)}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
                 {item.description}
@@ -125,7 +132,7 @@ export function AdminStatsCards({ stats }: AdminStatsCardsProps) {
             </CardHeader>
             <CardContent>
               <div className="text-xl font-semibold">
-                {item.value.toLocaleString()}
+                {formatValue(item.value)}
               </div>
             </CardContent>
           </Card>

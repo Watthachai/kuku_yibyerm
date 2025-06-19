@@ -1,65 +1,57 @@
-"use client";
-
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
 
 interface Category {
   id: string;
   name: string;
   icon: string;
   color: string;
-  productCount: number;
+  productCount?: number; // ทำให้ optional
 }
 
 interface CategoryFilterProps {
   categories: Category[];
-  selectedCategory: string;
+  selectedCategory?: string;
   onCategoryChange: (categoryId: string) => void;
 }
 
-export function CategoryFilter({
-  categories,
-  selectedCategory,
-  onCategoryChange,
+export function CategoryFilter({ 
+  categories, 
+  selectedCategory, 
+  onCategoryChange 
 }: CategoryFilterProps) {
   return (
-    <div className="bg-white border-b border-gray-200 p-4">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="font-medium text-gray-900">หมวดหมู่</h3>
-        {selectedCategory && (
-          <button
-            onClick={() => onCategoryChange('')}
-            className="text-sm text-ku-green hover:text-ku-green-dark"
-          >
-            ล้างตัวกรอง
-          </button>
-        )}
-      </div>
-      
-      <ScrollArea className="w-full">
-        <div className="flex space-x-2 pb-2">
-          <Badge
+    <div className="bg-white border-b">
+      <div className="p-4">
+        <div className="flex gap-2 overflow-x-auto pb-2">
+          <Button
             variant={!selectedCategory ? "default" : "outline"}
-            className="cursor-pointer whitespace-nowrap"
+            size="sm"
             onClick={() => onCategoryChange('')}
+            className="whitespace-nowrap"
           >
             ทั้งหมด
-          </Badge>
+          </Button>
           
           {categories.map((category) => (
-            <Badge
+            <Button
               key={category.id}
               variant={selectedCategory === category.id ? "default" : "outline"}
-              className="cursor-pointer whitespace-nowrap"
+              size="sm"
               onClick={() => onCategoryChange(category.id)}
+              className="whitespace-nowrap"
             >
               <span className="mr-1">{category.icon}</span>
               {category.name}
-              <span className="ml-1 text-xs">({category.productCount})</span>
-            </Badge>
+              {category.productCount !== undefined && (
+                <Badge variant="secondary" className="ml-1 text-xs">
+                  {category.productCount}
+                </Badge>
+              )}
+            </Button>
           ))}
         </div>
-      </ScrollArea>
+      </div>
     </div>
   );
 }

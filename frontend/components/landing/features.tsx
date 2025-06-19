@@ -8,21 +8,16 @@ import {
   Users,
   Shield,
   Package,
+  Smartphone,
 } from "lucide-react";
 import { motion } from "framer-motion";
 
 const features = [
   {
-    icon: Package,
-    title: "จัดการครุภัณฑ์",
+    icon: Smartphone,
+    title: "เบิกจ่ายออนไลน์",
     description:
-      "ระบบจัดเก็บและจัดการข้อมูลครุภัณฑ์อย่างเป็นระบบ พร้อมการติดตามสถานะแบบ Real-time",
-  },
-  {
-    icon: Clock,
-    title: "เบิก-คืนออนไลน์",
-    description:
-      "ขั้นตอนการเบิกและคืนครุภัณฑ์ที่รวดเร็ว สะดวก ผ่านระบบออนไลน์ตลอด 24 ชั่วโมง",
+      "ขั้นตอนการเบิกครุภัณฑ์ที่รวดเร็ว สะดวก ผ่านระบบออนไลน์ตลอด 24 ชั่วโมง",
   },
   {
     icon: FileText,

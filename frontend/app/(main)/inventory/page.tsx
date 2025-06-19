@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Search, Plus, Package } from "lucide-react";
 import Image from "next/image";
 import { UserCatalogShoppingView } from "@/features/mobile/components/catalog/user-catalog-shopping-view";
+import { AddInventoryDialog } from "@/features/admin/components/inventory/add-inventory-dialog";
 
 interface Item {
   id: number;
@@ -35,9 +36,9 @@ export default function InventoryPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDepartment, setSelectedDepartment] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
   const isAdmin = session?.user?.role === "ADMIN";
-  const isApprover = session?.user?.role === "APPROVER";
   const isUser = session?.user?.role === "USER";
 
   // Mock data
@@ -73,7 +74,7 @@ export default function InventoryPage() {
 
   // If user role is USER, show catalog view
   if (isUser) {
-    return <UserCatalogShoppingView items={items} loading={loading} />;
+    return <UserCatalogShoppingView />;
   }
 
   // Desktop view for ADMIN and APPROVER
@@ -119,16 +120,24 @@ export default function InventoryPage() {
     return matchesSearch && matchesDepartment && matchesCategory;
   });
 
+  const handleAddSuccess = () => {
+    // Refresh inventory list
+    console.log("Inventory added successfully, refreshing list...");
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">คลังครุภัณฑ์</h1>
-          <p className="text-gray-600">จัดการและค้นหาครุภัณฑ์ของมหาวิทยาลัย</p>
+          <p className="text-gray-600">จัดการครุภัณฑ์ทั้งหมดในระบบ</p>
         </div>
         {isAdmin && (
-          <Button className="bg-ku-green hover:bg-ku-green-dark">
+          <Button
+            onClick={() => setIsAddDialogOpen(true)}
+            className="bg-ku-green hover:bg-ku-green-dark"
+          >
             <Plus className="w-4 h-4 mr-2" />
             เพิ่มครุภัณฑ์
           </Button>
@@ -223,7 +232,7 @@ export default function InventoryPage() {
                   )}
 
                   <div className="pt-3 space-y-2">
-                    {(isAdmin || isApprover) && (
+                    {isAdmin && (
                       <div className="flex gap-2">
                         <Button variant="outline" size="sm" className="flex-1">
                           แก้ไข
@@ -258,6 +267,12 @@ export default function InventoryPage() {
           </p>
         </div>
       )}
+
+      <AddInventoryDialog
+        open={isAddDialogOpen}
+        onOpenChange={setIsAddDialogOpen}
+        onSuccess={handleAddSuccess}
+      />
     </div>
   );
 }

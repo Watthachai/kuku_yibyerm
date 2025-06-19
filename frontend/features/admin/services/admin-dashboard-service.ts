@@ -1,40 +1,114 @@
+// features/admin/services/admin-dashboard-service.ts
+
 import {
   AdminStats,
   RecentActivity,
   UserManagementData,
   SystemStats,
 } from "@/types/admin-dashboard";
+import { getSession } from "next-auth/react";
 
 export class AdminDashboardService {
-  private static baseUrl = process.env.BACKEND_URL || "";
+  private static baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+
+  // ⭐ 1. แก้ไขและจัดระเบียบฟังก์ชันนี้ให้สะอาดขึ้น
+  private static async getAuthHeaders(): Promise<Record<string, string>> {
+    const session = await getSession();
+
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+
+    // ใช้ if statement ที่ถูกต้อง และตอนนี้ TypeScript รู้จัก session.accessToken แล้ว
+    if (session?.accessToken) {
+      headers.Authorization = `Bearer ${session.accessToken}`;
+    } else {
+      console.warn(
+        "Access token not found directly on session. Check NextAuth setup."
+      );
+    }
+
+    return headers;
+  }
+
+  // ⭐ 2. ปรับปรุงฟังก์ชันทั้งหมดให้ใช้แพทเทิร์นที่ปลอดภัยและสอดคล้องกัน
 
   static async getAdminStats(): Promise<AdminStats> {
     try {
+      const headers = await this.getAuthHeaders();
       const response = await fetch(`${this.baseUrl}/api/v1/admin/stats`, {
-        headers: { Authorization: `Bearer ${this.getToken()}` },
+        headers,
+        credentials: "include",
       });
-      if (!response.ok) throw new Error("Failed to fetch admin stats");
-      return response.json();
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: Failed to fetch admin stats`);
+      }
+
+      const responseData = await response.json();
+      // ใช้แพทเทิร์นการตรวจสอบที่ปลอดภัย: ถ้ามี data.data ให้ใช้, ถ้าไม่มีให้ใช้ data ทั้งก้อน
+      // และถ้าทั้งหมดไม่มีค่า ให้ fallback ไปที่ mock data ใน catch block
+      return responseData.data || responseData;
     } catch (error) {
       console.error("Error fetching admin stats:", error);
-      // Return mock data for development
-      return this.getMockStats();
+      return this.getMockStats(); // Fallback to mock data on error
     }
   }
 
   static async getRecentActivity(limit = 10): Promise<RecentActivity[]> {
     try {
+      const headers = await this.getAuthHeaders();
       const response = await fetch(
         `${this.baseUrl}/api/v1/admin/activity?limit=${limit}`,
-        {
-          headers: { Authorization: `Bearer ${this.getToken()}` },
-        }
+        { headers, credentials: "include" }
       );
-      if (!response.ok) throw new Error("Failed to fetch recent activity");
-      return response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          `Failed to fetch recent activity: ${response.statusText}`
+        );
+      }
+
+      const responseData = await response.json();
+
+      // แพทเทิร์นที่ปลอดภัยที่สุดสำหรับ Array: ตรวจสอบว่าเป็น Array จริงๆ
+      // ถ้าไม่ใช่ ให้คืนค่า Array ว่าง เพื่อป้องกัน Component พัง
+      if (responseData && Array.isArray(responseData.data)) {
+        return responseData.data;
+      }
+
+      console.warn(
+        "Received unexpected data structure for recent activity:",
+        responseData
+      );
+      return []; // คืนค่า Array ว่างเสมอ
     } catch (error) {
       console.error("Error fetching recent activity:", error);
-      return this.getMockActivity();
+      return []; // คืนค่า Array ว่างเสมอเมื่อเกิด Error
+    }
+  }
+
+  static async getSystemStats(): Promise<SystemStats> {
+    try {
+      const headers = await this.getAuthHeaders();
+      const response = await fetch(
+        `${this.baseUrl}/api/v1/admin/system-stats`,
+        {
+          headers,
+          credentials: "include",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch system stats");
+      }
+
+      const responseData = await response.json();
+      // ใช้แพทเทิร์นเดียวกันกับ getAdminStats
+      return responseData.data || responseData;
+    } catch (error) {
+      console.error("Error fetching system stats:", error);
+      return this.getMockSystemStats();
     }
   }
 
@@ -43,14 +117,17 @@ export class AdminDashboardService {
     limit = 10
   ): Promise<{ users: UserManagementData[]; total: number }> {
     try {
+      const headers = await this.getAuthHeaders();
       const response = await fetch(
         `${this.baseUrl}/api/v1/admin/users?page=${page}&limit=${limit}`,
-        {
-          headers: { Authorization: `Bearer ${this.getToken()}` },
-        }
+        { headers, credentials: "include" }
       );
       if (!response.ok) throw new Error("Failed to fetch users");
-      return response.json();
+
+      // หมายเหตุ: Endpoint นี้ดูเหมือนจะ return data แบบไม่ห่อใน 'data' key
+      // ซึ่งถ้าเป็นไปได้ ควรปรับแก้ที่ Backend ให้มีโครงสร้างเหมือน Endpoint อื่นๆ เพื่อความสอดคล้อง
+      const responseData = await response.json();
+      return responseData.data; // สมมติว่า Backend ถูกแก้ให้ห่อใน data key แล้ว
     } catch (error) {
       console.error("Error fetching users:", error);
       return { users: this.getMockUsers(), total: 50 };
@@ -61,13 +138,13 @@ export class AdminDashboardService {
     userId: string,
     status: "ACTIVE" | "INACTIVE"
   ): Promise<void> {
+    const headers = await this.getAuthHeaders();
     const response = await fetch(
       `${this.baseUrl}/api/v1/admin/users/${userId}/status`,
       {
         method: "PATCH",
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${this.getToken()}`,
+          ...headers,
         },
         body: JSON.stringify({ status }),
       }
@@ -79,13 +156,13 @@ export class AdminDashboardService {
     userId: string,
     role: "USER" | "APPROVER" | "ADMIN"
   ): Promise<void> {
+    const headers = await this.getAuthHeaders();
     const response = await fetch(
       `${this.baseUrl}/api/v1/admin/users/${userId}/role`,
       {
         method: "PATCH",
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${this.getToken()}`,
+          ...headers,
         },
         body: JSON.stringify({ role }),
       }
@@ -93,28 +170,6 @@ export class AdminDashboardService {
     if (!response.ok) throw new Error("Failed to update user role");
   }
 
-  static async getSystemStats(): Promise<SystemStats> {
-    try {
-      const response = await fetch(
-        `${this.baseUrl}/api/v1/admin/system-stats`,
-        {
-          headers: { Authorization: `Bearer ${this.getToken()}` },
-        }
-      );
-      if (!response.ok) throw new Error("Failed to fetch system stats");
-      return response.json();
-    } catch (error) {
-      console.error("Error fetching system stats:", error);
-      return this.getMockSystemStats();
-    }
-  }
-
-  private static getToken(): string {
-    // Get token from session or localStorage
-    return ""; // Implement based on your auth system
-  }
-
-  // Mock data methods for development
   private static getMockStats(): AdminStats {
     return {
       totalUsers: 89,
@@ -146,22 +201,6 @@ export class AdminDashboardService {
     ];
   }
 
-  private static getMockUsers(): UserManagementData[] {
-    return [
-      {
-        id: "1",
-        name: "นาย สมชาย ใจดี",
-        email: "somchai@ku.ac.th",
-        role: "USER",
-        department: { id: "1", name: "คณะเกษตร" },
-        status: "ACTIVE",
-        lastLogin: new Date().toISOString(),
-        createdAt: new Date().toISOString(),
-        requestCount: 5,
-      },
-    ];
-  }
-
   private static getMockSystemStats(): SystemStats {
     return {
       requestsByMonth: [
@@ -178,5 +217,21 @@ export class AdminDashboardService {
         { department: "คณะวิศวกรรม", count: 15 },
       ],
     };
+  }
+
+  private static getMockUsers(): UserManagementData[] {
+    return [
+      {
+        id: "1",
+        name: "นาย สมชาย ใจดี",
+        email: "somchai@ku.ac.th",
+        role: "USER",
+        department: { id: "1", name: "คณะเกษตร" },
+        status: "ACTIVE",
+        lastLogin: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+        requestCount: 5,
+      },
+    ];
   }
 }

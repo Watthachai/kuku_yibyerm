@@ -88,7 +88,7 @@ export function MobileDashboard() {
               สวัสดี, {session?.user?.name?.split(' ')[0] || 'ผู้ใช้'}
             </h2>
             <p className="text-green-100 mb-4">
-              ยินดีต้อนรับสู่ระบบจัดการครุภัณฑ์ KU Asset
+              ยินดีต้อนรับสู่ระบบเบิกจ่ายครุภัณฑ์ KU Asset
             </p>
             <div className="flex items-center text-sm">
               <Calendar className="w-4 h-4 mr-2" />

@@ -6,6 +6,7 @@ import { Role } from "@/features/auth/types";
 
 export const authOptions: NextAuthOptions = {
   providers: [
+    // --- Google Provider ---
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
@@ -17,6 +18,8 @@ export const authOptions: NextAuthOptions = {
         },
       },
     }),
+
+    // --- Credentials Provider (Email/Password) ---
     CredentialsProvider({
       name: "credentials",
       credentials: {
@@ -29,14 +32,11 @@ export const authOptions: NextAuthOptions = {
         }
 
         try {
-          // Call backend API for authentication
           const response = await fetch(
             `${process.env.BACKEND_URL}/api/v1/auth/login`,
             {
               method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
+              headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 email: credentials.email,
                 password: credentials.password,
@@ -51,12 +51,13 @@ export const authOptions: NextAuthOptions = {
 
           const data = await response.json();
 
+          // ⭐ ถูกต้อง: คาดหวังข้อมูลแบบเรียบจาก /login
           return {
             id: data.user.id.toString(),
             email: data.user.email,
             name: data.user.name,
             role: data.user.role,
-            departmentId: data.user.department_id || "1", // Default department
+            departmentId: data.user.department_id || "1",
             accessToken: data.access_token,
             refreshToken: data.refresh_token,
           };
@@ -68,19 +69,16 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
+    // --- signIn Callback ---
     async signIn({ user, account }) {
       if (account?.provider === "google") {
-        // Validate Google account domain
-
         try {
-          // Send Google OAuth data to backend
+          const backendUrl = process.env.BACKEND_URL;
           const response = await fetch(
-            `${process.env.BACKEND_URL}/api/v1/auth/oauth/google`,
+            `${backendUrl}/api/v1/auth/oauth/google`,
             {
               method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
+              headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 email: user.email,
                 name: user.name,
@@ -92,13 +90,16 @@ export const authOptions: NextAuthOptions = {
           );
 
           if (!response.ok) {
-            console.error("Google OAuth backend error");
+            console.error(
+              "❌ Google OAuth backend error:",
+              await response.text()
+            );
             return false;
           }
 
           const data = await response.json();
 
-          // Store additional user data
+          // ⭐ ถูกต้อง: อ่านข้อมูลแบบเรียบจาก /oauth/google
           user.role = data.user.role || Role.USER;
           user.departmentId = data.user.department_id || "1";
           user.accessToken = data.access_token;
@@ -106,14 +107,16 @@ export const authOptions: NextAuthOptions = {
 
           return true;
         } catch (error) {
-          console.error("Google OAuth error:", error);
+          console.error("❌ Google OAuth error:", error);
           return false;
         }
       }
-
       return true;
     },
+
+    // --- jwt Callback ---
     async jwt({ token, user }) {
+      // ⭐ ถูกต้อง: ส่งต่อข้อมูลจาก user object ไปยัง token
       if (user) {
         token.role = user.role;
         token.accessToken = user.accessToken;
@@ -123,13 +126,16 @@ export const authOptions: NextAuthOptions = {
       }
       return token;
     },
+
+    // --- session Callback ---
     async session({ session, token }) {
+      // ⭐ ถูกต้อง: ส่งต่อข้อมูลจาก token ไปยัง session
       if (token) {
-        session.user.id = token.userId;
-        session.user.role = token.role;
-        session.user.departmentId = token.departmentId;
-        session.accessToken = token.accessToken;
-        session.refreshToken = token.refreshToken;
+        session.user.id = token.userId as string;
+        session.user.role = token.role as Role;
+        session.user.departmentId = token.departmentId as string;
+        session.accessToken = token.accessToken as string;
+        session.refreshToken = token.refreshToken as string;
       }
       return session;
     },
@@ -140,7 +146,7 @@ export const authOptions: NextAuthOptions = {
   },
   session: {
     strategy: "jwt",
-    maxAge: 24 * 60 * 60, // 24 hours
   },
   secret: process.env.NEXTAUTH_SECRET,
+  debug: process.env.NODE_ENV === "development",
 };

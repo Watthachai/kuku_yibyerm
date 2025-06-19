@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useSession } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,7 +17,10 @@ import {
   CheckCircle
 } from "lucide-react";
 
+import { useRouter } from "next/navigation";
+
 export function UserProfile() {
+  const router = useRouter();
   const { data: session } = useSession();
   const [userStats] = useState({
     totalRequests: 15,
@@ -26,9 +29,17 @@ export function UserProfile() {
     completedRequests: 10,
   });
 
-  const handleSignOut = () => {
-    // TODO: Implement sign out
-    console.log("Sign out");
+  const handleSignOut = async () => {
+    try {
+      await signOut({
+        redirect: true,
+        callbackUrl: "/sign-in",
+      });
+      router.replace("/sign-in");
+    } catch (error) {
+      console.error("Sign out error:", error);
+      router.replace("/sign-in");
+    }
   };
 
   return (

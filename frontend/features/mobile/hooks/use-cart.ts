@@ -46,19 +46,10 @@ export function useCart() {
     }
   };
 
-  const updateCartQuantity = (productId: string, quantity: number) => {
-    const item = getCartItem(productId);
-    if (item && quantity > item.product.availableQuantity) {
-      toast.error(`จำนวนเกินที่มีอยู่ (${item.product.availableQuantity})`);
-      return;
-    }
-    updateQuantity(productId, quantity);
-  };
-
   const submitCartRequest = async () => {
     try {
       await submitRequest();
-      toast.success('ส่งคำขอสำเร็จ!');
+      toast.success('ส่งคำขอเบิกสำเร็จ!');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'เกิดข้อผิดพลาด');
     }
@@ -73,7 +64,7 @@ export function useCart() {
     // Actions
     addToCart,
     removeFromCart,
-    updateCartQuantity,
+    updateQuantity,
     updateItemPurpose,
     updateItemNotes,
     updateItemPeriod,
@@ -87,6 +78,6 @@ export function useCart() {
     
     // Validation & Submission
     validateCart,
-    submitCartRequest,
+    submitRequest,
   };
 }
