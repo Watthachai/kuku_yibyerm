@@ -32,17 +32,25 @@ func (ctrl *AuthController) Login(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"success": true, "data": authResponse})
+
+	// ⭐ แก้ไข Response ของ Login ให้เหมือนกับ GoogleOAuth
+	c.JSON(http.StatusOK, gin.H{
+		"success":       true,
+		"message":       "Login successful",
+		"user":          authResponse.User,
+		"access_token":  authResponse.AccessToken,
+		"refresh_token": authResponse.RefreshToken,
+	})
 }
 
 // Register handles user registration.
 func (ctrl *AuthController) Register(c *gin.Context) {
+	// ... (โค้ด Register เหมือนเดิม) ...
 	var req dto.RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": err.Error()})
 		return
 	}
-
 	userResponse, err := ctrl.authService.Register(&req)
 	if err != nil {
 		if err.Error() == "user already exists" {
@@ -57,18 +65,17 @@ func (ctrl *AuthController) Register(c *gin.Context) {
 
 // RefreshToken handles token refresh.
 func (ctrl *AuthController) RefreshToken(c *gin.Context) {
+	// ... (โค้ด RefreshToken เหมือนเดิม) ...
 	var req dto.RefreshTokenRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": err.Error()})
 		return
 	}
-
 	newAccessToken, err := ctrl.authService.RefreshToken(req.RefreshToken)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": err.Error()})
 		return
 	}
-
 	c.JSON(http.StatusOK, gin.H{"success": true, "data": dto.AccessTokenResponse{AccessToken: newAccessToken}})
 }
 
@@ -86,14 +93,12 @@ func (ctrl *AuthController) GoogleOAuth(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Google OAuth successful", "data": authResponse})
-}
-
-// ForgotPassword and ResetPassword can be implemented later using a similar pattern
-func (ctrl *AuthController) ForgotPassword(c *gin.Context) {
-	c.JSON(http.StatusNotImplemented, gin.H{"success": false, "message": "Not implemented yet"})
-}
-
-func (ctrl *AuthController) ResetPassword(c *gin.Context) {
-	c.JSON(http.StatusNotImplemented, gin.H{"success": false, "message": "Not implemented yet"})
+	// ⭐ ส่ง Response กลับแบบนี้แค่ครั้งเดียว
+	c.JSON(http.StatusOK, gin.H{
+		"success":       true,
+		"message":       "Google OAuth successful",
+		"user":          authResponse.User,
+		"access_token":  authResponse.AccessToken,
+		"refresh_token": authResponse.RefreshToken,
+	})
 }

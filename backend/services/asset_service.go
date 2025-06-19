@@ -10,7 +10,7 @@ import (
 
 type AssetService interface {
 	CreateAsset(req *dto.CreateAssetRequest) (*dto.AssetResponse, error)
-	// เพิ่ม Method อื่นๆ ที่จำเป็น
+	GetAssets(query *dto.AssetQuery) (*dto.PaginatedAssetResponse, error)
 }
 
 type assetService struct {
@@ -19,6 +19,13 @@ type assetService struct {
 
 func NewAssetService(db *gorm.DB) AssetService {
 	return &assetService{db: db}
+}
+
+// ⭐ เพิ่ม Method นี้
+func (s *assetService) GetAssets(query *dto.AssetQuery) (*dto.PaginatedAssetResponse, error) {
+	// Implement a query similar to GetProducts
+	// ...
+	return nil, nil // Placeholder
 }
 
 func (s *assetService) CreateAsset(req *dto.CreateAssetRequest) (*dto.AssetResponse, error) {

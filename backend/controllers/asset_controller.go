@@ -37,3 +37,17 @@ func (ctrl *AssetController) CreateAsset(c *gin.Context) {
 	}
 	c.JSON(http.StatusCreated, gin.H{"success": true, "data": asset})
 }
+
+func (ctrl *AssetController) GetAssets(c *gin.Context) {
+	var query dto.AssetQuery
+	if err := c.ShouldBindQuery(&query); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid query parameters"})
+		return
+	}
+	assets, err := ctrl.assetService.GetAssets(&query)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get assets"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true, "data": assets})
+}

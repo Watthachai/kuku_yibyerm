@@ -39,7 +39,6 @@ export default function InventoryPage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
   const isAdmin = session?.user?.role === "ADMIN";
-  const isApprover = session?.user?.role === "APPROVER";
   const isUser = session?.user?.role === "USER";
 
   // Mock data
@@ -75,7 +74,7 @@ export default function InventoryPage() {
 
   // If user role is USER, show catalog view
   if (isUser) {
-    return <UserCatalogShoppingView items={items} loading={loading} />;
+    return <UserCatalogShoppingView />;
   }
 
   // Desktop view for ADMIN and APPROVER
@@ -233,7 +232,7 @@ export default function InventoryPage() {
                   )}
 
                   <div className="pt-3 space-y-2">
-                    {(isAdmin || isApprover) && (
+                    {isAdmin && (
                       <div className="flex gap-2">
                         <Button variant="outline" size="sm" className="flex-1">
                           แก้ไข

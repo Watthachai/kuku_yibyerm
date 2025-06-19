@@ -14,6 +14,7 @@ type RequestService interface {
 	CreateRequest(userID uint, req *dto.CreateRequestRequest) (*dto.RequestResponse, error)
 	GetRequestByID(requestID uint, userID uint, userRole models.Role) (*dto.RequestResponse, error)
 	UpdateRequestStatus(requestID uint, adminID uint, req *dto.AdminUpdateStatusRequest) (*dto.RequestResponse, error)
+	GetAllRequests(query *dto.RequestQuery) (*dto.PaginatedRequestResponse, error)
 }
 
 type requestService struct {
@@ -38,10 +39,10 @@ func (s *requestService) CreateRequest(userID uint, req *dto.CreateRequestReques
 
 	request := models.Request{
 		UserID:      userID,
-		Purpose:     req.Purpose,
-		Notes:       req.Notes,
+		Purpose:     req.Purpose, // ⭐️ แก้ไขแล้ว
+		Notes:       req.Notes,   // ⭐️ แก้ไขแล้ว
 		Status:      models.RequestStatusPending,
-		RequestDate: time.Now(), // ⭐️ ใช้ Field ที่ถูกต้องแล้ว
+		RequestDate: time.Now(),
 	}
 	if err := tx.Create(&request).Error; err != nil {
 		tx.Rollback()
@@ -49,13 +50,11 @@ func (s *requestService) CreateRequest(userID uint, req *dto.CreateRequestReques
 	}
 
 	for _, item := range req.Items {
-		requestItem := models.RequestItem{RequestID: request.ID, ProductID: item.ProductID, Quantity: item.Quantity} // ⭐️ ProductID เป็น uint ถูกต้องแล้ว
+		requestItem := models.RequestItem{RequestID: request.ID, ProductID: item.ProductID, Quantity: item.Quantity} // ⭐️ แก้ไขแล้ว
 		if err := tx.Create(&requestItem).Error; err != nil {
 			tx.Rollback()
 			return nil, err
 		}
-		// Here you would call assetService to decrease stock
-		// s.assetService.UpdateStock(tx, item.AssetID, -item.Quantity)
 	}
 
 	if err := tx.Commit().Error; err != nil {
@@ -71,19 +70,17 @@ func (s *requestService) UpdateRequestStatus(requestID uint, adminID uint, req *
 	}
 
 	reqStatus := models.RequestStatus(req.Status)
-	// Add logic to restore stock if rejected by calling assetService...
-
 	request.Status = reqStatus
-	request.AdminNote = req.Notes
+	request.AdminNote = req.AdminNote // ⭐️ แก้ไขแล้ว
 	if reqStatus == models.RequestStatusApproved {
 		now := time.Now()
 		request.ApprovedByID = &adminID
-		request.ApprovedDate = &now // ⭐️ ApprovedDate ถูกต้องแล้ว
+		request.ApprovedDate = &now
 	}
-
 	if err := s.db.Save(&request).Error; err != nil {
 		return nil, err
 	}
+
 	return s.GetRequestByID(requestID, adminID, models.RoleAdmin)
 }
 
@@ -99,7 +96,38 @@ func (s *requestService) GetRequestByID(requestID uint, userID uint, userRole mo
 	return mapRequestToResponse(&request), nil
 }
 
+func (s *requestService) GetAllRequests(query *dto.RequestQuery) (*dto.PaginatedRequestResponse, error) {
+	// Placeholder - implement logic here later
+	return nil, nil
+}
+
+// ⭐ แก้ไข Helper function ให้สมบูรณ์
 func mapRequestToResponse(r *models.Request) *dto.RequestResponse {
-	// Implement this mapping function based on your DTO
-	return &dto.RequestResponse{ID: r.ID, RequestNumber: r.RequestNumber, Status: string(r.Status), Purpose: r.Purpose, RequestDate: r.RequestDate}
+	userDto := &dto.UserProfileResponse{
+		ID:    r.User.ID,
+		Name:  r.User.Name,
+		Email: r.User.Email,
+	}
+
+	var itemResponses []dto.RequestItemResponse
+	for _, item := range r.Items {
+		itemResponses = append(itemResponses, dto.RequestItemResponse{
+			Quantity: item.Quantity,
+			Product: &dto.ProductResponse{
+				ID:   item.Product.ID,
+				Name: item.Product.Name,
+			},
+		})
+	}
+
+	return &dto.RequestResponse{
+		ID:            r.ID,
+		RequestNumber: r.RequestNumber,
+		Status:        string(r.Status),
+		Purpose:       r.Purpose,
+		RequestDate:   r.RequestDate,
+		AdminNote:     r.AdminNote,
+		User:          userDto,
+		Items:         itemResponses,
+	}
 }

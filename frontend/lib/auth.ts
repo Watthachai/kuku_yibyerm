@@ -6,6 +6,7 @@ import { Role } from "@/features/auth/types";
 
 export const authOptions: NextAuthOptions = {
   providers: [
+    // --- Google Provider ---
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
@@ -17,6 +18,8 @@ export const authOptions: NextAuthOptions = {
         },
       },
     }),
+
+    // --- Credentials Provider (Email/Password) ---
     CredentialsProvider({
       name: "credentials",
       credentials: {
@@ -29,14 +32,11 @@ export const authOptions: NextAuthOptions = {
         }
 
         try {
-          // Call backend API for authentication
           const response = await fetch(
             `${process.env.BACKEND_URL}/api/v1/auth/login`,
             {
               method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
+              headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 email: credentials.email,
                 password: credentials.password,
@@ -51,6 +51,7 @@ export const authOptions: NextAuthOptions = {
 
           const data = await response.json();
 
+          // ⭐ ถูกต้อง: คาดหวังข้อมูลแบบเรียบจาก /login
           return {
             id: data.user.id.toString(),
             email: data.user.email,
@@ -68,20 +69,16 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
+    // --- signIn Callback ---
     async signIn({ user, account }) {
       if (account?.provider === "google") {
         try {
-          console.log("🔍 Google OAuth data:", { user, account });
-
-          // ⭐ แก้ไข URL ให้ถูกต้อง
-          const backendUrl = process.env.BACKEND_URL || "http://localhost:8080";
+          const backendUrl = process.env.BACKEND_URL;
           const response = await fetch(
             `${backendUrl}/api/v1/auth/oauth/google`,
             {
               method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
+              headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 email: user.email,
                 name: user.name,
@@ -92,22 +89,21 @@ export const authOptions: NextAuthOptions = {
             }
           );
 
-          console.log("📡 Backend response status:", response.status);
-
           if (!response.ok) {
-            const errorText = await response.text();
-            console.error("❌ Google OAuth backend error:", errorText);
+            console.error(
+              "❌ Google OAuth backend error:",
+              await response.text()
+            );
             return false;
           }
 
           const data = await response.json();
-          console.log("✅ Backend response:", data);
 
-          // Store additional user data
+          // ⭐ ถูกต้อง: อ่านข้อมูลแบบเรียบจาก /oauth/google
           user.role = data.user.role || Role.USER;
           user.departmentId = data.user.department_id || "1";
-          user.accessToken = data.access_token; // ⭐ สำคัญ!
-          user.refreshToken = data.refresh_token; // ⭐ สำคัญ!
+          user.accessToken = data.access_token;
+          user.refreshToken = data.refresh_token;
 
           return true;
         } catch (error) {
@@ -115,13 +111,12 @@ export const authOptions: NextAuthOptions = {
           return false;
         }
       }
-
       return true;
     },
-    async jwt({ token, user, account }) {
-      // ⭐ เพิ่ม account parameter
-      console.log("🔍 JWT callback:", { token, user, account });
 
+    // --- jwt Callback ---
+    async jwt({ token, user }) {
+      // ⭐ ถูกต้อง: ส่งต่อข้อมูลจาก user object ไปยัง token
       if (user) {
         token.role = user.role;
         token.accessToken = user.accessToken;
@@ -129,23 +124,18 @@ export const authOptions: NextAuthOptions = {
         token.userId = user.id;
         token.departmentId = user.departmentId;
       }
-
-      // Store Google access token if available
-      if (account?.access_token) {
-        token.googleAccessToken = account.access_token;
-      }
-
       return token;
     },
-    async session({ session, token }) {
-      console.log("🔍 Session callback:", { session, token });
 
+    // --- session Callback ---
+    async session({ session, token }) {
+      // ⭐ ถูกต้อง: ส่งต่อข้อมูลจาก token ไปยัง session
       if (token) {
-        session.user.id = token.userId;
-        session.user.role = token.role;
-        session.user.departmentId = token.departmentId;
-        session.accessToken = token.accessToken; // ⭐ สำคัญ!
-        session.refreshToken = token.refreshToken; // ⭐ สำคัญ!
+        session.user.id = token.userId as string;
+        session.user.role = token.role as Role;
+        session.user.departmentId = token.departmentId as string;
+        session.accessToken = token.accessToken as string;
+        session.refreshToken = token.refreshToken as string;
       }
       return session;
     },
@@ -156,8 +146,7 @@ export const authOptions: NextAuthOptions = {
   },
   session: {
     strategy: "jwt",
-    maxAge: 24 * 60 * 60, // 24 hours
   },
   secret: process.env.NEXTAUTH_SECRET,
-  debug: process.env.NODE_ENV === "development", // ⭐ เพิ่ม debug
+  debug: process.env.NODE_ENV === "development",
 };
