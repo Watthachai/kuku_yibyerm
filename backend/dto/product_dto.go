@@ -10,27 +10,33 @@ type ProductQuery struct {
 	Search     string `form:"search"`
 }
 
+// DTO สำหรับรับข้อมูลตอนสร้าง Product ใหม่
 type CreateProductRequest struct {
-	ID          string `json:"id" binding:"required"`
-	Name        string `json:"name" binding:"required"`
-	Description string `json:"description"`
-	CategoryID  string `json:"category_id" binding:"required"`
-	ImageURL    string `json:"image_url"`
+	Name           string `json:"name" binding:"required"`
+	Description    string `json:"description"`
+	Brand          string `json:"brand"`
+	ProductModel   string `json:"productModel"`
+	CategoryID     uint   `json:"category_id" binding:"required"`
+	TrackingMethod string `json:"trackingMethod" binding:"required,oneof=BY_ITEM BY_QUANTITY"`
+}
+
+// DTO สำหรับส่งข้อมูล Product กลับไปให้ Frontend
+type ProductResponse struct {
+	ID             uint              `json:"id"`
+	Name           string            `json:"name"`
+	Description    string            `json:"description"` // ⭐ เพิ่ม Field นี้
+	ImageURL       *string           `json:"imageUrl"`    // ⭐ แก้เป็น *string
+	Brand          *string           `json:"brand,omitempty"`
+	ProductModel   *string           `json:"productModel,omitempty"`
+	TrackingMethod string            `json:"trackingMethod"`
+	Category       *CategoryResponse `json:"category,omitempty"`
 }
 
 type UpdateProductRequest struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
-	CategoryID  string `json:"category_id"`
+	CategoryID  uint   `json:"category_id"`
 	ImageURL    string `json:"image_url"`
-}
-
-type ProductResponse struct {
-	ID          string            `json:"id"`
-	Name        string            `json:"name"`
-	Description string            `json:"description"`
-	ImageURL    string            `json:"image_url"`
-	Category    *CategoryResponse `json:"category,omitempty"`
 }
 
 type PaginatedProductResponse struct {

@@ -1,9 +1,9 @@
-// services/asset_service.go
 package services
 
 import (
 	"ku-asset/dto"
 	"ku-asset/models"
+	"math"
 
 	"gorm.io/gorm"
 )
@@ -21,22 +21,50 @@ func NewAssetService(db *gorm.DB) AssetService {
 	return &assetService{db: db}
 }
 
-// ⭐ เพิ่ม Method นี้
 func (s *assetService) GetAssets(query *dto.AssetQuery) (*dto.PaginatedAssetResponse, error) {
-	// Implement a query similar to GetProducts
-	// ...
-	return nil, nil // Placeholder
+	var assets []models.Asset
+	var total int64
+	dbQuery := s.db.Model(&models.Asset{})
+
+	if query.Status != "" {
+		dbQuery = dbQuery.Where("status = ?", query.Status)
+	}
+	if query.ProductID != 0 {
+		dbQuery = dbQuery.Where("product_id = ?", query.ProductID)
+	}
+	if query.Search != "" {
+		searchTerm := "%" + query.Search + "%"
+		dbQuery = dbQuery.Where("asset_code ILIKE ? OR serial_number ILIKE ?", searchTerm, searchTerm)
+	}
+
+	if err := dbQuery.Count(&total).Error; err != nil {
+		return nil, err
+	}
+
+	offset := (query.Page - 1) * query.Limit
+	err := dbQuery.Preload("Product.Category").Preload("Department").
+		Offset(offset).Limit(query.Limit).Order("id desc").Find(&assets).Error
+	if err != nil {
+		return nil, err
+	}
+
+	var assetResponses []dto.AssetResponse
+	for _, asset := range assets {
+		assetResponses = append(assetResponses, *mapAssetToResponse(&asset))
+	}
+
+	return &dto.PaginatedAssetResponse{
+		Assets: assetResponses,
+		Pagination: dto.PaginationResponse{
+			CurrentPage: query.Page, PerPage: query.Limit, Total: total,
+			TotalPages: int64(math.Ceil(float64(total) / float64(query.Limit))),
+		},
+	}, nil
 }
 
 func (s *assetService) CreateAsset(req *dto.CreateAssetRequest) (*dto.AssetResponse, error) {
-	// Add logic for file upload here...
-	// For now, we'll use a placeholder URL.
 	var imageURL *string
-	if req.Image != nil {
-		temp := "path/to/your/image.jpg"
-		imageURL = &temp
-	}
-
+	// ... Your file upload logic here ...
 	asset := models.Asset{
 		ProductID:        req.ProductID,
 		AssetCode:        req.AssetCode,
@@ -46,15 +74,17 @@ func (s *assetService) CreateAsset(req *dto.CreateAssetRequest) (*dto.AssetRespo
 		LocationRoom:     req.LocationRoom,
 		ImageURL:         imageURL,
 	}
-
 	if err := s.db.Create(&asset).Error; err != nil {
 		return nil, err
 	}
 
-	// Re-fetch to preload product info for the response
-	s.db.Preload("Product").First(&asset, asset.ID)
+	s.db.Preload("Product.Category").Preload("Department").First(&asset, asset.ID)
+	return mapAssetToResponse(&asset), nil
+}
 
-	response := &dto.AssetResponse{
+// ⭐ แก้ไข Helper function นี้เป็นครั้งสุดท้ายจริงๆ
+func mapAssetToResponse(asset *models.Asset) *dto.AssetResponse {
+	res := &dto.AssetResponse{
 		ID:               asset.ID,
 		AssetCode:        asset.AssetCode,
 		Status:           asset.Status,
@@ -62,11 +92,25 @@ func (s *assetService) CreateAsset(req *dto.CreateAssetRequest) (*dto.AssetRespo
 		LocationRoom:     asset.LocationRoom,
 		ImageURL:         asset.ImageURL,
 		CreatedAt:        asset.CreatedAt,
-		Product: &dto.ProductResponse{
-			ID:   asset.Product.ID,
-			Name: asset.Product.Name,
-		},
+		SerialNumber:     asset.SerialNumber,
+		Quantity:         asset.Quantity,
 	}
 
-	return response, nil
+	if asset.Product.ID != 0 {
+		res.Name = asset.Product.Name
+		if asset.Product.Category.ID != 0 {
+			res.Category = &dto.CategoryResponse{
+				ID:   asset.Product.Category.ID,
+				Name: asset.Product.Category.Name,
+			}
+		}
+	}
+
+	if asset.DepartmentID != nil {
+		res.Department = &dto.DepartmentResponse{
+			ID:     *asset.DepartmentID,
+			NameTH: asset.Department.NameTH,
+		}
+	}
+	return res
 }

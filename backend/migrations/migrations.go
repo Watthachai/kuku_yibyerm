@@ -17,6 +17,7 @@ func GetAllMigrations() []*gormigrate.Migration {
 		M25680619123003CreateUsersAndProductsTables,
 		M25680619123004CreateAssetsTable,
 		M25680619123005CreateRequestsTables,
+		M25680619150000SeedInitialData,
 	}
 }
 

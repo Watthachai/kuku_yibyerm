@@ -27,4 +27,16 @@ export class ProductService {
       return []; // คืนค่า array ว่างเมื่อเกิด error
     }
   }
+
+  static async createProduct(data: Omit<Product, "id">): Promise<Product> {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${this.baseUrl}/api/v1/products`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error("Failed to create product");
+    const responseData = await response.json();
+    return responseData.data;
+  }
 }

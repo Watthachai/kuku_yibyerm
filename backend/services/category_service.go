@@ -46,7 +46,6 @@ func (s *categoryService) GetByID(id string) (*dto.CategoryResponse, error) {
 
 func (s *categoryService) Create(req *dto.CreateCategoryRequest) (*dto.CategoryResponse, error) {
 	category := models.Category{
-		ID:          req.ID,
 		Name:        req.Name,
 		Description: req.Description,
 		IsActive:    true,

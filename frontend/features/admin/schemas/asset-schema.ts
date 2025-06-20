@@ -1,18 +1,40 @@
 import * as z from "zod";
 
-export const addAssetSchema = z.object({
-  // ขั้นตอนที่ 1: เลือก Product
-  productId: z.number({ required_error: "กรุณาเลือกประเภทครุภัณฑ์" }),
-
-  // ขั้นตอนที่ 2: กรอกข้อมูล Asset
-  assetCode: z.string().min(1, "กรุณากรอกรหัสครุภัณฑ์"),
-  serialNumber: z.string().optional(),
-  status: z.string({ required_error: "กรุณาเลือกสถานะ" }),
-  locationBuilding: z.string({ required_error: "กรุณาเลือกอาคาร" }),
-  locationRoom: z.string().min(1, "กรุณากรอกหมายเลขห้อง"),
-  purchaseDate: z.date().optional(),
-  purchasePrice: z.coerce.number().optional(),
-  notes: z.string().optional(),
-  // Field สำหรับรูปภาพ เราจะจัดการแยกต่างหาก
-  image: z.any().optional(),
-});
+export const addAssetSchema = z
+  .object({
+    productId: z.coerce.number({ required_error: "กรุณาเลือกประเภทครุภัณฑ์" }),
+    trackingMethod: z.enum(["BY_ITEM", "BY_QUANTITY"]),
+    assetCode: z.string().optional(),
+    serialNumber: z.string().optional(),
+    status: z.string().optional(),
+    quantity: z.coerce.number().optional(),
+    locationBuilding: z.string({ required_error: "กรุณาเลือกอาคาร" }),
+    locationRoom: z.string().min(1, "กรุณากรอกหมายเลขห้อง"),
+  })
+  .superRefine((data, ctx) => {
+    if (data.trackingMethod === "BY_ITEM") {
+      if (!data.assetCode) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "กรุณากรอกรหัสครุภัณฑ์",
+          path: ["assetCode"],
+        });
+      }
+      if (!data.status) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "กรุณาเลือกสถานะ",
+          path: ["status"],
+        });
+      }
+    }
+    if (data.trackingMethod === "BY_QUANTITY") {
+      if (!data.quantity || data.quantity <= 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "กรุณากรอกจำนวน > 0",
+          path: ["quantity"],
+        });
+      }
+    }
+  });

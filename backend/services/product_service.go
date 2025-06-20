@@ -7,6 +7,7 @@ import (
 	"ku-asset/dto"
 	"ku-asset/models"
 	"math"
+	"strconv"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -80,16 +81,18 @@ func (s *productService) GetProductByID(id string) (*dto.ProductResponse, error)
 
 func (s *productService) CreateProduct(req *dto.CreateProductRequest) (*dto.ProductResponse, error) {
 	product := models.Product{
-		ID:          req.ID,
-		Name:        req.Name,
-		Description: req.Description,
-		CategoryID:  req.CategoryID,
-		ImageURL:    req.ImageURL,
+		Name:           req.Name,
+		Description:    req.Description,
+		Brand:          &req.Brand,
+		ProductModel:   &req.ProductModel,
+		CategoryID:     req.CategoryID,
+		TrackingMethod: models.TrackingMethod(req.TrackingMethod),
 	}
 	if err := s.db.Create(&product).Error; err != nil {
 		return nil, err
 	}
-	return s.GetProductByID(product.ID)
+	// Fetch again to preload category for the response
+	return s.GetProductByID(strconv.Itoa(int(product.ID)))
 }
 
 // ⭐ เติม Logic ให้ UpdateProduct
@@ -105,7 +108,7 @@ func (s *productService) UpdateProduct(id string, req *dto.UpdateProductRequest)
 	if req.Description != "" {
 		product.Description = req.Description
 	}
-	if req.CategoryID != "" {
+	if req.CategoryID != 0 {
 		product.CategoryID = req.CategoryID
 	}
 	if req.ImageURL != "" {
@@ -146,12 +149,11 @@ func (s *productService) UpdateStock(tx *gorm.DB, id string, change int) error {
 // --- Helper ---
 func mapProductToResponse(p *models.Product) *dto.ProductResponse {
 	res := &dto.ProductResponse{
-		ID:          p.ID,
-		Name:        p.Name,
-		Description: p.Description,
-		ImageURL:    p.ImageURL,
+		ID:             p.ID,
+		Name:           p.Name,
+		TrackingMethod: string(p.TrackingMethod),
 	}
-	if p.Category.ID != "" {
+	if p.Category.ID != 0 {
 		res.Category = &dto.CategoryResponse{ID: p.Category.ID, Name: p.Category.Name}
 	}
 	return res

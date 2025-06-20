@@ -16,7 +16,7 @@ import (
 )
 
 func main() {
-	log.Println("🚀 Starting Kuku Yipyerm Backend Server...")
+	log.Println("🚀 Starting KU Asset Backend Server...")
 
 	if err := godotenv.Load(); err != nil {
 		log.Println("Warning: .env file not found")
