@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"errors"
+	"ku-asset/models"
 	"log"
 	"net/http"
 	"os"
@@ -39,27 +40,14 @@ func AuthMiddleware() gin.HandlerFunc {
 		}
 
 		tokenString := parts[1]
-		log.Printf("🔍 Token received: %s...", tokenString[:50])
+		log.Printf("🔍 Token received: %s...", tokenString[:30])
 
 		jwtSecret := os.Getenv("JWT_SECRET")
-		if jwtSecret == "" {
-			log.Println("❌ JWT_SECRET not found in environment!")
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"success": false,
-				"message": "Server configuration error",
-			})
-			c.Abort()
-			return
-		}
-
 		log.Printf("🔑 Using JWT Secret: %s... (length: %d)", jwtSecret[:10], len(jwtSecret))
 
-		// ⭐ JWT v5 syntax
 		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-			// Check signing method
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				log.Printf("❌ Unexpected signing method: %v", token.Header["alg"])
-				return nil, errors.New("invalid signing method") // ⭐ ใช้ errors.New แทน
+				return nil, errors.New("invalid signing method")
 			}
 			return []byte(jwtSecret), nil
 		})
@@ -85,7 +73,6 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		// ⭐ JWT v5 claims syntax
 		claims, ok := token.Claims.(jwt.MapClaims)
 		if !ok {
 			log.Println("❌ Invalid token claims")
@@ -97,12 +84,54 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		// Set user info in context
-		c.Set("user_id", claims["user_id"])
-		c.Set("email", claims["email"])
-		c.Set("role", claims["role"])
+		// ⭐ แก้ไขการ Set Context ให้ตรงกับที่ helpers.go คาดหวัง
+		userID, exists := claims["user_id"]
+		if !exists {
+			log.Println("❌ user_id not found in token claims")
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"success": false,
+				"message": "user_id not found in token",
+			})
+			c.Abort()
+			return
+		}
 
-		log.Printf("✅ Token validated successfully for user: %v (role: %v)", claims["email"], claims["role"])
+		// แปลง user_id เป็น uint
+		var userIDUint uint
+		switch v := userID.(type) {
+		case float64:
+			userIDUint = uint(v)
+		case int:
+			userIDUint = uint(v)
+		case uint:
+			userIDUint = v
+		default:
+			log.Printf("❌ Invalid user_id type: %T, value: %v", userID, userID)
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"success": false,
+				"message": "Invalid user_id format in token",
+			})
+			c.Abort()
+			return
+		}
+
+		// Set context for later use
+		// ⭐ Set context keys ให้ตรงกับที่ helpers.go ต้องการ
+		c.Set("userID", userIDUint)
+		c.Set("userRole", claims["role"])
+		c.Set("email", claims["email"])
+
+		log.Printf("✅ Token validated successfully for user: %v (role: %v), userID set: %v",
+			claims["email"], claims["role"], userIDUint)
+
+		// ⭐ เพิ่ม debug - ทดสอบอ่าน context ทันที
+		testRole, exists := c.Get("userRole")
+		if exists {
+			log.Printf("🔍 Context TEST: userRole = %v (type: %T)", testRole, testRole)
+		} else {
+			log.Printf("❌ Context TEST: userRole not found immediately after setting!")
+		}
+
 		c.Next()
 	}
 }
@@ -110,41 +139,141 @@ func AuthMiddleware() gin.HandlerFunc {
 // AuthorizeRole checks if the authenticated user has the required role
 func AuthorizeRole(requiredRole string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		role, exists := c.Get("role")
+		log.Printf("🔍 AuthorizeRole called for: %s", requiredRole)
+
+		// ⭐ Debug: ตรวจสอบ context ทั้งหมด
+		log.Println("🔍 Current context keys:")
+		if c.Keys != nil {
+			for k, v := range c.Keys {
+				log.Printf("  - %s: %v (type: %T)", k, v, v)
+			}
+		}
+
+		// Get user role from context (set by AuthMiddleware)
+		userRole, exists := c.Get("userRole")
 		if !exists {
-			log.Println("❌ User role not found in context")
+			log.Println("❌ User role not found in AuthorizeRole")
 			c.JSON(http.StatusUnauthorized, gin.H{
-				"success": false,
-				"message": "User role not found",
+				"error": "User role not found in context. Make sure AuthMiddleware is used first",
 			})
 			c.Abort()
 			return
 		}
 
-		userRole, ok := role.(string)
+		log.Printf("✅ Found userRole in AuthorizeRole: %v (type: %T)", userRole, userRole)
+
+		// Convert to string and check role
+		roleStr, ok := userRole.(string)
 		if !ok {
-			log.Printf("❌ Invalid role type: %T", role)
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"success": false,
-				"message": "Invalid role type",
+			log.Printf("❌ Invalid role type: %T, value: %v", userRole, userRole)
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Invalid user role format",
 			})
 			c.Abort()
 			return
 		}
 
-		if userRole != requiredRole && userRole != "ADMIN" { // Admin can access everything
-			log.Printf("❌ Insufficient permissions. Required: %s, Got: %s", requiredRole, userRole)
+		// Check if user has the required role
+		if roleStr != requiredRole {
+			log.Printf("❌ Role mismatch: required=%s, current=%s", requiredRole, roleStr)
 			c.JSON(http.StatusForbidden, gin.H{
-				"success":  false,
-				"message":  "Insufficient permissions",
+				"error":    "Insufficient permissions",
 				"required": requiredRole,
-				"current":  userRole,
+				"current":  roleStr,
 			})
 			c.Abort()
 			return
 		}
 
-		log.Printf("✅ Role authorization passed: %s", userRole)
+		log.Printf("✅ Role check passed: %s", roleStr)
+		c.Next()
+	}
+}
+
+// AuthAdminMiddleware combines authentication and admin role check
+func AuthAdminMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		log.Println("🔍 AuthAdminMiddleware called")
+
+		// ทำ auth check ก่อน (copy จาก AuthMiddleware)
+		authHeader := c.GetHeader("Authorization")
+		if authHeader == "" {
+			log.Println("❌ No authorization header")
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header required"})
+			c.Abort()
+			return
+		}
+
+		bearerToken := strings.Split(authHeader, " ")
+		if len(bearerToken) != 2 || bearerToken[0] != "Bearer" {
+			log.Println("❌ Invalid authorization header format")
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid authorization header format"})
+			c.Abort()
+			return
+		}
+
+		tokenString := bearerToken[1]
+		log.Printf("🔍 Token received: %s...", tokenString[:min(len(tokenString), 20)])
+
+		jwtSecret := os.Getenv("JWT_SECRET")
+		if jwtSecret == "" {
+			log.Println("❌ JWT_SECRET not set")
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Server configuration error"})
+			c.Abort()
+			return
+		}
+
+		log.Printf("🔑 Using JWT Secret: %s... (length: %d)", jwtSecret[:min(len(jwtSecret), 10)], len(jwtSecret))
+
+		claims := jwt.MapClaims{}
+		token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+			return []byte(jwtSecret), nil
+		})
+
+		if err != nil || !token.Valid {
+			log.Printf("❌ Token validation failed: %v", err)
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+			c.Abort()
+			return
+		}
+
+		// ตรวจสอบ role ทันที
+		roleInterface, ok := claims["role"]
+		if !ok {
+			log.Println("❌ Role not found in token")
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Role not found in token"})
+			c.Abort()
+			return
+		}
+
+		roleStr, ok := roleInterface.(string)
+		if !ok {
+			log.Printf("❌ Role is not string: %T", roleInterface)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid role format"})
+			c.Abort()
+			return
+		}
+
+		if models.Role(roleStr) != models.RoleAdmin {
+			log.Printf("❌ Access denied. Required: %s, Current: %s", models.RoleAdmin, roleStr)
+			c.JSON(http.StatusForbidden, gin.H{
+				"error":    "Access denied. Admin role required",
+				"required": string(models.RoleAdmin),
+				"current":  roleStr,
+			})
+			c.Abort()
+			return
+		}
+
+		// Set context
+		userIDFloat, _ := claims["user_id"].(float64)
+		userIDUint := uint(userIDFloat)
+
+		c.Set("userID", userIDUint)
+		c.Set("userRole", roleStr)
+		c.Set("email", claims["email"])
+
+		log.Printf("✅ Admin authenticated: %v (role: %v), userID: %v", claims["email"], roleStr, userIDUint)
 		c.Next()
 	}
 }

@@ -1,27 +1,21 @@
-// services/product_service.go
 package services
 
 import (
-	"errors"
 	"fmt"
 	"ku-asset/dto"
 	"ku-asset/models"
 	"math"
-	"strconv"
 
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
-// Interface ไม่มีการเปลี่ยนแปลง
 type ProductService interface {
 	GetProducts(query *dto.ProductQuery) (*dto.PaginatedProductResponse, error)
-	GetProductByID(id string) (*dto.ProductResponse, error)
+	GetProductByID(id uint) (*dto.ProductResponse, error)
 	CreateProduct(req *dto.CreateProductRequest) (*dto.ProductResponse, error)
-	UpdateProduct(id string, req *dto.UpdateProductRequest) (*dto.ProductResponse, error)
-	DeleteProduct(id string) error
-	GetProductForUpdate(tx *gorm.DB, id string) (*models.Product, error)
-	UpdateStock(tx *gorm.DB, id string, change int) error
+	UpdateProduct(id uint, req *dto.UpdateProductRequest) (*dto.ProductResponse, error)
+	DeleteProduct(id uint) error
+	UpdateStock(tx *gorm.DB, productID uint, quantityChange int) error
 }
 
 type productService struct {
@@ -32,13 +26,60 @@ func NewProductService(db *gorm.DB) ProductService {
 	return &productService{db: db}
 }
 
-// ... (GetProducts, GetProductByID, CreateProduct เหมือนเดิม) ...
+func (s *productService) CreateProduct(req *dto.CreateProductRequest) (*dto.ProductResponse, error) {
+	// ⭐ สร้าง Code อัตโนมัติ
+	code, err := s.generateProductCode()
+	if err != nil {
+		return nil, err
+	}
 
+	product := models.Product{
+		Code:         code,
+		Name:         req.Name,
+		Description:  req.Description,
+		CategoryID:   req.CategoryID,
+		Brand:        req.Brand,
+		ProductModel: req.ProductModel,
+
+		// ⭐ ใช้ Stock ตัวเดียว
+		Stock:    req.Stock, // จำนวนเริ่มต้น
+		MinStock: req.MinStock,
+		Unit:     req.Unit,
+		Status:   models.ProductStatusActive,
+	}
+
+	// ตั้งค่า default unit
+	if product.Unit == "" {
+		product.Unit = "ชิ้น"
+	}
+
+	if err := s.db.Create(&product).Error; err != nil {
+		return nil, err
+	}
+
+	// โหลดข้อมูลใหม่พร้อม relations
+	if err := s.db.Preload("Category").First(&product, product.ID).Error; err != nil {
+		return nil, err
+	}
+
+	return mapProductToResponse(&product), nil
+}
+
+func (s *productService) GetProductByID(id uint) (*dto.ProductResponse, error) {
+	var product models.Product
+	if err := s.db.Preload("Category").First(&product, id).Error; err != nil {
+		return nil, err
+	}
+	return mapProductToResponse(&product), nil
+}
+
+// ⭐ เติม Logic ให้ GetProducts
 func (s *productService) GetProducts(query *dto.ProductQuery) (*dto.PaginatedProductResponse, error) {
 	var products []models.Product
 	var total int64
 	dbQuery := s.db.Model(&models.Product{})
 
+	// Apply filters
 	if query.CategoryID != "" {
 		dbQuery = dbQuery.Where("category_id = ?", query.CategoryID)
 	}
@@ -46,15 +87,19 @@ func (s *productService) GetProducts(query *dto.ProductQuery) (*dto.PaginatedPro
 		searchTerm := "%" + query.Search + "%"
 		dbQuery = dbQuery.Where("name ILIKE ?", searchTerm)
 	}
+
+	// Get total count
 	if err := dbQuery.Count(&total).Error; err != nil {
 		return nil, err
 	}
 
+	// Apply pagination and get results
 	offset := (query.Page - 1) * query.Limit
 	if err := dbQuery.Preload("Category").Offset(offset).Limit(query.Limit).Find(&products).Error; err != nil {
 		return nil, err
 	}
 
+	// Map to response
 	var productResponses []dto.ProductResponse
 	for _, p := range products {
 		productResponses = append(productResponses, *mapProductToResponse(&p))
@@ -71,90 +116,97 @@ func (s *productService) GetProducts(query *dto.ProductQuery) (*dto.PaginatedPro
 	}, nil
 }
 
-func (s *productService) GetProductByID(id string) (*dto.ProductResponse, error) {
+func (s *productService) UpdateProduct(id uint, req *dto.UpdateProductRequest) (*dto.ProductResponse, error) {
 	var product models.Product
-	if err := s.db.Preload("Category").First(&product, "id = ?", id).Error; err != nil {
-		return nil, errors.New("product not found")
-	}
-	return mapProductToResponse(&product), nil
-}
-
-func (s *productService) CreateProduct(req *dto.CreateProductRequest) (*dto.ProductResponse, error) {
-	product := models.Product{
-		Name:           req.Name,
-		Description:    req.Description,
-		Brand:          &req.Brand,
-		ProductModel:   &req.ProductModel,
-		CategoryID:     req.CategoryID,
-		TrackingMethod: models.TrackingMethod(req.TrackingMethod),
-	}
-	if err := s.db.Create(&product).Error; err != nil {
+	if err := s.db.First(&product, id).Error; err != nil {
 		return nil, err
 	}
-	// Fetch again to preload category for the response
-	return s.GetProductByID(strconv.Itoa(int(product.ID)))
-}
 
-// ⭐ เติม Logic ให้ UpdateProduct
-func (s *productService) UpdateProduct(id string, req *dto.UpdateProductRequest) (*dto.ProductResponse, error) {
-	var product models.Product
-	if err := s.db.First(&product, "id = ?", id).Error; err != nil {
-		return nil, errors.New("product not found")
-	}
-
+	// อัปเดตเฉพาะ field ที่มีค่า
 	if req.Name != "" {
 		product.Name = req.Name
 	}
 	if req.Description != "" {
 		product.Description = req.Description
 	}
-	if req.CategoryID != 0 {
-		product.CategoryID = req.CategoryID
+	if req.Brand != "" {
+		product.Brand = req.Brand
 	}
-	if req.ImageURL != "" {
-		product.ImageURL = req.ImageURL
+	if req.ProductModel != "" {
+		product.ProductModel = req.ProductModel
+	}
+	if req.Stock >= 0 { // ⭐ ใช้ Stock ตัวเดียว
+		product.Stock = req.Stock
+	}
+	if req.MinStock >= 0 {
+		product.MinStock = req.MinStock
+	}
+	if req.Unit != "" {
+		product.Unit = req.Unit
+	}
+	if req.CategoryID > 0 {
+		product.CategoryID = req.CategoryID
 	}
 
 	if err := s.db.Save(&product).Error; err != nil {
 		return nil, err
 	}
-	return s.GetProductByID(id)
-}
 
-// ⭐ เติม Logic ให้ DeleteProduct
-func (s *productService) DeleteProduct(id string) error {
-	// GORM จะทำการ soft delete อัตโนมัติถ้า Model มี gorm.DeletedAt
-	if err := s.db.Delete(&models.Product{}, "id = ?", id).Error; err != nil {
-		return err
-	}
-	return nil
-}
-
-func (s *productService) GetProductForUpdate(tx *gorm.DB, id string) (*models.Product, error) {
-	var product models.Product
-	if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).First(&product, "id = ?", id).Error; err != nil {
+	// โหลดข้อมูลใหม่
+	if err := s.db.Preload("Category").First(&product, product.ID).Error; err != nil {
 		return nil, err
 	}
-	return &product, nil
+
+	return mapProductToResponse(&product), nil
 }
 
-func (s *productService) UpdateStock(tx *gorm.DB, id string, change int) error {
-	// This logic now needs to find the relevant ASSET and update its stock.
-	// This highlights the tight coupling. For now, we'll leave a placeholder.
-	// In the final design, RequestService should talk to AssetService.
-	fmt.Printf("Updating stock for Product ID %s, change %d. (This should be Asset)\n", id, change)
-	return nil
+func (s *productService) DeleteProduct(id uint) error {
+	return s.db.Delete(&models.Product{}, id).Error
 }
 
-// --- Helper ---
+func (s *productService) UpdateStock(tx *gorm.DB, productID uint, quantityChange int) error {
+	// ใช้ gorm.Expr เพื่อบวกลบค่าใน database โดยตรงอย่างปลอดภัย
+	// quantityChange สามารถเป็นได้ทั้งค่าบวก (เติมสต็อก) และค่าลบ (เบิกของ)
+	return tx.Model(&models.Product{}).
+		Where("id = ?", productID).
+		Update("quantity", gorm.Expr("quantity + ?", quantityChange)).Error
+}
+
+// ⭐ สร้าง Product Code อัตโนมัติ
+func (s *productService) generateProductCode() (string, error) {
+	var count int64
+	if err := s.db.Model(&models.Product{}).Count(&count).Error; err != nil {
+		return "", err
+	}
+
+	// สร้าง code ใหม่
+	nextID := count + 1
+	return fmt.Sprintf("PRD%04d", nextID), nil
+}
+
+// ⭐ แก้ไข mapProductToResponse
 func mapProductToResponse(p *models.Product) *dto.ProductResponse {
 	res := &dto.ProductResponse{
-		ID:             p.ID,
-		Name:           p.Name,
-		TrackingMethod: string(p.TrackingMethod),
+		ID:           p.ID,
+		Code:         p.Code,
+		Name:         p.Name,
+		Description:  p.Description,
+		Brand:        p.Brand,
+		ProductModel: p.ProductModel,
+		Stock:        p.Stock, // ⭐ ใช้ Stock ตัวเดียว
+		MinStock:     p.MinStock,
+		Unit:         p.Unit,
+		Status:       string(p.Status),
+		CreatedAt:    p.CreatedAt,
+		UpdatedAt:    p.UpdatedAt,
 	}
+
 	if p.Category.ID != 0 {
-		res.Category = &dto.CategoryResponse{ID: p.Category.ID, Name: p.Category.Name}
+		res.Category = &dto.CategoryResponse{
+			ID:   p.Category.ID,
+			Name: p.Category.Name,
+		}
 	}
+
 	return res
 }

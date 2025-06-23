@@ -1,4 +1,3 @@
-// migrations/m25680619123002_create_core_tables.go
 package migrations
 
 import (
@@ -11,9 +10,25 @@ import (
 var M25680619123002CreateCoreTables = &gormigrate.Migration{
 	ID: "25680619123002_create_core_tables",
 	Migrate: func(tx *gorm.DB) error {
-		return tx.AutoMigrate(&models.Category{}, &models.Department{})
+		// สร้างตารางแยกกันเพื่อให้แน่ใจว่าสร้างครบ
+		if err := tx.AutoMigrate(&models.Category{}); err != nil {
+			return err
+		}
+
+		if err := tx.AutoMigrate(&models.Department{}); err != nil {
+			return err
+		}
+
+		return nil
 	},
 	Rollback: func(tx *gorm.DB) error {
-		return tx.Migrator().DropTable("categories", "departments")
+		// ลบในลำดับที่ถูกต้อง (ลบ foreign key ก่อน)
+		if err := tx.Migrator().DropTable("departments"); err != nil {
+			return err
+		}
+		if err := tx.Migrator().DropTable("categories"); err != nil {
+			return err
+		}
+		return nil
 	},
 }

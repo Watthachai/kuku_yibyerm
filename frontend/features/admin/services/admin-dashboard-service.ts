@@ -46,12 +46,52 @@ export class AdminDashboardService {
       }
 
       const responseData = await response.json();
-      // ใช้แพทเทิร์นการตรวจสอบที่ปลอดภัย: ถ้ามี data.data ให้ใช้, ถ้าไม่มีให้ใช้ data ทั้งก้อน
-      // และถ้าทั้งหมดไม่มีค่า ให้ fallback ไปที่ mock data ใน catch block
-      return responseData.data || responseData;
+
+      // ⭐ เพิ่ม debug logs เพื่อดูข้อมูลที่ได้รับจาก Backend
+      console.log("🔍 Raw response from backend:", responseData);
+      console.log("🔍 Response structure check:");
+      console.log("  - Has 'data' key:", !!responseData.data);
+      console.log("  - Direct data:", responseData);
+
+      // Backend ส่งมาในรูปแบบ { "success": true, "data": {...} }
+      const statsData = responseData.data || responseData;
+
+      console.log("🔍 Final stats data:", statsData);
+      console.log("🔍 Stats data keys:", Object.keys(statsData));
+
+      // ⭐ ตรวจสอบ field mapping
+      const mappedStats: AdminStats = {
+        totalUsers: statsData.total_users || 0,
+        totalProducts: statsData.total_products || 0,
+        totalDepartments: statsData.total_departments || 0,
+        pendingRequests: statsData.pending_requests || 0,
+        approvedRequests: statsData.approved_requests || 0,
+        rejectedRequests: statsData.rejected_requests || 0,
+        completedRequests: statsData.completed_requests || 0,
+        monthlyRequests: statsData.monthly_requests || 0,
+        activeUsers: statsData.active_users || 0,
+        lowStockProducts: statsData.low_stock_products || 0,
+      };
+
+      console.log("🎯 Mapped stats:", mappedStats);
+      return mappedStats;
     } catch (error) {
       console.error("Error fetching admin stats:", error);
-      return this.getMockStats(); // Fallback to mock data on error
+      // ⭐ เปลี่ยน mock data ให้ตรงกับข้อมูลจริงจาก Backend
+      const mockStats = {
+        totalUsers: 888,
+        totalProducts: 888,
+        totalDepartments: 888,
+        pendingRequests: 888,
+        approvedRequests: 888,
+        rejectedRequests: 888,
+        completedRequests: 888,
+        monthlyRequests: 888,
+        activeUsers: 888,
+        lowStockProducts: 888,
+      };
+      console.log("🔄 Using mock data:", mockStats);
+      return mockStats;
     }
   }
 
@@ -173,13 +213,15 @@ export class AdminDashboardService {
   private static getMockStats(): AdminStats {
     return {
       totalUsers: 89,
-      totalItems: 156,
+      totalProducts: 156,
+      totalDepartments: 15,
       pendingRequests: 12,
       approvedRequests: 45,
       rejectedRequests: 3,
-      activeUsers: 67,
-      totalDepartments: 15,
+      completedRequests: 89,
       monthlyRequests: 28,
+      activeUsers: 67,
+      lowStockProducts: 8,
     };
   }
 
@@ -204,17 +246,28 @@ export class AdminDashboardService {
   private static getMockSystemStats(): SystemStats {
     return {
       requestsByMonth: [
-        { month: "ม.ค.", count: 25 },
-        { month: "ก.พ.", count: 30 },
-        { month: "มี.ค.", count: 28 },
+        { month: "2024-10", count: 25 },
+        { month: "2024-11", count: 30 },
+        { month: "2024-12", count: 28 },
+        { month: "2025-01", count: 35 },
       ],
       topRequestedItems: [
-        { name: "เครื่องฉายภาพ", count: 15 },
-        { name: "เครื่องพิมพ์", count: 10 },
+        { name: "เครื่องฉายภาพ Epson", count: 15 },
+        { name: "เครื่องพิมพ์ HP LaserJet", count: 12 },
+        { name: "กล้องดิจิตอล Canon", count: 8 },
+        { name: "โครงการพรีเซนเตชั่น", count: 6 },
       ],
       departmentUsage: [
         { department: "คณะเกษตร", count: 20 },
         { department: "คณะวิศวกรรม", count: 15 },
+        { department: "คณะศึกษาศาสตร์", count: 12 },
+        { department: "คณะวิทยาศาสตร์", count: 8 },
+      ],
+      requestsByStatus: [
+        { status: "PENDING", count: 12 },
+        { status: "APPROVED", count: 45 },
+        { status: "REJECTED", count: 3 },
+        { status: "COMPLETED", count: 89 },
       ],
     };
   }

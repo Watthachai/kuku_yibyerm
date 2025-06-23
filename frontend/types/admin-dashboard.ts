@@ -1,14 +1,24 @@
 export interface AdminStats {
   totalUsers: number;
-  totalItems: number;
+  totalProducts: number;
+  totalDepartments: number;
   pendingRequests: number;
   approvedRequests: number;
   rejectedRequests: number;
-  activeUsers: number;
-  totalDepartments: number;
+  completedRequests: number;
   monthlyRequests: number;
+  activeUsers: number;
+  lowStockProducts: number;
 }
 
+export interface SystemStats {
+  requestsByMonth: { month: string; count: number }[];
+  topRequestedItems: { name: string; count: number }[];
+  departmentUsage: { department: string; count: number }[];
+  requestsByStatus: { status: string; count: number }[]; // ⭐ เพิ่มใหม่
+}
+
+// เหมือนเดิม
 export interface RecentActivity {
   id: string;
   type: "REQUEST" | "APPROVAL" | "REJECTION" | "RETURN" | "USER_CREATED";
@@ -39,10 +49,4 @@ export interface UserManagementData {
   lastLogin?: string;
   createdAt: string;
   requestCount: number;
-}
-
-export interface SystemStats {
-  requestsByMonth: { month: string; count: number }[];
-  topRequestedItems: { name: string; count: number }[];
-  departmentUsage: { department: string; count: number }[];
 }

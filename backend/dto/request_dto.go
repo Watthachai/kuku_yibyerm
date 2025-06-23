@@ -1,22 +1,36 @@
-// dto/request_dto.go
 package dto
 
 import "time"
 
+// --- DTOs for Request Actions ---
+
 type CreateRequestItemInput struct {
-	ProductID uint `json:"product_id" binding:"required"` // ⭐️ แก้จาก AssetID เป็น ProductID
+	ProductID uint `json:"product_id" binding:"required"`
 	Quantity  int  `json:"quantity" binding:"required,min=1"`
 }
 
+// ⭐ เพิ่ม DTO ที่ขาดไป
+type CreateRequestInput struct {
+	Purpose string                   `json:"purpose" binding:"required"`
+	Notes   string                   `json:"notes"`
+	Items   []CreateRequestItemInput `json:"items" binding:"required,min=1"`
+}
+
 type CreateRequestRequest struct {
-	Purpose string                   `json:"purpose"` // ⭐️ เพิ่ม Purpose
-	Notes   string                   `json:"notes"`   // ⭐️ แก้จาก RequestNote เป็น Notes
+	Purpose string                   `json:"purpose"`
+	Notes   string                   `json:"notes"`
 	Items   []CreateRequestItemInput `json:"items" binding:"required,min=1"`
 }
 
 type AdminUpdateStatusRequest struct {
 	Status    string `json:"status" binding:"required,oneof=APPROVED REJECTED ISSUED COMPLETED CANCELLED"`
-	AdminNote string `json:"admin_note"` // ⭐️ ใช้ AdminNote ให้ตรงกับ Service
+	AdminNote string `json:"admin_note"`
+}
+
+// ⭐ เพิ่ม DTO สำหรับ UpdateRequestStatus
+type UpdateRequestStatusInput struct {
+	Status string `json:"status" binding:"required,oneof=APPROVED REJECTED ISSUED COMPLETED CANCELLED"`
+	Notes  string `json:"notes"`
 }
 
 // --- Response DTOs ---
@@ -27,20 +41,26 @@ type RequestItemResponse struct {
 }
 
 type RequestResponse struct {
-	ID        uint                  `json:"id"`
-	Status    string                `json:"status"`
-	CreatedAt time.Time             `json:"created_at"`
-	User      *UserProfileResponse  `json:"user,omitempty"`
-	Items     []RequestItemResponse `json:"items"`
-
-	// ⭐️ เพิ่ม Field ที่ขาดไปเพื่อให้ Service ทำงานได้
+	ID            uint      `json:"id"`
 	RequestNumber string    `json:"request_number"`
+	Status        string    `json:"status"`
 	Purpose       string    `json:"purpose"`
-	RequestDate   time.Time `json:"request_date"`
+	Notes         string    `json:"notes,omitempty"`
 	AdminNote     string    `json:"admin_note,omitempty"`
+	RequestDate   time.Time `json:"request_date"`
+	CreatedAt     time.Time `json:"created_at"`
+
+	// เพิ่ม Field ที่ขาดไปทั้งหมด
+	ApprovedDate  *time.Time `json:"approved_date,omitempty"`
+	IssuedDate    *time.Time `json:"issued_date,omitempty"`
+	CompletedDate *time.Time `json:"completed_date,omitempty"`
+
+	// ข้อมูล User ที่เกี่ยวข้อง
+	User       *UserProfileResponse  `json:"user,omitempty"`
+	ApprovedBy *UserProfileResponse  `json:"approved_by,omitempty"`
+	Items      []RequestItemResponse `json:"items"`
 }
 
-// --- ⭐ เพิ่ม Struct ใหม่ที่นี่ ---
 type RequestQuery struct {
 	Page   int    `form:"page,default=1"`
 	Limit  int    `form:"limit,default=10"`

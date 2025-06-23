@@ -144,7 +144,7 @@
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
-    
+
     /* KU Colors */
     --ku-green: 150 100% 30%;
     --ku-green-dark: 150 100% 25%;
@@ -192,32 +192,32 @@
   .ku-green {
     @apply bg-ku-green text-white;
   }
-  
+
   .ku-green-dark {
     @apply bg-ku-green-dark;
   }
-  
+
   .text-ku-green {
     color: hsl(var(--ku-green));
   }
-  
+
   .bg-ku-green {
     background-color: hsl(var(--ku-green));
   }
-  
+
   .bg-ku-green-dark {
     background-color: hsl(var(--ku-green-dark));
   }
-  
+
   .border-ku-green {
     border-color: hsl(var(--ku-green));
   }
-  
+
   /* Fix for mobile safe area */
   .safe-area-pb {
     padding-bottom: env(safe-area-inset-bottom);
   }
-  
+
   /* Line clamp utilities */
   .line-clamp-1 {
     overflow: hidden;
@@ -225,14 +225,14 @@
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 1;
   }
-  
+
   .line-clamp-2 {
     overflow: hidden;
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
   }
-  
+
   .line-clamp-3 {
     overflow: hidden;
     display: -webkit-box;
@@ -293,7 +293,7 @@
     width: 100%;
     overflow-x: hidden;
   }
-  
+
   .admin-buttons-container button {
     width: 100%;
     min-width: unset;
@@ -303,7 +303,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  
+
   /* Tab layout for mobile */
   .admin-tabs {
     display: flex;
@@ -311,7 +311,7 @@
     gap: 4px;
     margin-bottom: 16px;
   }
-  
+
   .admin-tabs button {
     flex: 1;
     min-width: 0;
@@ -325,9 +325,59 @@
     padding: 10px 12px;
     font-size: 13px;
   }
-  
+
   .admin-tabs button {
     padding: 6px 8px;
     font-size: 11px;
+  }
+}
+
+/* Print styles */
+@media print {
+  * {
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  body {
+    font-size: 12pt;
+    line-height: 1.4;
+  }
+
+  .print\:hidden {
+    display: none !important;
+  }
+
+  .print\:block {
+    display: block !important;
+  }
+
+  .print\:shadow-none {
+    box-shadow: none !important;
+  }
+
+  .print\:border {
+    border: 1px solid #e5e7eb !important;
+  }
+
+  /* Page breaks */
+  .print\:page-break-before {
+    page-break-before: always;
+  }
+
+  .print\:page-break-after {
+    page-break-after: always;
+  }
+
+  .print\:page-break-inside-avoid {
+    page-break-inside: avoid;
+  }
+
+  /* Remove backgrounds for better printing */
+  .bg-gray-50,
+  .bg-blue-50,
+  .bg-green-50,
+  .bg-orange-50 {
+    background-color: #f9fafb !important;
   }
 }

@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import Image from "next/image";
 import {
   Search,
   Filter,
@@ -19,10 +20,41 @@ import {
   Package,
 } from "lucide-react";
 import { toast } from "sonner";
+// ⭐ Import ProductService ที่มีอยู่แล้ว
+import { ProductService } from "@/features/admin/services/product-service";
+import { Product } from "@/types/product";
 
-// Extend API Category to include productCount
-interface Category extends APICategory {
+// ⭐ Define Category type ให้ตรงกับระบบ
+interface Category {
+  id: number;
+  name: string;
+  description?: string;
+  icon?: string;
+  isActive: boolean;
   productCount?: number;
+}
+
+// ⭐ Define Asset type สำหรับ Mobile Shopping (แปลงจาก Backend)
+interface ShoppingAsset {
+  id: number;
+  name: string;
+  assetCode: string;
+  description?: string;
+  imageUrl?: string;
+  status: "AVAILABLE" | "IN_USE" | "MAINTENANCE" | "DAMAGED";
+  quantity: number;
+  locationBuilding?: string;
+  locationRoom?: string;
+  rating?: number;
+  category: {
+    id: number;
+    name: string;
+    icon?: string;
+  };
+  department: {
+    id: number;
+    name: string;
+  };
 }
 
 interface Props {
@@ -35,7 +67,7 @@ export function UserCatalogShoppingView({ className }: Props) {
   const { addItem, getItemQuantity, getTotalItems } = useCartStore();
 
   // State
-  const [products, setProducts] = useState<Product[]>([]);
+  const [assets, setAssets] = useState<ShoppingAsset[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState(
@@ -46,38 +78,89 @@ export function UserCatalogShoppingView({ className }: Props) {
   );
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-  // Load data from API
+  // ⭐ ฟังก์ชันแปลง Product type เป็น ShoppingAsset type
+  const convertProductToAsset = (products: Product[]): ShoppingAsset[] => {
+    return products.map((product) => ({
+      id: product.id,
+      name: product.name,
+      assetCode: product.code || product.id.toString(),
+      description: product.description,
+      imageUrl: undefined, // ยังไม่มี image URL
+      status: "AVAILABLE" as const,
+
+      // ⭐ ใช้ stock แทน quantity
+      quantity: product.stock || 0, // แปลง stock เป็น quantity สำหรับ Mobile UI
+
+      locationBuilding: undefined,
+      locationRoom: undefined,
+      rating: undefined,
+      category: {
+        id: Number(product.category?.id) || 0,
+        name: product.category?.name || "ไม่ระบุหมวดหมู่",
+        icon: "📦",
+      },
+      department: {
+        id: 0,
+        name: "ทั่วไป",
+      },
+    }));
+  };
+
+  // ⭐ Load data from API
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
 
-      const [productsData, categoriesData] = await Promise.all([
-        ProductService.getProducts({
-          search: searchTerm || undefined,
-          categoryId: selectedCategory || undefined,
-          status: "AVAILABLE",
-        }),
-        ProductService.getCategories(),
-      ]);
+      // เรียกใช้ ProductService ที่มีอยู่แล้ว
+      const products = await ProductService.getProducts({
+        search: searchTerm || undefined,
+      });
 
-      setProducts(productsData.products);
+      console.log("Loaded products:", products);
 
-      // Add productCount to categories
-      const categoriesWithCount = categoriesData.map((category) => ({
+      // แปลง Products เป็น Assets สำหรับ Mobile Shopping
+      const convertedAssets = convertProductToAsset(products);
+
+      // Filter ตาม category ถ้ามี
+      let filteredAssets = convertedAssets;
+      if (selectedCategory) {
+        filteredAssets = convertedAssets.filter(
+          (asset) => asset.category.id.toString() === selectedCategory
+        );
+      }
+
+      setAssets(filteredAssets);
+
+      // สร้าง categories จาก products ที่มี
+      const uniqueCategories = Array.from(
+        new Map(
+          products
+            .filter((p) => p.category && p.category.id)
+            .map((p) => [
+              p.category!.id,
+              {
+                id: p.category!.id,
+                name: p.category!.name,
+                icon: "📦",
+                isActive: true,
+                productCount: 0,
+              },
+            ])
+        ).values()
+      );
+
+      // นับจำนวนสินค้าแต่ละหมวดหมู่
+      const categoriesWithCount = uniqueCategories.map((category) => ({
         ...category,
-        productCount: productsData.products.filter(
-          (p) => p.category.id === category.id
+        productCount: convertedAssets.filter(
+          (asset) => asset.category.id === category.id
         ).length,
       }));
 
       setCategories(categoriesWithCount);
     } catch (error) {
       console.error("Failed to load data:", error);
-      toast({
-        title: "เกิดข้อผิดพลาด",
-        description: "ไม่สามารถโหลดข้อมูลครุภัณฑ์ได้",
-        variant: "destructive",
-      });
+      toast.error("ไม่สามารถโหลดข้อมูลครุภัณฑ์ได้");
     } finally {
       setLoading(false);
     }
@@ -112,42 +195,31 @@ export function UserCatalogShoppingView({ className }: Props) {
   };
 
   // Handle add to cart
-  const handleAddToCart = (product: Product) => {
-    if (product.availableQuantity <= 0) {
-      toast({
-        title: "ไม่สามารถเพิ่มได้",
-        description: "ครุภัณฑ์นี้ไม่มีในสต็อก",
-        variant: "destructive",
-      });
+  const handleAddToCart = (asset: ShoppingAsset) => {
+    if (asset.quantity <= 0) {
+      toast.error("ครุภัณฑ์นี้ไม่มีในสต็อก");
       return;
     }
 
-    addItem(product, 1);
-    toast({
-      title: "เพิ่มลงตะกร้าแล้ว",
-      description: `${product.name} ถูกเพิ่มลงตะกร้าเรียบร้อยแล้ว`,
-    });
+    addItem(asset, 1);
+    toast.success(`${asset.name} ถูกเพิ่มลงตะกร้าเรียบร้อยแล้ว`);
   };
 
   // Handle quantity change
-  const handleQuantityChange = (product: Product, change: number) => {
-    const currentQuantity = getItemQuantity(product.id);
+  const handleQuantityChange = (asset: ShoppingAsset, change: number) => {
+    const currentQuantity = getItemQuantity(asset.id);
     const newQuantity = currentQuantity + change;
 
     if (newQuantity <= 0) {
       return;
     }
 
-    if (newQuantity > product.availableQuantity) {
-      toast({
-        title: "จำนวนเกินที่มีในสต็อก",
-        description: `มีครุภัณฑ์นี้เหลือเพียง ${product.availableQuantity} ชิ้น`,
-        variant: "destructive",
-      });
+    if (newQuantity > asset.quantity) {
+      toast.error(`มีครุภัณฑ์นี้เหลือเพียง ${asset.quantity} ชิ้น`);
       return;
     }
 
-    addItem(product, change);
+    addItem(asset, change);
   };
 
   if (loading) {
@@ -173,7 +245,7 @@ export function UserCatalogShoppingView({ className }: Props) {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => router.push("/mobile/cart")}
+              onClick={() => router.push("/cart")}
               className="relative"
             >
               <ShoppingCart className="w-4 h-4 mr-2" />
@@ -223,16 +295,18 @@ export function UserCatalogShoppingView({ className }: Props) {
                     }}
                     className="w-full justify-start"
                   >
-                    ทั้งหมด ({products.length})
+                    ทั้งหมด ({assets.length})
                   </Button>
                   {categories.map((category) => (
                     <Button
                       key={category.id}
                       variant={
-                        selectedCategory === category.id ? "default" : "outline"
+                        selectedCategory === category.id.toString()
+                          ? "default"
+                          : "outline"
                       }
                       onClick={() => {
-                        handleCategoryChange(category.id);
+                        handleCategoryChange(category.id.toString());
                         setIsFilterOpen(false);
                       }}
                       className="w-full justify-start"
@@ -248,7 +322,10 @@ export function UserCatalogShoppingView({ className }: Props) {
 
           {selectedCategory && (
             <Badge variant="secondary" className="text-xs">
-              {categories.find((c) => c.id === selectedCategory)?.name}
+              {
+                categories.find((c) => c.id.toString() === selectedCategory)
+                  ?.name
+              }
             </Badge>
           )}
         </div>
@@ -256,7 +333,7 @@ export function UserCatalogShoppingView({ className }: Props) {
 
       {/* Products Grid */}
       <div className="p-4">
-        {products.length === 0 ? (
+        {assets.length === 0 ? (
           <div className="text-center py-12">
             <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <p className="text-gray-500 text-lg mb-2">ไม่พบครุภัณฑ์</p>
@@ -266,19 +343,20 @@ export function UserCatalogShoppingView({ className }: Props) {
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-4">
-            {products.map((product) => {
+            {assets.map((asset) => {
               const isAvailable =
-                product.status === "AVAILABLE" && product.availableQuantity > 0;
-              const cartQuantity = getItemQuantity(product.id);
+                asset.status === "AVAILABLE" && asset.quantity > 0;
+              const cartQuantity = getItemQuantity(asset.id);
 
               return (
-                <Card key={product.id} className="overflow-hidden">
+                <Card key={asset.id} className="overflow-hidden">
                   <div className="aspect-square bg-gray-100 relative">
-                    {product.imageUrl ? (
-                      <img
-                        src={product.imageUrl}
-                        alt={product.name}
-                        className="w-full h-full object-cover"
+                    {asset.imageUrl ? (
+                      <Image
+                        src={asset.imageUrl}
+                        alt={asset.name}
+                        fill
+                        className="object-cover"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
@@ -297,15 +375,17 @@ export function UserCatalogShoppingView({ className }: Props) {
 
                   <CardContent className="p-3">
                     <h3 className="font-medium text-sm text-gray-900 line-clamp-2 mb-1">
-                      {product.name}
+                      {asset.name}
                     </h3>
 
-                    <p className="text-xs text-gray-500 mb-2">{product.code}</p>
+                    <p className="text-xs text-gray-500 mb-2">
+                      {asset.assetCode}
+                    </p>
 
                     {/* Category */}
                     <div className="flex items-center text-xs text-gray-600 mb-2">
-                      <span className="mr-1">{product.category.icon}</span>
-                      {product.category.name}
+                      <span className="mr-1">{asset.category.icon}</span>
+                      {asset.category.name}
                     </div>
 
                     {/* Location & Quantity */}
@@ -313,18 +393,20 @@ export function UserCatalogShoppingView({ className }: Props) {
                       <div className="flex items-center">
                         <MapPin className="w-3 h-3 mr-1" />
                         <span className="truncate">
-                          {product.location || "ไม่ระบุ"}
+                          {asset.locationBuilding && asset.locationRoom
+                            ? `${asset.locationBuilding} ${asset.locationRoom}`
+                            : "ไม่ระบุ"}
                         </span>
                       </div>
-                      <span>คงเหลือ: {product.availableQuantity}</span>
+                      <span>คงเหลือ: {asset.quantity}</span>
                     </div>
 
                     {/* Rating */}
-                    {product.rating && (
+                    {asset.rating && (
                       <div className="flex items-center mb-3">
                         <Star className="w-3 h-3 text-yellow-400 fill-current" />
                         <span className="text-xs text-gray-600 ml-1">
-                          {product.rating.toFixed(1)}
+                          {asset.rating.toFixed(1)}
                         </span>
                       </div>
                     )}
@@ -335,7 +417,7 @@ export function UserCatalogShoppingView({ className }: Props) {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleQuantityChange(product, -1)}
+                          onClick={() => handleQuantityChange(asset, -1)}
                           className="h-8 w-8 p-0"
                         >
                           <Minus className="w-3 h-3" />
@@ -348,8 +430,8 @@ export function UserCatalogShoppingView({ className }: Props) {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleQuantityChange(product, 1)}
-                          disabled={cartQuantity >= product.availableQuantity}
+                          onClick={() => handleQuantityChange(asset, 1)}
+                          disabled={cartQuantity >= asset.quantity}
                           className="h-8 w-8 p-0"
                         >
                           <Plus className="w-3 h-3" />
@@ -357,7 +439,7 @@ export function UserCatalogShoppingView({ className }: Props) {
                       </div>
                     ) : (
                       <Button
-                        onClick={() => handleAddToCart(product)}
+                        onClick={() => handleAddToCart(asset)}
                         disabled={!isAvailable}
                         className="w-full bg-ku-green hover:bg-ku-green-dark text-xs h-8"
                       >

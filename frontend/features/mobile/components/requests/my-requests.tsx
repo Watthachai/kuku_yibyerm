@@ -1,208 +1,377 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { toast } from "sonner";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Package, Calendar, Clock } from "lucide-react";
+import {
+  Clock,
+  Package,
+  Calendar,
+  FileText,
+  RefreshCw,
+  ChevronRight,
+  ShoppingBag,
+} from "lucide-react";
+import { RequestService } from "../../services/request-service";
+
+interface Request {
+  id: number;
+  request_number: string;
+  status: string;
+  purpose: string;
+  request_date: string;
+  items: Array<{
+    quantity: number;
+    product: {
+      id: number;
+      name: string;
+    };
+  }>;
+}
+
+interface ApiResponse {
+  requests: Request[];
+}
 
 export function MyRequests() {
-  const [requests, setRequests] = useState<BorrowRequest[]>([]);
+  const [requests, setRequests] = useState<Request[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("all");
-
-  useEffect(() => {
-    loadRequests();
-  }, []);
+  const [error, setError] = useState<string | null>(null);
 
   const loadRequests = async () => {
     try {
       setLoading(true);
       const data = await RequestService.getMyRequests();
-      setRequests(data.requests);
+
+      if (Array.isArray(data)) {
+        setRequests(data);
+      } else if (data && typeof data === "object" && "requests" in data) {
+        const apiResponse = data as ApiResponse;
+        if (Array.isArray(apiResponse.requests)) {
+          setRequests(apiResponse.requests);
+        } else {
+          setRequests([]);
+        }
+      } else {
+        setRequests([]);
+      }
+      setError(null);
     } catch (error) {
-      console.error("Failed to load requests:", error);
-      toast.error("เกิดข้อผิดพลาด: ไม่สามารถโหลดคำขอได้");
+      console.error("❌ Failed to load requests:", error);
+      setError(
+        error instanceof Error ? error.message : "ไม่สามารถโหลดข้อมูลได้"
+      );
+      setRequests([]);
     } finally {
       setLoading(false);
     }
   };
 
+  useEffect(() => {
+    loadRequests();
+  }, []);
+
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "PENDING": return "bg-yellow-100 text-yellow-800";
-      case "APPROVED": return "bg-green-100 text-green-800";
-      case "REJECTED": return "bg-red-100 text-red-800";
-      case "BORROWED": return "bg-blue-100 text-blue-800";
-      case "RETURNED": return "bg-gray-100 text-gray-800";
-      case "OVERDUE": return "bg-red-100 text-red-800";
-      default: return "bg-gray-100 text-gray-800";
+      case "PENDING":
+        return "bg-amber-500";
+      case "APPROVED":
+        return "bg-emerald-500";
+      case "REJECTED":
+        return "bg-red-500";
+      case "ISSUED":
+        return "bg-blue-500";
+      case "COMPLETED":
+        return "bg-slate-500";
+      default:
+        return "bg-gray-400";
     }
   };
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case "PENDING": return "รออนุมัติ";
-      case "APPROVED": return "อนุมัติแล้ว";
-      case "REJECTED": return "ปฏิเสธ";
-      case "ISSUED": return "เบิกแล้ว";
-      case "COMPLETED": return "เสร็จสิ้น";
-      default: return status;
+      case "PENDING":
+        return "รอดำเนินการ";
+      case "APPROVED":
+        return "อนุมัติแล้ว";
+      case "REJECTED":
+        return "ไม่อนุมัติ";
+      case "ISSUED":
+        return "เบิกแล้ว";
+      case "COMPLETED":
+        return "เสร็จสิ้น";
+      default:
+        return status;
     }
   };
 
-  const filteredRequests = activeTab === "all" 
-    ? requests 
-    : requests.filter(req => req.status === activeTab);
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("th-TH", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  };
 
-  const stats = requests.reduce((acc, req) => {
-    const status = req.status.toLowerCase();
-    acc[status] = (acc[status] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
+  const formatTime = (dateString: string) => {
+    return new Date(dateString).toLocaleTimeString("th-TH", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  const getTotalItems = (
+    items: Array<{ quantity: number; product: { id: number; name: string } }>
+  ) => {
+    return items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
+  };
 
   if (loading) {
     return (
-      <div className="p-4 space-y-4">
-        {[...Array(3)].map((_, i) => (
-          <div key={i} className="h-32 bg-gray-200 rounded-lg animate-pulse" />
-        ))}
+      <div className="bg-gray-50 min-h-screen">
+        {/* Header */}
+        <div className="bg-white sticky top-0 z-10 border-b border-gray-100 shadow-sm">
+          <div className="px-4 py-4">
+            <h1 className="text-lg font-semibold text-gray-900">
+              คำขอเบิกของฉัน
+            </h1>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-center py-20">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-10 w-10 border-3 border-blue-500 border-t-transparent mx-auto mb-4"></div>
+            <p className="text-gray-600 text-sm font-medium">
+              กำลังโหลดข้อมูล...
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-gray-50 min-h-screen">
+        {/* Header */}
+        <div className="bg-white sticky top-0 z-10 border-b border-gray-100 shadow-sm">
+          <div className="px-4 py-4">
+            <h1 className="text-lg font-semibold text-gray-900">
+              คำขอเบิกของฉัน
+            </h1>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-center py-20 px-4">
+          <div className="text-center max-w-sm">
+            <div className="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <Package className="w-8 h-8 text-red-500" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              เกิดข้อผิดพลาด
+            </h3>
+            <p className="text-gray-600 text-sm mb-6 leading-relaxed">
+              {error}
+            </p>
+            <Button
+              onClick={loadRequests}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg font-medium"
+            >
+              ลองใหม่
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!Array.isArray(requests) || requests.length === 0) {
+    return (
+      <div className="bg-gray-50 min-h-screen">
+        {/* Header */}
+        <div className="bg-white sticky top-0 z-10 border-b border-gray-100 shadow-sm">
+          <div className="px-4 py-4">
+            <h1 className="text-lg font-semibold text-gray-900">
+              คำขอเบิกของฉัน
+            </h1>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-center py-20 px-4">
+          <div className="text-center max-w-sm">
+            <div className="w-20 h-20 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <ShoppingBag className="w-10 h-10 text-blue-500" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-3">
+              ยังไม่มีคำขอเบิก
+            </h3>
+            <p className="text-gray-600 text-sm mb-8 leading-relaxed">
+              เมื่อคุณส่งคำขอเบิกครุภัณฑ์แล้ว จะแสดงรายการและสถานะที่นี่
+            </p>
+            <Button
+              onClick={() => window.history.back()}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-2.5 rounded-lg font-medium"
+            >
+              เลือกสินค้า
+            </Button>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-white sticky top-0 z-10 p-4 border-b">
-        <h1 className="text-xl font-bold text-gray-900">คำขอเบิกของฉัน</h1>
-        <p className="text-sm text-gray-600">ติดตามสถานะคำขอเบิกครุภัณฑ์</p>
-      </div>
-
-      {/* Quick Stats */}
-      <div className="px-4">
-        <div className="grid grid-cols-3 gap-3">
-          <Card className="text-center">
-            <CardContent className="p-3">
-              <Clock className="w-6 h-6 text-yellow-600 mx-auto mb-1" />
-              <div className="text-lg font-bold text-yellow-600">{stats.pending || 0}</div>
-              <div className="text-xs text-gray-600">รออนุมัติ</div>
-            </CardContent>
-          </Card>
-
-          <Card className="text-center">
-            <CardContent className="p-3">
-              <Package className="w-6 h-6 text-blue-600 mx-auto mb-1" />
-              <div className="text-lg font-bold text-blue-600">{stats.borrowed || 0}</div>
-              <div className="text-xs text-gray-600">กำลังยืม</div>
-            </CardContent>
-          </Card>
-
-          <Card className="text-center">
-            <CardContent className="p-3">
-              <Calendar className="w-6 h-6 text-green-600 mx-auto mb-1" />
-              <div className="text-lg font-bold text-green-600">{stats.returned || 0}</div>
-              <div className="text-xs text-gray-600">คืนแล้ว</div>
-            </CardContent>
-          </Card>
+    <div className="bg-gray-50 min-h-screen pb-20">
+      {/* Header with Stats */}
+      <div className="bg-white sticky top-0 z-10 border-b border-gray-100 shadow-sm">
+        <div className="px-4 py-4">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h1 className="text-lg font-semibold text-gray-900 mb-1">
+                คำขอเบิกของฉัน
+              </h1>
+              <p className="text-sm text-gray-600">
+                ทั้งหมด{" "}
+                <span className="font-medium text-blue-600">
+                  {requests.length}
+                </span>{" "}
+                รายการ
+              </p>
+            </div>
+            <Button
+              onClick={loadRequests}
+              variant="ghost"
+              size="sm"
+              disabled={loading}
+              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 p-2.5 rounded-lg"
+            >
+              <RefreshCw
+                className={`w-4 h-4 ${loading ? "animate-spin" : ""}`}
+              />
+            </Button>
+          </div>
         </div>
       </div>
 
       {/* Requests List */}
-      <div className="px-4">
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="all">ทั้งหมด</TabsTrigger>
-            <TabsTrigger value="PENDING">รออนุมัติ</TabsTrigger>
-            <TabsTrigger value="ISSUED">เบิกแล้ว</TabsTrigger>
-            <TabsTrigger value="COMPLETED">เสร็จสิ้น</TabsTrigger>
-          </TabsList>
+      <div className="px-4 py-4 space-y-4">
+        {requests.map((request) => (
+          <div
+            key={request.id}
+            className="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden"
+          >
+            {/* Header */}
+            <div className="p-4 border-b border-gray-50">
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex-1 pr-3">
+                  <h3 className="font-semibold text-gray-900 text-base leading-6 mb-2">
+                    {request.purpose}
+                  </h3>
+                  <div className="flex items-center text-sm text-gray-500">
+                    <Calendar className="w-4 h-4 mr-1.5" />
+                    <span>{formatDate(request.request_date)}</span>
+                    <span className="mx-2">•</span>
+                    <Clock className="w-4 h-4 mr-1" />
+                    <span>{formatTime(request.request_date)}</span>
+                  </div>
+                </div>
+                <div
+                  className={`${getStatusColor(
+                    request.status
+                  )} text-white px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap`}
+                >
+                  {getStatusText(request.status)}
+                </div>
+              </div>
 
-          <TabsContent value={activeTab} className="space-y-3 mt-4">
-            {filteredRequests.length === 0 ? (
-              <Card>
-                <CardContent className="p-8 text-center">
-                  <Package className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                  <p className="text-gray-500">ไม่มีคำขอในหมวดนี้</p>
-                </CardContent>
-              </Card>
-            ) : (
-              filteredRequests.map((request) => (
-                <Card key={request.id} className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-4">
-                    <div className="space-y-3">
-                      {/* Header */}
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="font-semibold text-gray-900">
-                            {request.requestNumber}
-                          </h3>
-                          <p className="text-sm text-gray-600">
-                            {new Date(request.requestDate).toLocaleDateString('th-TH')}
-                          </p>
-                        </div>
-                        <Badge className={getStatusColor(request.status)}>
-                          {getStatusText(request.status)}
-                        </Badge>
+              {request.request_number && (
+                <div className="flex items-center bg-gray-50 rounded-lg px-3 py-2">
+                  <FileText className="w-4 h-4 text-gray-400 mr-2" />
+                  <span className="text-sm text-gray-600 font-mono">
+                    รหัส: {request.request_number}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Items Summary */}
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center">
+                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                    <Package className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">
+                      {Array.isArray(request.items) ? request.items.length : 0}{" "}
+                      รายการ
+                    </p>
+                    <p className="text-xs text-gray-500">รายการที่ขอเบิก</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-2xl font-bold text-blue-600">
+                    {getTotalItems(request.items)}
+                  </p>
+                  <p className="text-xs text-gray-500">ชิ้น</p>
+                </div>
+              </div>
+
+              {/* Items Preview */}
+              {Array.isArray(request.items) && request.items.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-gray-700 mb-2">
+                    รายละเอียด:
+                  </p>
+                  {request.items.slice(0, 2).map((item, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2"
+                    >
+                      <div className="flex items-center flex-1">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
+                        <span className="text-sm text-gray-700 truncate">
+                          {item.product?.name || "ไม่ระบุ"}
+                        </span>
                       </div>
-
-                      {/* Items */}
-                      <div className="space-y-2">
-                        {request.items.map((item) => (
-                          <div key={item.id} className="flex items-center space-x-3 p-2 bg-gray-50 rounded">
-                            <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center">
-                              <Package className="w-4 h-4 text-gray-500" />
-                            </div>
-                            <div className="flex-1">
-                              <p className="text-sm font-medium">{item.product.name}</p>
-                              <p className="text-xs text-gray-600">จำนวน: {item.quantity}</p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* Purpose */}
-                      <div className="text-sm">
-                        <span className="text-gray-600">วัตถุประสงค์: </span>
-                        <span className="text-gray-900">{request.purpose}</span>
-                      </div>
-
-                      {/* Admin Note */}
-                      {request.adminNote && (
-                        <div className="text-sm p-2 bg-blue-50 rounded border-l-4 border-blue-400">
-                          <span className="text-blue-800 font-medium">หมายเหตุจากเจ้าหน้าที่: </span>
-                          <span className="text-blue-700">{request.adminNote}</span>
-                        </div>
-                      )}
-
-                      {/* Rejection Reason */}
-                      {request.rejectedBy && (
-                        <div className="text-sm p-2 bg-red-50 rounded border-l-4 border-red-400">
-                          <span className="text-red-800 font-medium">เหตุผลที่ปฏิเสธ: </span>
-                          <span className="text-red-700">{request.rejectedBy.reason}</span>
-                        </div>
-                      )}
-
-                      {/* Actions */}
-                      {request.status === "PENDING" && (
-                        <div className="flex gap-2">
-                          <Button variant="outline" size="sm" className="flex-1">
-                            แก้ไขคำขอ
-                          </Button>
-                          <Button variant="outline" size="sm" className="flex-1 text-red-600 hover:text-red-700">
-                            ยกเลิกคำขอ
-                          </Button>
-                        </div>
-                      )}
+                      <span className="text-sm font-semibold text-blue-600 ml-3">
+                        {item.quantity} ชิ้น
+                      </span>
                     </div>
-                  </CardContent>
-                </Card>
-              ))
-            )}
-          </TabsContent>
-        </Tabs>
+                  ))}
+
+                  {request.items.length > 2 && (
+                    <div className="text-center py-2">
+                      <span className="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                        และอีก {request.items.length - 2} รายการ
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Empty State */}
+              {(!Array.isArray(request.items) ||
+                request.items.length === 0) && (
+                <div className="text-center py-6 bg-gray-50 rounded-lg">
+                  <Package className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                  <span className="text-sm text-gray-500">
+                    ไม่มีรายการสินค้า
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Action Footer */}
+            <div className="px-4 py-3 bg-gradient-to-r from-gray-50 to-gray-100 border-t border-gray-100">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-500">
+                  สร้างเมื่อ {formatDate(request.request_date)}
+                </span>
+                <ChevronRight className="w-4 h-4 text-gray-400" />
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

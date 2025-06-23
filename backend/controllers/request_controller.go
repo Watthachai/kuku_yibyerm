@@ -1,13 +1,13 @@
-// controllers/request_controller.go
 package controllers
 
 import (
-	"ku-asset/dto"
-	"ku-asset/middleware"
-	"ku-asset/models"
-	"ku-asset/services"
+	"log"
 	"net/http"
 	"strconv"
+
+	"ku-asset/dto"
+	"ku-asset/middleware"
+	"ku-asset/services"
 
 	"github.com/gin-gonic/gin"
 )
@@ -17,75 +17,185 @@ type RequestController struct {
 }
 
 func NewRequestController(requestService services.RequestService) *RequestController {
-	return &RequestController{requestService: requestService}
+	return &RequestController{
+		requestService: requestService,
+	}
 }
 
-func (ctrl *RequestController) CreateRequest(c *gin.Context) {
-	var req dto.CreateRequestRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
-		return
-	}
-	userID, _ := middleware.GetUserID(c)
+// CreateRequest สร้างคำขอเบิกใหม่
+func (rc *RequestController) CreateRequest(c *gin.Context) {
+	log.Println("🔍 CreateRequest controller called")
 
-	newRequest, err := ctrl.requestService.CreateRequest(userID, &req)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	var input dto.CreateRequestInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		log.Printf("❌ JSON binding failed: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "Invalid request body",
+			"message": err.Error(),
+		})
 		return
 	}
-	c.JSON(http.StatusCreated, gin.H{"success": true, "data": newRequest})
+
+	log.Printf("✅ Request input parsed: %+v", input)
+
+	// ดึง user ID จาก token
+	log.Println("🔍 Attempting to get userID from context")
+	userID, err := middleware.GetUserIDFromContext(c)
+	if err != nil {
+		log.Printf("❌ Failed to get userID from context: %v", err)
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error":   "Unauthorized",
+			"message": "Invalid user ID in token",
+		})
+		return
+	}
+
+	log.Printf("✅ UserID extracted: %d", userID)
+
+	// สร้างคำขอ
+	request, err := rc.requestService.CreateRequest(userID, &input)
+	if err != nil {
+		log.Printf("❌ Failed to create request: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to create request",
+			"message": err.Error(),
+		})
+		return
+	}
+
+	log.Printf("✅ Request created successfully: %+v", request)
+
+	c.JSON(http.StatusCreated, gin.H{
+		"message": "Request created successfully",
+		"data":    request,
+	})
 }
 
-func (ctrl *RequestController) UpdateRequestStatus(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+// ⭐ เพิ่ม GetMyRequests สำหรับ User ดูคำขอของตัวเอง
+func (rc *RequestController) GetMyRequests(c *gin.Context) {
+	// ดึง user ID จาก token
+	userID, err := middleware.GetUserIDFromContext(c)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request ID"})
-		return
-	}
-	adminID, _ := middleware.GetUserID(c)
-
-	var req dto.AdminUpdateStatusRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error":   "Unauthorized",
+			"message": "Invalid user ID in token",
+		})
 		return
 	}
 
-	updatedRequest, err := ctrl.requestService.UpdateRequestStatus(uint(id), adminID, &req)
+	// ดึงคำขอทั้งหมดของ user
+	requests, err := rc.requestService.GetRequestsByUserID(userID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to get requests",
+			"message": err.Error(),
+		})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"success": true, "data": updatedRequest})
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Requests retrieved successfully",
+		"data": gin.H{
+			"requests": requests,
+		},
+	})
 }
 
-func (ctrl *RequestController) GetRequest(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+// GetRequest ดูรายละเอียดคำขอ (ตรวจสอบเป็นของ user คนนั้นหรือไม่)
+func (rc *RequestController) GetRequest(c *gin.Context) {
+	requestID, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request ID"})
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "Invalid request ID",
+			"message": "Request ID must be a number",
+		})
 		return
 	}
-	userID, _ := middleware.GetUserID(c)
-	userRoleStr, _ := middleware.GetUserRole(c)
-	userRole := models.Role(userRoleStr)
 
-	request, err := ctrl.requestService.GetRequestByID(uint(id), userID, userRole)
+	// ดึง user ID จาก token
+	userID, err := middleware.GetUserIDFromContext(c)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error":   "Unauthorized",
+			"message": "Invalid user ID in token",
+		})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"success": true, "data": request})
+
+	// ดึงรายละเอียดคำขอ
+	request, err := rc.requestService.GetRequestByID(uint(requestID))
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error":   "Request not found",
+			"message": err.Error(),
+		})
+		return
+	}
+
+	// ตรวจสอบว่าคำขอนี้เป็นของ user คนนี้หรือไม่
+	if request.User.ID != userID {
+		c.JSON(http.StatusForbidden, gin.H{
+			"error":   "Access denied",
+			"message": "You can only view your own requests",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Request retrieved successfully",
+		"data":    request,
+	})
 }
 
-func (ctrl *RequestController) GetAllRequests(c *gin.Context) {
-	var query dto.RequestQuery
-	if err := c.ShouldBindQuery(&query); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid query parameters"})
-		return
-	}
-	requests, err := ctrl.requestService.GetAllRequests(&query)
+// GetAllRequests สำหรับ Admin ดูคำขอทั้งหมด
+func (rc *RequestController) GetAllRequests(c *gin.Context) {
+	requests, err := rc.requestService.GetAllRequests()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get requests"})
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to get requests",
+			"message": err.Error(),
+		})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"success": true, "data": requests})
+
+	// ⭐ แก้ไขให้ส่ง requests โดยตรงเหมือน endpoint อื่นๆ
+	c.JSON(http.StatusOK, gin.H{
+		"message": "All requests retrieved successfully",
+		"data":    requests, // ⭐ ส่ง array โดยตรง ไม่ห่อใน object
+	})
+}
+
+// UpdateRequestStatus สำหรับ Admin อัปเดตสถานะคำขอ
+func (rc *RequestController) UpdateRequestStatus(c *gin.Context) {
+	requestID, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "Invalid request ID",
+			"message": "Request ID must be a number",
+		})
+		return
+	}
+
+	var input dto.UpdateRequestStatusInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "Invalid request body",
+			"message": err.Error(),
+		})
+		return
+	}
+
+	request, err := rc.requestService.UpdateRequestStatus(uint(requestID), input.Status, input.Notes)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to update request status",
+			"message": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Request status updated successfully",
+		"data":    request,
+	})
 }

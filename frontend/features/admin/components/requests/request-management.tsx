@@ -3,20 +3,24 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "sonner"; // ⭐ ใช้ sonner แทน
 import {
   BorrowRequest,
   RequestStatus,
 } from "@/features/shared/types/request.types";
+import { AdminRequestService } from "@/features/admin/services/admin-request-service";
 import { RequestCard } from "./request-card";
 import { ApprovalModal } from "./approval-modal";
+import { RefreshCw } from "lucide-react";
 
 interface RequestStats {
   pending: number;
   approved: number;
   rejected: number;
-  borrowed: number;
-  overdue: number;
+  issued: number;
+  completed: number;
 }
 
 export function RequestManagement() {
@@ -25,13 +29,14 @@ export function RequestManagement() {
     pending: 0,
     approved: 0,
     rejected: 0,
-    borrowed: 0,
-    overdue: 0,
+    issued: 0,
+    completed: 0,
   });
   const [selectedRequest, setSelectedRequest] = useState<BorrowRequest | null>(
     null
   );
   const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<RequestStatus | "all">("PENDING");
 
   useEffect(() => {
@@ -41,106 +46,99 @@ export function RequestManagement() {
   const loadRequests = async () => {
     try {
       setLoading(true);
-      // TODO: Call API to get requests
-      // const data = await AdminService.getRequests();
+      console.log("🔍 Loading admin requests...");
 
-      // Mock data for now
-      const mockRequests: BorrowRequest[] = [
-        {
-          id: "1",
-          requestNumber: "REQ-2025-001",
-          user: {
-            id: "u1",
-            name: "นาย สมชาย ใจดี",
-            email: "somchai@ku.ac.th",
-            department: "คณะเกษตร",
-          },
-          items: [
-            {
-              id: "i1",
-              product: {
-                id: "p1",
-                name: "เครื่องฉายภาพ Epson EB-X41",
-                code: "EP001-2024",
-              },
-              quantity: 1,
-              purpose: "ใช้ในการสอน",
-            },
-          ],
-          purpose: "การสอนในรายวิชา เกษตรเบื้องต้น",
-          requestDate: new Date().toISOString(),
-          expectedStartDate: new Date().toISOString(),
-          expectedEndDate: new Date(
-            Date.now() + 7 * 24 * 60 * 60 * 1000
-          ).toISOString(),
-          status: "PENDING",
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
-      ];
+      const data = await AdminRequestService.getAllRequests();
+      console.log("✅ Loaded requests:", data);
 
-      setRequests(mockRequests);
+      setRequests(data);
 
-      // Calculate stats
-      const newStats = mockRequests.reduce(
+      // คำนวณสถิติ
+      const newStats = data.reduce(
         (acc, req) => {
-          acc[req.status.toLowerCase() as keyof RequestStats]++;
+          const status = req.status.toLowerCase();
+          if (status in acc) {
+            acc[status as keyof RequestStats]++;
+          }
           return acc;
         },
-        { pending: 0, approved: 0, rejected: 0, borrowed: 0, overdue: 0 }
+        { pending: 0, approved: 0, rejected: 0, issued: 0, completed: 0 }
       );
 
       setStats(newStats);
+
+      // ⭐ ใช้ sonner toast
+      toast.success("โหลดข้อมูลสำเร็จ", {
+        description: `พบคำขอทั้งหมด ${data.length} รายการ`,
+      });
     } catch (error) {
       console.error("Failed to load requests:", error);
+      // ⭐ ใช้ sonner toast
+      toast.error("เกิดข้อผิดพลาด", {
+        description: "ไม่สามารถโหลดข้อมูลคำขอได้",
+      });
     } finally {
       setLoading(false);
     }
   };
 
+  // ⭐ อนุมัติ/ปฏิเสธคำขอ
   const handleApproval = async (
     requestId: string,
     action: "APPROVE" | "REJECT",
     note?: string
   ) => {
     try {
-      // TODO: Call API to approve/reject request
-      console.log("Approval action:", { requestId, action, note });
+      setUpdating(requestId);
 
-      // Update local state
-      setRequests((prev) =>
-        prev.map((req) =>
-          req.id === requestId
-            ? {
-                ...req,
-                status: action === "APPROVE" ? "APPROVED" : "REJECTED",
-                adminNote: note,
-                approvedBy:
-                  action === "APPROVE"
-                    ? {
-                        id: "admin1",
-                        name: "ผู้ดูแลระบบ",
-                        approvedAt: new Date().toISOString(),
-                      }
-                    : undefined,
-                rejectedBy:
-                  action === "REJECT"
-                    ? {
-                        id: "admin1",
-                        name: "ผู้ดูแลระบบ",
-                        rejectedAt: new Date().toISOString(),
-                        reason: note || "",
-                      }
-                    : undefined,
-              }
-            : req
-        )
-      );
+      await AdminRequestService.updateRequestStatus(requestId, {
+        action,
+        notes: note,
+      });
+
+      // ⭐ ใช้ sonner toast
+      toast.success(action === "APPROVE" ? "อนุมัติสำเร็จ" : "ปฏิเสธสำเร็จ", {
+        description: `คำขอ ${requestId} ได้รับการ${
+          action === "APPROVE" ? "อนุมัติ" : "ปฏิเสธ"
+        }แล้ว`,
+      });
 
       setSelectedRequest(null);
-      await loadRequests(); // Reload to get fresh stats
+      await loadRequests(); // โหลดข้อมูลใหม่
     } catch (error) {
       console.error("Failed to process approval:", error);
+      // ⭐ ใช้ sonner toast
+      toast.error("เกิดข้อผิดพลาด", {
+        description:
+          error instanceof Error ? error.message : "ไม่สามารถดำเนินการได้",
+      });
+    } finally {
+      setUpdating(null);
+    }
+  };
+
+  // ⭐ เบิกออก (Issue) - สำหรับคำขอที่อนุมัติแล้ว
+  const handleIssue = async (requestId: string, notes?: string) => {
+    try {
+      setUpdating(requestId);
+
+      await AdminRequestService.issueRequest(requestId, notes);
+
+      // ⭐ ใช้ sonner toast
+      toast.success("เบิกออกสำเร็จ", {
+        description: `คำขอ ${requestId} ได้ถูกเบิกออกแล้ว`,
+      });
+
+      await loadRequests(); // โหลดข้อมูลใหม่
+    } catch (error) {
+      console.error("Failed to issue request:", error);
+      // ⭐ ใช้ sonner toast
+      toast.error("เกิดข้อผิดพลาด", {
+        description:
+          error instanceof Error ? error.message : "ไม่สามารถเบิกออกได้",
+      });
+    } finally {
+      setUpdating(null);
     }
   };
 
@@ -157,12 +155,10 @@ export function RequestManagement() {
         return "bg-green-100 text-green-800";
       case "REJECTED":
         return "bg-red-100 text-red-800";
-      case "BORROWED":
+      case "ISSUED":
         return "bg-blue-100 text-blue-800";
-      case "RETURNED":
+      case "COMPLETED":
         return "bg-gray-100 text-gray-800";
-      case "OVERDUE":
-        return "bg-red-100 text-red-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -176,12 +172,10 @@ export function RequestManagement() {
         return "อนุมัติแล้ว";
       case "REJECTED":
         return "ปฏิเสธ";
-      case "BORROWED":
-        return "กำลังยืม";
-      case "RETURNED":
-        return "คืนแล้ว";
-      case "OVERDUE":
-        return "เกินกำหนด";
+      case "ISSUED":
+        return "เบิกออกแล้ว";
+      case "COMPLETED":
+        return "เสร็จสิ้น";
       default:
         return status;
     }
@@ -206,15 +200,27 @@ export function RequestManagement() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">จัดการคำขอเบิก</h1>
-        <p className="text-gray-600">อนุมัติและติดตามคำขอเบิกครุภัณฑ์</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">จัดการคำขอเบิก</h1>
+          <p className="text-gray-600">อนุมัติและติดตามคำขอเบิกครุภัณฑ์</p>
+        </div>
+        <Button
+          onClick={loadRequests}
+          variant="outline"
+          className="flex items-center gap-2"
+        >
+          <RefreshCw className="h-4 w-4" />
+          รีเฟรช
+        </Button>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <Card
-          className="hover:shadow-md transition-shadow cursor-pointer"
+          className={`hover:shadow-md transition-shadow cursor-pointer ${
+            activeTab === "PENDING" ? "ring-2 ring-yellow-500" : ""
+          }`}
           onClick={() => setActiveTab("PENDING")}
         >
           <CardContent className="p-4">
@@ -225,13 +231,17 @@ export function RequestManagement() {
                   {stats.pending}
                 </p>
               </div>
-              <Badge className="bg-yellow-100 text-yellow-800">ด่วน</Badge>
+              {stats.pending > 0 && (
+                <Badge className="bg-yellow-100 text-yellow-800">ด่วน</Badge>
+              )}
             </div>
           </CardContent>
         </Card>
 
         <Card
-          className="hover:shadow-md transition-shadow cursor-pointer"
+          className={`hover:shadow-md transition-shadow cursor-pointer ${
+            activeTab === "APPROVED" ? "ring-2 ring-green-500" : ""
+          }`}
           onClick={() => setActiveTab("APPROVED")}
         >
           <CardContent className="p-4">
@@ -247,15 +257,17 @@ export function RequestManagement() {
         </Card>
 
         <Card
-          className="hover:shadow-md transition-shadow cursor-pointer"
-          onClick={() => setActiveTab("BORROWED")}
+          className={`hover:shadow-md transition-shadow cursor-pointer ${
+            activeTab === "ISSUED" ? "ring-2 ring-blue-500" : ""
+          }`}
+          onClick={() => setActiveTab("ISSUED")}
         >
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">กำลังยืม</p>
+                <p className="text-sm text-gray-600">เบิกออกแล้ว</p>
                 <p className="text-2xl font-bold text-blue-600">
-                  {stats.borrowed}
+                  {stats.issued}
                 </p>
               </div>
             </div>
@@ -263,7 +275,9 @@ export function RequestManagement() {
         </Card>
 
         <Card
-          className="hover:shadow-md transition-shadow cursor-pointer"
+          className={`hover:shadow-md transition-shadow cursor-pointer ${
+            activeTab === "REJECTED" ? "ring-2 ring-red-500" : ""
+          }`}
           onClick={() => setActiveTab("REJECTED")}
         >
           <CardContent className="p-4">
@@ -279,18 +293,19 @@ export function RequestManagement() {
         </Card>
 
         <Card
-          className="hover:shadow-md transition-shadow cursor-pointer"
-          onClick={() => setActiveTab("OVERDUE")}
+          className={`hover:shadow-md transition-shadow cursor-pointer ${
+            activeTab === "COMPLETED" ? "ring-2 ring-gray-500" : ""
+          }`}
+          onClick={() => setActiveTab("COMPLETED")}
         >
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">เกินกำหนด</p>
-                <p className="text-2xl font-bold text-red-600">
-                  {stats.overdue}
+                <p className="text-sm text-gray-600">เสร็จสิ้น</p>
+                <p className="text-2xl font-bold text-gray-600">
+                  {stats.completed}
                 </p>
               </div>
-              {stats.overdue > 0 && <Badge variant="destructive">!</Badge>}
             </div>
           </CardContent>
         </Card>
@@ -302,18 +317,26 @@ export function RequestManagement() {
         onValueChange={(value) => setActiveTab(value as RequestStatus | "all")}
       >
         <TabsList>
-          <TabsTrigger value="all">ทั้งหมด</TabsTrigger>
+          <TabsTrigger value="all">ทั้งหมด ({requests.length})</TabsTrigger>
           <TabsTrigger value="PENDING">รออนุมัติ ({stats.pending})</TabsTrigger>
-          <TabsTrigger value="APPROVED">อนุมัติแล้ว</TabsTrigger>
-          <TabsTrigger value="ISSUED">เบิกแล้ว</TabsTrigger>
-          <TabsTrigger value="COMPLETED">เสร็จสิ้น</TabsTrigger>
+          <TabsTrigger value="APPROVED">
+            อนุมัติแล้ว ({stats.approved})
+          </TabsTrigger>
+          <TabsTrigger value="ISSUED">เบิกออกแล้ว ({stats.issued})</TabsTrigger>
+          <TabsTrigger value="COMPLETED">
+            เสร็จสิ้น ({stats.completed})
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value={activeTab} className="space-y-4">
           {filteredRequests.length === 0 ? (
             <Card>
               <CardContent className="p-12 text-center">
-                <p className="text-gray-500">ไม่มีคำขอในหมวดนี้</p>
+                <p className="text-gray-500">
+                  {activeTab === "all"
+                    ? "ยังไม่มีคำขอในระบบ"
+                    : `ไม่มีคำขอ${getStatusText(activeTab as RequestStatus)}`}
+                </p>
               </CardContent>
             </Card>
           ) : (
@@ -323,8 +346,10 @@ export function RequestManagement() {
                   key={request.id}
                   request={request}
                   onAction={(req) => setSelectedRequest(req)}
+                  onIssue={handleIssue}
                   getStatusColor={getStatusColor}
                   getStatusText={getStatusText}
+                  isUpdating={updating === request.id}
                 />
               ))}
             </div>
@@ -339,6 +364,7 @@ export function RequestManagement() {
           isOpen={!!selectedRequest}
           onClose={() => setSelectedRequest(null)}
           onApproval={handleApproval}
+          isUpdating={updating === selectedRequest.id}
         />
       )}
     </div>

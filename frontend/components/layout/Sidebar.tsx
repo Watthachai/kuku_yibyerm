@@ -15,7 +15,6 @@ import {
   Settings,
   LogOut,
   X,
-
 } from "lucide-react";
 import Link from "next/link";
 
@@ -73,7 +72,7 @@ export function Sidebar({ isOpen, onClose, session }: SidebarProps) {
     },
     {
       name: "คลังครุภัณฑ์",
-      href: "/inventory",
+      href: "/products",
       icon: Package,
       roles: ["ADMIN"],
     },
@@ -194,7 +193,8 @@ export function Sidebar({ isOpen, onClose, session }: SidebarProps) {
           <nav className="flex-1 p-4 space-y-2">
             {filteredNavigation.map((item) => {
               const Icon = item.icon;
-              const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+              const isActive =
+                pathname === item.href || pathname.startsWith(item.href + "/");
 
               return (
                 <Link
@@ -272,7 +272,9 @@ export function Sidebar({ isOpen, onClose, session }: SidebarProps) {
             <div className="space-y-1">
               {filteredNavigation.map((item) => {
                 const Icon = item.icon;
-                const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+                const isActive =
+                  pathname === item.href ||
+                  pathname.startsWith(item.href + "/");
 
                 return (
                   <Link
@@ -288,7 +290,9 @@ export function Sidebar({ isOpen, onClose, session }: SidebarProps) {
                     <Icon
                       className={cn(
                         "h-6 w-6 shrink-0",
-                        isActive ? "text-white" : "text-gray-400 group-hover:text-ku-green"
+                        isActive
+                          ? "text-white"
+                          : "text-gray-400 group-hover:text-ku-green"
                       )}
                     />
                     {item.name}

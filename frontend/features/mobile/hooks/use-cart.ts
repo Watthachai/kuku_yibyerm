@@ -1,13 +1,13 @@
 "use client";
 
-import { useCartStore } from '../stores/cart.store';
-import { Product } from '../types/product.types';
-import { RequestPeriod } from '../types/cart.types';
-import { toast } from 'sonner';
+import { useCartStore } from "../stores/cart.store";
+import { Product } from "../types/product.types";
+import { RequestPeriod } from "../types/cart.types";
+import { toast } from "sonner";
 
 export function useCart() {
   const {
-    cart,
+    items: cart = [], // ⭐ เพิ่ม default value
     isLoading,
     error,
     addItem,
@@ -26,15 +26,15 @@ export function useCart() {
   } = useCartStore();
 
   const addToCart = async (
-    product: Product, 
-    quantity: number = 1, 
+    product: Product,
+    quantity: number = 1,
     period?: Partial<RequestPeriod>
   ) => {
     try {
       await addItem(product, quantity, period);
       toast.success(`เพิ่ม ${product.name} ลงในตะกร้าแล้ว`);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'เกิดข้อผิดพลาด');
+      toast.error(error instanceof Error ? error.message : "เกิดข้อผิดพลาด");
     }
   };
 
@@ -49,18 +49,18 @@ export function useCart() {
   const submitCartRequest = async () => {
     try {
       await submitRequest();
-      toast.success('ส่งคำขอเบิกสำเร็จ!');
+      toast.success("ส่งคำขอเบิกสำเร็จ!");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'เกิดข้อผิดพลาด');
+      toast.error(error instanceof Error ? error.message : "เกิดข้อผิดพลาด");
     }
   };
 
   return {
     // State
-    cart,
-    isLoading,
+    cart: cart || [], // ⭐ เพิ่ม fallback
+    isLoading: isLoading || false,
     error,
-    
+
     // Actions
     addToCart,
     removeFromCart,
@@ -69,15 +69,15 @@ export function useCart() {
     updateItemNotes,
     updateItemPeriod,
     clearCart,
-    
+
     // Selectors
-    getTotalItems,
-    getItemQuantity,
-    isInCart,
-    getCartItem,
-    
+    getTotalItems: getTotalItems || (() => 0),
+    getItemQuantity: getItemQuantity || (() => 0),
+    isInCart: isInCart || (() => false),
+    getCartItem: getCartItem || (() => null),
+
     // Validation & Submission
-    validateCart,
-    submitRequest,
+    validateCart: validateCart || (() => true),
+    submitRequest: submitCartRequest,
   };
 }

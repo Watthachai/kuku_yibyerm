@@ -5,9 +5,9 @@ import (
 )
 
 type Category struct {
-	gorm.Model // ⭐️ ใช้ gorm.Model เพื่อสร้าง ID (uint), CreatedAt, UpdatedAt, DeletedAt อัตโนมัติ
+	gorm.Model // ID (uint), CreatedAt, UpdatedAt, DeletedAt
 
-	Name        string `json:"name" gorm:"size:255;not null;unique"` // เพิ่ม unique เพื่อไม่ให้ชื่อซ้ำ
+	Name        string `json:"name" gorm:"size:255;not null;unique"`
 	Description string `json:"description" gorm:"type:text"`
 	Icon        string `json:"icon" gorm:"size:10"`
 	Color       string `json:"color" gorm:"size:50"`

@@ -1,15 +1,7 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  CheckCircle,
-  Clock,
-  FileText,
-  Users,
-  Shield,
-  Package,
-  Smartphone,
-} from "lucide-react";
+import { CheckCircle, FileText, Users, Shield, Smartphone } from "lucide-react";
 import { motion } from "framer-motion";
 
 const features = [

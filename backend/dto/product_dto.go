@@ -1,42 +1,60 @@
 // dto/product_dto.go
 package dto
 
+import "time"
+
 // DTOs for Product domain
 
 type ProductQuery struct {
 	Page       int    `form:"page,default=1"`
 	Limit      int    `form:"limit,default=20"`
-	CategoryID string `form:"category_id"`
 	Search     string `form:"search"`
+	CategoryID string `form:"category_id"`
 }
 
-// DTO สำหรับรับข้อมูลตอนสร้าง Product ใหม่
 type CreateProductRequest struct {
-	Name           string `json:"name" binding:"required"`
-	Description    string `json:"description"`
-	Brand          string `json:"brand"`
-	ProductModel   string `json:"productModel"`
-	CategoryID     uint   `json:"category_id" binding:"required"`
-	TrackingMethod string `json:"trackingMethod" binding:"required,oneof=BY_ITEM BY_QUANTITY"`
+	Name         string `json:"name" binding:"required"`
+	Description  string `json:"description"`
+	CategoryID   uint   `json:"category_id" binding:"required"`
+	Brand        string `json:"brand"`
+	ProductModel string `json:"product_model"`
+
+	// ⭐ ใช้ stock แทน quantity
+	Stock    int    `json:"stock" binding:"required,min=0"` // จำนวนเริ่มต้น
+	MinStock int    `json:"min_stock" binding:"min=0"`      // จำนวนขั้นต่ำ
+	Unit     string `json:"unit"`                           // หน่วยนับ
 }
 
-// DTO สำหรับส่งข้อมูล Product กลับไปให้ Frontend
-type ProductResponse struct {
-	ID             uint              `json:"id"`
-	Name           string            `json:"name"`
-	Description    string            `json:"description"` // ⭐ เพิ่ม Field นี้
-	ImageURL       *string           `json:"imageUrl"`    // ⭐ แก้เป็น *string
-	Brand          *string           `json:"brand,omitempty"`
-	ProductModel   *string           `json:"productModel,omitempty"`
-	TrackingMethod string            `json:"trackingMethod"`
-	Category       *CategoryResponse `json:"category,omitempty"`
-}
-
+// UpdateProductRequest defines the request body for updating a product.
 type UpdateProductRequest struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	CategoryID  uint   `json:"category_id"`
-	ImageURL    string `json:"image_url"`
+	Name         string `json:"name"`
+	Description  string `json:"description"`
+	CategoryID   uint   `json:"category_id"`
+	Brand        string `json:"brand"`
+	ProductModel string `json:"product_model"`
+	Stock        int    `json:"stock"` // ⭐ ใช้ stock แทน quantity
+	MinStock     int    `json:"min_stock"`
+	Unit         string `json:"unit"`
+}
+
+// ProductResponse is the standard representation of a product returned by the API.
+type ProductResponse struct {
+	ID           uint   `json:"id"`
+	Code         string `json:"code"`
+	Name         string `json:"name"`
+	Description  string `json:"description"`
+	Brand        string `json:"brand"`
+	ProductModel string `json:"product_model"`
+
+	// ⭐ ใช้แค่ Stock
+	Stock    int    `json:"stock"`     // จำนวนคงเหลือ
+	MinStock int    `json:"min_stock"` // จำนวนขั้นต่ำ
+	Unit     string `json:"unit"`      // หน่วยนับ
+	Status   string `json:"status"`
+
+	Category  *CategoryResponse `json:"category,omitempty"`
+	CreatedAt time.Time         `json:"created_at"`
+	UpdatedAt time.Time         `json:"updated_at"`
 }
 
 type PaginatedProductResponse struct {

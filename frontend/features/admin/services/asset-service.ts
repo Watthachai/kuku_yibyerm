@@ -1,5 +1,5 @@
 import { getAuthHeadersForFormData } from "@/lib/api";
-import { AssetFormData } from "@/types/inventory";
+import { AssetFormData } from "@/types/product";
 
 export class AssetService {
   private static baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
