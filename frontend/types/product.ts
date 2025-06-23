@@ -19,7 +19,7 @@ export interface Product {
   stock: number; // จำนวนคงเหลือ (แทน quantity)
   minStock: number; // จำนวนขั้นต่ำ
   unit: string; // หน่วยนับ
-  status: string;
+  status: "ACTIVE" | "INACTIVE";
 
   category?: {
     id: string;
@@ -45,6 +45,60 @@ export type StockAdjustmentFormData = z.infer<typeof stockAdjustmentSchema>;
  */
 export interface StockAdjustmentData extends StockAdjustmentFormData {
   productId: number;
+}
+
+// ⭐ Create Product Request
+export interface CreateProductRequest {
+  name: string;
+  description?: string;
+  categoryId: number;
+  brand?: string;
+  productModel?: string;
+  stock: number;
+  minStock?: number;
+  unit?: string;
+}
+
+// ⭐ Update Product Request
+export interface UpdateProductRequest extends CreateProductRequest {
+  id: string;
+}
+
+// ⭐ Product Filters
+export interface ProductFilters {
+  search?: string;
+  status?: "ACTIVE" | "INACTIVE" | "ALL";
+  categoryId?: number;
+  page?: number;
+  limit?: number;
+}
+
+// ⭐ Product Statistics
+export interface ProductStats {
+  total: number;
+  inStock: number;
+  lowStock: number;
+  outOfStock: number;
+  categories: number;
+}
+
+// ⭐ Products Response (for frontend)
+export interface ProductsResponse {
+  products: Product[];
+  total: number;
+  page: number;
+  totalPages: number;
+}
+
+// ⭐ Stock Update Request
+export interface StockUpdateRequest {
+  id: string;
+  stock: number;
+}
+
+// ⭐ Bulk Stock Update Request
+export interface BulkStockUpdateRequest {
+  updates: StockUpdateRequest[];
 }
 
 // ❌ เราได้ลบ Type ที่ไม่จำเป็นออกไปแล้ว เช่น Item, AssetFormData, CreateAssetData

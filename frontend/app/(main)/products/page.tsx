@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,12 +14,17 @@ import {
   TrendingDown,
   AlertTriangle,
   BarChart3,
+  Download,
+  RefreshCw,
 } from "lucide-react";
-import { ProductService } from "@/features/admin/services/product-service";
+import { ProductManagementService } from "@/features/admin/services/product-management-service";
 import { toast } from "sonner";
 import { UserCatalogShoppingView } from "@/features/mobile/components/catalog/user-catalog-shopping-view";
 import { AdminGuard } from "@/components/guards/admin-guard";
 import { AddProductDialog } from "@/features/admin/components/products/add-product-dialog";
+import { EditProductDialog } from "@/features/admin/components/products/edit-product-dialog";
+import { DeleteProductDialog } from "@/features/admin/components/products/delete-product-dialog";
+import { ProductDetailDialog } from "@/features/admin/components/products/product-detail-dialog";
 import { ProductList } from "@/features/admin/components/products/product-list";
 import { Product } from "@/types/product";
 import { Badge } from "@/components/ui/badge";
@@ -58,9 +63,13 @@ function ProductManagementView() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
-  const [categoryFilter, setCategoryFilter] = useState<string>("ALL");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [view, setView] = useState<"table" | "cards">("cards");
+
+  // Dialog states
+  const [editProduct, setEditProduct] = useState<Product | null>(null);
+  const [deleteProduct, setDeleteProduct] = useState<Product | null>(null);
+  const [detailProductId, setDetailProductId] = useState<string | null>(null);
 
   // Statistics
   const totalProducts = products.length;
@@ -70,33 +79,27 @@ function ProductManagementView() {
   ).length;
   const inStock = products.filter((p) => p.stock > (p.minStock || 0)).length;
 
-  // โหลดข้อมูล Product จาก Backend
-  useEffect(() => {
-    loadProducts();
-  }, [searchTerm, statusFilter, categoryFilter]);
-
-  const loadProducts = async () => {
+  // ⭐ โหลดข้อมูล Product จาก Backend
+  const loadProducts = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await ProductService.getProducts({
+      const response = await ProductManagementService.getProducts({
         search: searchTerm || undefined,
         status: statusFilter !== "ALL" ? statusFilter : undefined,
-        category_id:
-          categoryFilter !== "ALL" ? Number(categoryFilter) : undefined,
       });
 
-      if (Array.isArray(data)) {
-        setProducts(data);
-      } else {
-        setProducts([]);
-      }
+      setProducts(response.products);
     } catch (error) {
       console.error("❌ Failed to load products:", error);
       toast.error("เกิดข้อผิดพลาด: ไม่สามารถโหลดข้อมูลสินค้าได้");
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchTerm, statusFilter]);
+
+  useEffect(() => {
+    loadProducts();
+  }, [loadProducts]);
 
   const filteredProducts = products.filter((product) => {
     const matchesSearch = product.name
@@ -114,6 +117,7 @@ function ProductManagementView() {
     return matchesSearch && matchesStatus;
   });
 
+  // ⭐ Event Handlers
   const handleProductAdded = () => {
     setIsAddDialogOpen(false);
     loadProducts();
@@ -123,24 +127,60 @@ function ProductManagementView() {
   };
 
   const handleEditProduct = (product: Product) => {
-    // TODO: Implement edit functionality
-    toast.info("กำลังพัฒนาฟีเจอร์นี้", {
-      description: "ฟีเจอร์แก้ไขสินค้าจะพร้อมใช้งานเร็วๆ นี้",
-    });
+    setEditProduct(product);
   };
 
-  const handleDeleteProduct = async (product: Product) => {
-    // TODO: Implement delete functionality with confirmation
-    toast.info("กำลังพัฒนาฟีเจอร์นี้", {
-      description: "ฟีเจอร์ลบสินค้าจะพร้อมใช้งานเร็วๆ นี้",
-    });
+  const handleDeleteProduct = (product: Product) => {
+    setDeleteProduct(product);
   };
 
   const handleViewDetails = (product: Product) => {
-    // TODO: Implement product details view
-    toast.info("กำลังพัฒนาฟีเจอร์นี้", {
-      description: "ฟีเจอร์ดูรายละเอียดสินค้าจะพร้อมใช้งานเร็วๆ นี้",
-    });
+    setDetailProductId(product.id);
+  };
+
+  const handleExportProducts = async () => {
+    try {
+      toast.info("กำลังสร้างไฟล์...", { description: "กรุณารอสักครู่" });
+
+      const blob = await ProductManagementService.exportProducts("csv");
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `products-${new Date().toISOString().split("T")[0]}.csv`;
+      link.click();
+      window.URL.revokeObjectURL(url);
+
+      toast.success("ส่งออกข้อมูลสำเร็จ 📄");
+    } catch (error) {
+      console.error("Export failed:", error);
+      toast.error("ไม่สามารถส่งออกข้อมูลได้");
+    }
+  };
+
+  // ⭐ เพิ่ม handler สำหรับ stock update
+  const handleStockUpdate = async (product: Product) => {
+    try {
+      await ProductManagementService.updateProduct(product.id, {
+        id: product.id,
+        name: product.name,
+        description: product.description,
+        categoryId: parseInt(product.category?.id || "0"),
+        brand: product.brand,
+        productModel: product.productModel,
+        stock: product.stock,
+        minStock: product.minStock,
+        unit: product.unit,
+      });
+
+      toast.success("อัปเดตสต็อกสำเร็จ", {
+        description: `${product.name} สต็อกปัจจุบัน: ${product.stock} ${product.unit}`,
+      });
+
+      loadProducts(); // Refresh data
+    } catch (error) {
+      console.error("Failed to update stock:", error);
+      toast.error("ไม่สามารถอัปเดตสต็อกได้");
+    }
   };
 
   return (
@@ -153,13 +193,25 @@ function ProductManagementView() {
             เพิ่ม แก้ไข และจัดการสินค้าในระบบ
           </p>
         </div>
-        <Button
-          onClick={() => setIsAddDialogOpen(true)}
-          className="bg-ku-green hover:bg-ku-green-dark"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          เพิ่มสินค้าใหม่
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={loadProducts} disabled={loading}>
+            <RefreshCw
+              className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`}
+            />
+            รีเฟรช
+          </Button>
+          <Button variant="outline" onClick={handleExportProducts}>
+            <Download className="w-4 h-4 mr-2" />
+            ส่งออก
+          </Button>
+          <Button
+            onClick={() => setIsAddDialogOpen(true)}
+            className="bg-ku-green hover:bg-ku-green-dark"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            เพิ่มสินค้าใหม่
+          </Button>
+        </div>
       </div>
 
       {/* Statistics Cards */}
@@ -300,16 +352,46 @@ function ProductManagementView() {
       <ProductList
         products={filteredProducts}
         loading={loading}
+        view={view}
         onEdit={handleEditProduct}
         onDelete={handleDeleteProduct}
         onViewDetails={handleViewDetails}
+        onUpdateStock={handleStockUpdate} // ⭐ ส่ง stock update handler
       />
 
-      {/* Add Product Dialog */}
+      {/* Dialogs */}
       <AddProductDialog
         open={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}
         onSuccess={handleProductAdded}
+      />
+
+      <EditProductDialog
+        product={editProduct}
+        open={!!editProduct}
+        onOpenChange={(open) => !open && setEditProduct(null)}
+        onSuccess={() => {
+          setEditProduct(null);
+          loadProducts();
+        }}
+      />
+
+      <DeleteProductDialog
+        product={deleteProduct}
+        open={!!deleteProduct}
+        onOpenChange={(open) => !open && setDeleteProduct(null)}
+        onSuccess={() => {
+          setDeleteProduct(null);
+          loadProducts();
+        }}
+      />
+
+      <ProductDetailDialog
+        productId={detailProductId}
+        open={!!detailProductId}
+        onOpenChange={(open) => !open && setDetailProductId(null)}
+        onEdit={handleEditProduct}
+        onDelete={handleDeleteProduct}
       />
     </div>
   );

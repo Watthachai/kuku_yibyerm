@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { Product } from "@/types/product";
 import {
   Table,
@@ -27,6 +26,7 @@ import { cn } from "@/lib/utils";
 interface ProductListProps {
   products: Product[];
   loading: boolean;
+  view?: "table" | "cards"; // ⭐ เพิ่ม view prop
   onEdit?: (product: Product) => void;
   onDelete?: (product: Product) => void;
   onViewDetails?: (product: Product) => void;
@@ -36,12 +36,20 @@ interface ProductListProps {
 export function ProductList({
   products,
   loading,
+  view = "cards", // ⭐ รับ view จาก parent
   onEdit,
   onDelete,
   onViewDetails,
-  onUpdateStock,
+  onUpdateStock, // ⭐ ใช้ function นี้
 }: ProductListProps) {
-  const [view, setView] = useState<"table" | "cards">("cards");
+  // ⭐ ลบ internal view state
+  // const [view, setView] = useState<"table" | "cards">("cards");
+
+  // ⭐ เพิ่ม Quick Stock Update
+  const handleQuickStockUpdate = (product: Product, newStock: number) => {
+    const updatedProduct = { ...product, stock: newStock };
+    onUpdateStock?.(updatedProduct);
+  };
 
   if (loading) {
     return (
@@ -197,6 +205,33 @@ export function ProductList({
                   </p>
                 )}
 
+                {/* ⭐ Quick Stock Actions - แสดงเมื่อสต็อกต่ำ */}
+                {product.stock <= (product.minStock || 0) && (
+                  <div className="p-2 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <p className="text-xs text-yellow-800 mb-2">
+                      เติมสต็อกด่วน:
+                    </p>
+                    <div className="flex gap-1">
+                      {[10, 20, 50].map((amount) => (
+                        <Button
+                          key={amount}
+                          variant="outline"
+                          size="sm"
+                          className="text-xs px-2 py-1 h-6"
+                          onClick={() =>
+                            handleQuickStockUpdate(
+                              product,
+                              product.stock + amount
+                            )
+                          }
+                        >
+                          +{amount}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* Action Buttons */}
                 <div className="flex gap-2 pt-2">
                   <Button
@@ -235,7 +270,7 @@ export function ProductList({
     );
   }
 
-  // Table View
+  // ⭐ Table View ก็เพิ่ม Quick Stock Update
   return (
     <Card>
       <Table>
@@ -277,18 +312,34 @@ export function ProductList({
                 <TableCell>{product.category?.name || "ไม่ระบุ"}</TableCell>
                 <TableCell>{product.brand || "ไม่ระบุ"}</TableCell>
                 <TableCell className="text-right">
-                  <span
-                    className={cn(
-                      "font-bold",
-                      product.stock === 0
-                        ? "text-red-600"
-                        : product.stock <= (product.minStock || 0)
-                        ? "text-yellow-600"
-                        : "text-green-600"
+                  <div className="flex items-center justify-end gap-1">
+                    <span
+                      className={cn(
+                        "font-bold",
+                        product.stock === 0
+                          ? "text-red-600"
+                          : product.stock <= (product.minStock || 0)
+                          ? "text-yellow-600"
+                          : "text-green-600"
+                      )}
+                    >
+                      {product.stock} {product.unit || "ชิ้น"}
+                    </span>
+                    {/* ⭐ Quick Add Stock Button */}
+                    {product.stock <= (product.minStock || 0) && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="ml-2 h-6 w-6 p-0"
+                        onClick={() =>
+                          handleQuickStockUpdate(product, product.stock + 10)
+                        }
+                        title="เติมสต็อก +10"
+                      >
+                        +
+                      </Button>
                     )}
-                  >
-                    {product.stock} {product.unit || "ชิ้น"}
-                  </span>
+                  </div>
                 </TableCell>
                 <TableCell className="text-right">
                   {product.minStock || 0} {product.unit || "ชิ้น"}
@@ -306,7 +357,16 @@ export function ProductList({
                     <Button
                       variant="ghost"
                       size="sm"
+                      onClick={() => onViewDetails?.(product)}
+                      title="ดูรายละเอียด"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={() => onEdit?.(product)}
+                      title="แก้ไข"
                     >
                       <Edit className="w-4 h-4" />
                     </Button>
@@ -315,6 +375,7 @@ export function ProductList({
                       size="sm"
                       onClick={() => onDelete?.(product)}
                       className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      title="ลบ"
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
