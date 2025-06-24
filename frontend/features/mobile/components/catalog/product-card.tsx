@@ -5,6 +5,7 @@ import { useState } from "react";
 import { CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import {
   ShoppingCart,
   Heart,
@@ -13,6 +14,8 @@ import {
   MapPin,
   Users,
   Package, // ⭐ เพิ่ม Package import
+  Plus,
+  Minus,
 } from "lucide-react";
 import {
   CatalogProduct,
@@ -24,7 +27,7 @@ import { cn } from "@/lib/utils";
 interface ProductCardProps {
   product: CatalogProduct;
   onViewDetails: (product: CatalogProduct) => void;
-  onAddToCart?: (product: CatalogProduct) => void;
+  onAddToCart?: (product: CatalogProduct, quantity: number) => void; // ⭐ เพิ่ม quantity parameter
   className?: string;
   variant?: "default" | "compact" | "featured";
 }
@@ -67,30 +70,94 @@ export function ProductCard({
   className,
   variant = "default",
 }: ProductCardProps) {
-  const { addItem, getItemQuantity, isInCart } = useCartStore();
+  const { setItemQuantity, getItemQuantity, isInCart } = useCartStore(); // ⭐ เปลี่ยนจาก addItem เป็น setItemQuantity
   const [isLoading, setIsLoading] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [selectedQuantity, setSelectedQuantity] = useState(1); // ⭐ เพิ่ม quantity state
+  const [inputValue, setInputValue] = useState("1"); // ⭐ เพิ่ม input state แยกจาก quantity
 
   const inCartQuantity = getItemQuantity(product.id);
   const canAddMore = inCartQuantity < product.stock;
+  const maxQuantity = Math.min(product.stock - inCartQuantity, product.stock); // ⭐ คำนวณจำนวนสูงสุดที่เพิ่มได้
   const isAvailable = product.status === "AVAILABLE" && product.stock > 0;
 
   // ⭐ Debug logging สำหรับรูปภาพ
   console.log(`Product ${product.name} imageUrl:`, product.imageUrl);
 
   const handleAddToCart = async () => {
-    if (!canAddMore || !isAvailable) return;
+    if (!canAddMore || !isAvailable || selectedQuantity <= 0) return;
+
+    console.log("🛒 Adding to cart:", {
+      productId: product.id,
+      productName: product.name,
+      selectedQuantity,
+      currentInCart: inCartQuantity,
+      action: "setItemQuantity",
+    });
 
     setIsLoading(true);
     try {
       const cartProduct = convertCatalogProductToProduct(product);
-      await addItem(cartProduct);
-      onAddToCart?.(product);
+      await setItemQuantity(cartProduct, selectedQuantity); // ⭐ เปลี่ยนเป็น setItemQuantity
+      onAddToCart?.(product, selectedQuantity); // ⭐ ส่ง selectedQuantity ด้วย
+
+      console.log("✅ Successfully added to cart");
     } catch (error) {
-      console.error("Failed to add to cart:", error);
+      console.error("❌ Failed to add to cart:", error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // ⭐ เพิ่ม helper functions สำหรับ quantity
+  const increaseQuantity = () => {
+    if (selectedQuantity < maxQuantity) {
+      const newQuantity = selectedQuantity + 1;
+      setSelectedQuantity(newQuantity);
+      setInputValue(newQuantity.toString());
+    }
+  };
+
+  const decreaseQuantity = () => {
+    if (selectedQuantity > 1) {
+      const newQuantity = selectedQuantity - 1;
+      setSelectedQuantity(newQuantity);
+      setInputValue(newQuantity.toString());
+    }
+  };
+
+  const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setInputValue(value); // อัปเดต input value ทันที
+
+    // ถ้าเป็นตัวเลขที่ valid ให้อัปเดต selectedQuantity
+    const numValue = parseInt(value);
+    if (!isNaN(numValue) && numValue >= 1 && numValue <= maxQuantity) {
+      setSelectedQuantity(numValue);
+    }
+  };
+
+  // ⭐ เพิ่ม handler สำหรับการ focus (เลือกข้อความทั้งหมด)
+  const handleQuantityFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    e.target.select();
+  };
+
+  // ⭐ เพิ่ม handler สำหรับการ blur (ตรวจสอบและแก้ไขค่า)
+  const handleQuantityBlur = () => {
+    const numValue = parseInt(inputValue);
+    if (isNaN(numValue) || numValue < 1) {
+      // ถ้าค่าไม่ valid ให้รีเซ็ตเป็น 1
+      setSelectedQuantity(1);
+      setInputValue("1");
+    } else if (numValue > maxQuantity) {
+      // ถ้าเกินจำนวนสูงสุด ให้ตั้งเป็นค่าสูงสุด
+      setSelectedQuantity(maxQuantity);
+      setInputValue(maxQuantity.toString());
+    } else {
+      // ถ้าค่า valid ให้ sync กัน
+      setSelectedQuantity(numValue);
+      setInputValue(numValue.toString());
     }
   };
 
@@ -269,7 +336,44 @@ export function ProductCard({
         )}
 
         {/* Actions */}
-        <div className="space-y-2">
+        <div className="space-y-3">
+          {/* Quantity Selector */}
+          {isAvailable && maxQuantity > 0 && (
+            <div className="flex items-center justify-between bg-white/40 backdrop-blur-sm rounded-lg p-2">
+              <span className="text-xs text-gray-600 font-medium">จำนวน:</span>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={decreaseQuantity}
+                  disabled={selectedQuantity <= 1}
+                  className="h-7 w-7 p-0 bg-white/60 hover:bg-white/80 border-gray-200/50"
+                >
+                  <Minus className="h-3 w-3" />
+                </Button>
+                <Input
+                  type="number"
+                  min="1"
+                  max={maxQuantity}
+                  value={inputValue}
+                  onChange={handleQuantityChange}
+                  onFocus={handleQuantityFocus}
+                  onBlur={handleQuantityBlur}
+                  className="w-12 h-7 text-center text-xs bg-white/60 border-gray-200/50 p-1"
+                />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={increaseQuantity}
+                  disabled={selectedQuantity >= maxQuantity}
+                  className="h-7 w-7 p-0 bg-white/60 hover:bg-white/80 border-gray-200/50"
+                >
+                  <Plus className="h-3 w-3" />
+                </Button>
+              </div>
+            </div>
+          )}
+
           {/* Add to Cart Button - Full Width */}
           <Button
             size="sm"
@@ -278,17 +382,35 @@ export function ProductCard({
               e.stopPropagation();
               handleAddToCart();
             }}
-            disabled={!isAvailable || !canAddMore || isLoading}
+            disabled={
+              !isAvailable || !canAddMore || isLoading || selectedQuantity <= 0
+            }
           >
             {isLoading ? (
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
             ) : (
               <>
                 <ShoppingCart className="h-4 w-4 mr-2" />
-                {isInCart(product.id) ? `เพิ่ม (${inCartQuantity})` : "เบิก"}
+                {isInCart(product.id)
+                  ? `เพิ่ม ${selectedQuantity} ชิ้น (รวม ${
+                      inCartQuantity + selectedQuantity
+                    })`
+                  : `เบิก ${selectedQuantity} ชิ้น`}
               </>
             )}
           </Button>
+
+          {/* Stock Info */}
+          {isAvailable && (
+            <div className="text-xs text-gray-500 text-center bg-white/30 backdrop-blur-sm rounded-lg p-1.5">
+              สามารถเบิกได้สูงสุด {maxQuantity} ชิ้น
+              {inCartQuantity > 0 && (
+                <span className="ml-1 text-blue-600 font-medium">
+                  (ในตะกร้า {inCartQuantity} ชิ้น)
+                </span>
+              )}
+            </div>
+          )}
         </div>
 
         {/* ⭐ เพิ่มข้อมูลเสริมสำหรับ featured variant */}

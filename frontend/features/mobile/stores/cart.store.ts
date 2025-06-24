@@ -15,6 +15,11 @@ interface CartStore {
     quantity?: number,
     period?: Partial<RequestPeriod>
   ) => void;
+  setItemQuantity: (
+    product: Product,
+    quantity: number,
+    period?: Partial<RequestPeriod>
+  ) => void; // ⭐ เพิ่มฟังก์ชันสำหรับ set quantity
   removeItem: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   updateItemPurpose: (productId: string, purpose: string) => void;
@@ -48,7 +53,7 @@ export const useCartStore = create<CartStore>()(
         try {
           const items = get().items || [];
           const existingItem = items.find(
-            (item) => item.id === product.id.toString()
+            (item) => item.product.id === product.id.toString()
           );
 
           if (existingItem) {
@@ -61,7 +66,7 @@ export const useCartStore = create<CartStore>()(
               );
             }
 
-            get().updateQuantity(product.id.toString(), newQuantity);
+            get().updateQuantity(existingItem.id, newQuantity);
           } else {
             // ⭐ ตรวจสอบ stock สำหรับรายการใหม่
             if (quantity > product.stock) {
@@ -109,6 +114,96 @@ export const useCartStore = create<CartStore>()(
           }
         } catch (error) {
           console.error("Failed to add item to cart:", error);
+          throw error;
+        }
+      },
+
+      // ⭐ เพิ่มฟังก์ชัน setItemQuantity ที่จะ set quantity แทนการ add
+      setItemQuantity: async (
+        product: Product,
+        quantity: number,
+        period?: Partial<RequestPeriod>
+      ) => {
+        console.log("🛒 setItemQuantity called:", {
+          productId: product.id,
+          productName: product.name,
+          quantity,
+          currentItems: get().items.length,
+        });
+
+        try {
+          const items = get().items || [];
+          const existingItem = items.find(
+            (item) => item.product.id === product.id.toString()
+          );
+
+          console.log("🔍 Existing item search:", {
+            searching: product.id.toString(),
+            found: existingItem ? existingItem.id : "not found",
+            allItemIds: items.map((item) => ({
+              itemId: item.id,
+              productId: item.product.id,
+            })),
+          });
+
+          // ตรวจสอบ stock
+          if (quantity > product.stock) {
+            throw new Error(
+              `ไม่สามารถเลือกได้ คงเหลือเพียง ${product.stock} ชิ้น`
+            );
+          }
+
+          if (existingItem) {
+            // ถ้ามีอยู่แล้ว ให้ update quantity
+            console.log(
+              "✏️ Updating existing item:",
+              existingItem.id,
+              "to quantity:",
+              quantity
+            );
+            get().updateQuantity(existingItem.id, quantity);
+          } else {
+            // ถ้าไม่มี ให้เพิ่มใหม่
+            console.log("➕ Creating new item for product:", product.id);
+            const newItem: CartItem = {
+              id: `${product.id}-${Date.now()}`,
+              product: {
+                id: product.id.toString(),
+                code: product.code || "",
+                name: product.name,
+                description: product.description,
+                brand: product.brand,
+                productModel: product.productModel,
+                stock: product.stock,
+                minStock: product.minStock || 0,
+                unit: product.unit || "ชิ้น",
+                status: product.status || "ACTIVE",
+                imageUrl: product.imageUrl,
+                category: product.category,
+                createdAt: product.createdAt || new Date().toISOString(),
+                updatedAt: product.updatedAt || new Date().toISOString(),
+              },
+              quantity,
+              purpose: "",
+              notes: "",
+              priority: "NORMAL",
+              addedAt: new Date().toISOString(),
+              requestPeriod: {
+                startDate: period?.startDate || new Date().toISOString(),
+                endDate:
+                  period?.endDate ||
+                  new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+                duration: period?.duration || 7,
+                isFlexible: period?.isFlexible || false,
+              },
+            };
+
+            set((state) => ({
+              items: [...(state.items || []), newItem],
+            }));
+          }
+        } catch (error) {
+          console.error("Failed to set item quantity:", error);
           throw error;
         }
       },
@@ -212,7 +307,7 @@ export const useCartStore = create<CartStore>()(
       // Selectors
       getItemQuantity: (productId) => {
         const items = get().items || [];
-        const item = items.find((item) => item.id === productId);
+        const item = items.find((item) => item.product.id === productId);
         return item ? item.quantity : 0;
       },
 
@@ -223,12 +318,12 @@ export const useCartStore = create<CartStore>()(
 
       getCartItem: (productId) => {
         const items = get().items || [];
-        return items.find((item) => item.id === productId) || null;
+        return items.find((item) => item.product.id === productId) || null;
       },
 
       isInCart: (productId) => {
         const items = get().items || [];
-        return items.some((item) => item.id === productId);
+        return items.some((item) => item.product.id === productId);
       },
     }),
     {

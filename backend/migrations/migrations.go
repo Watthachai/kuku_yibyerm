@@ -17,6 +17,7 @@ func GetAllMigrations() []*gormigrate.Migration {
 		M25680623002AddProductImageURL,              // 5. ⭐ เพิ่ม ImageURL field
 		M25680619123005CreateRequestsTables,         // 6. สร้างตาราง Requests
 		M25680621173000SeedCoreData,                 // 7. Seed ข้อมูลสุดท้าย
+		M25680624001SeedFacultiesAndDepartments,     // 8. 🆕 Seed Faculty และ Department data
 	}
 }
 

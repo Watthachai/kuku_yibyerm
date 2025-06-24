@@ -64,13 +64,23 @@ func (s *departmentService) GetDepartmentByID(id uint) (*dto.DepartmentResponse,
 func (s *departmentService) GetFaculties() ([]dto.DepartmentResponse, error) {
 	var faculties []models.Department
 	if err := s.db.Where("type = ? AND is_active = ?", models.DepartmentTypeFaculty, true).
+		Preload("Children", "is_active = ?", true).
 		Order("name_th ASC").Find(&faculties).Error; err != nil {
 		return nil, err
 	}
 
 	var response []dto.DepartmentResponse
 	for _, faculty := range faculties {
-		response = append(response, *mapDepartmentToResponse(&faculty))
+		facultyResponse := mapDepartmentToResponse(&faculty)
+
+		// เพิ่มข้อมูล children (departments)
+		var children []dto.DepartmentResponse
+		for _, child := range faculty.Children {
+			children = append(children, *mapDepartmentToResponse(&child))
+		}
+		facultyResponse.Children = children
+
+		response = append(response, *facultyResponse)
 	}
 	return response, nil
 }
@@ -78,10 +88,14 @@ func (s *departmentService) GetFaculties() ([]dto.DepartmentResponse, error) {
 // Helper to map model to DTO
 func mapDepartmentToResponse(dept *models.Department) *dto.DepartmentResponse {
 	return &dto.DepartmentResponse{
-		ID:     dept.ID,
-		Code:   dept.Code,
-		NameTh: dept.NameTH,
-		NameEn: dept.NameEN,
-		Type:   string(dept.Type),
+		ID:        dept.ID,
+		Code:      dept.Code,
+		NameTh:    dept.NameTH,
+		NameEn:    dept.NameEN,
+		Type:      string(dept.Type),
+		ParentID:  dept.ParentID,
+		IsActive:  dept.IsActive,
+		CreatedAt: dept.CreatedAt,
+		UpdatedAt: dept.UpdatedAt,
 	}
 }

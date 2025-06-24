@@ -8,12 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
-  Sheet,
-  SheetContent,
-  SheetTrigger,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 import { Search, Filter, ShoppingCart, Package } from "lucide-react";
 import { toast } from "sonner";
 // ⭐ Import ProductService และ types ที่ถูกต้อง
@@ -58,7 +58,6 @@ export function UserCatalogShoppingView({ className }: Props) {
   const [selectedCategory, setSelectedCategory] = useState<string>(
     searchParams.get("category") || ""
   );
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   // ⭐ Debounced search term (500ms delay)
   const debouncedSearchTerm = useDebounced(searchInput, 500);
@@ -213,15 +212,17 @@ export function UserCatalogShoppingView({ className }: Props) {
   };
 
   // Handle add to cart
-  const handleAddToCart = (product: CatalogProduct) => {
+  const handleAddToCart = (product: CatalogProduct, quantity: number = 1) => {
     if (product.stock <= 0) {
       toast.error("สินค้าครุภัณฑ์นี้ไม่มีในสต็อก");
       return;
     }
 
     const productForCart = convertCatalogProductToProduct(product);
-    addItem(productForCart, 1);
-    toast.success(`${product.name} ถูกเพิ่มลงตะกร้าเรียบร้อยแล้ว`);
+    addItem(productForCart, quantity);
+    toast.success(
+      `${product.name} จำนวน ${quantity} ชิ้น ถูกเพิ่มลงตะกร้าเรียบร้อยแล้ว`
+    );
   };
 
   // Handle view details
@@ -316,10 +317,10 @@ export function UserCatalogShoppingView({ className }: Props) {
             )}
           </div>
 
-          {/* Filter Button */}
+          {/* Filter Dropdown */}
           <div className="flex items-center gap-2">
-            <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
-              <SheetTrigger asChild>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
                 <Button
                   variant="outline"
                   size="sm"
@@ -328,73 +329,56 @@ export function UserCatalogShoppingView({ className }: Props) {
                   <Filter className="w-4 h-4 mr-2" />
                   ตัวกรอง
                 </Button>
-              </SheetTrigger>
-              <SheetContent
-                side="bottom"
-                className="h-[80vh] bg-white/90 backdrop-blur-lg border-t border-gray-200/50"
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="start"
+                className="w-64 bg-white/95 backdrop-blur-lg border border-gray-200/50 shadow-xl rounded-xl"
               >
-                <SheetHeader>
-                  <SheetTitle className="text-gray-900">
-                    ตัวกรองหมวดหมู่
-                  </SheetTitle>
-                </SheetHeader>
-                <div className="py-4">
-                  <div className="space-y-3">
-                    <Button
-                      variant={!selectedCategory ? "default" : "outline"}
-                      onClick={() => {
-                        handleCategoryChange("");
-                        setIsFilterOpen(false);
-                      }}
-                      className={`w-full justify-start transition-all duration-200 ${
-                        !selectedCategory
-                          ? "bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-lg"
-                          : "bg-white/60 backdrop-blur-sm border-gray-200/50 hover:bg-white/80"
-                      }`}
-                    >
-                      ทั้งหมด (
-                      {debouncedSearchTerm
-                        ? allProducts.filter(
-                            (product) =>
-                              product.name
-                                .toLowerCase()
-                                .includes(debouncedSearchTerm.toLowerCase()) ||
-                              product.description
-                                ?.toLowerCase()
-                                .includes(debouncedSearchTerm.toLowerCase()) ||
-                              product.category.name
-                                .toLowerCase()
-                                .includes(debouncedSearchTerm.toLowerCase())
-                          ).length
-                        : allProducts.length}
-                      )
-                    </Button>
-                    {categories.map((category) => (
-                      <Button
-                        key={category.id}
-                        variant={
-                          selectedCategory === category.id
-                            ? "default"
-                            : "outline"
-                        }
-                        onClick={() => {
-                          handleCategoryChange(category.id);
-                          setIsFilterOpen(false);
-                        }}
-                        className={`w-full justify-start transition-all duration-200 ${
-                          selectedCategory === category.id
-                            ? "bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-lg"
-                            : "bg-white/60 backdrop-blur-sm border-gray-200/50 hover:bg-white/80"
-                        }`}
-                      >
-                        <span className="mr-2">{category.icon}</span>
-                        {category.name} ({category.productCount || 0})
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-              </SheetContent>
-            </Sheet>
+                <DropdownMenuItem
+                  onClick={() => handleCategoryChange("")}
+                  className={`cursor-pointer transition-colors ${
+                    !selectedCategory
+                      ? "bg-blue-50 text-blue-700 font-medium"
+                      : "hover:bg-gray-50"
+                  }`}
+                >
+                  <span className="mr-2">📦</span>
+                  ทั้งหมด (
+                  {debouncedSearchTerm
+                    ? allProducts.filter(
+                        (product) =>
+                          product.name
+                            .toLowerCase()
+                            .includes(debouncedSearchTerm.toLowerCase()) ||
+                          product.description
+                            ?.toLowerCase()
+                            .includes(debouncedSearchTerm.toLowerCase()) ||
+                          product.category.name
+                            .toLowerCase()
+                            .includes(debouncedSearchTerm.toLowerCase())
+                      ).length
+                    : allProducts.length}
+                  )
+                </DropdownMenuItem>
+
+                <DropdownMenuSeparator />
+
+                {categories.map((category) => (
+                  <DropdownMenuItem
+                    key={category.id}
+                    onClick={() => handleCategoryChange(category.id)}
+                    className={`cursor-pointer transition-colors ${
+                      selectedCategory === category.id
+                        ? "bg-blue-50 text-blue-700 font-medium"
+                        : "hover:bg-gray-50"
+                    }`}
+                  >
+                    <span className="mr-2">{category.icon}</span>
+                    {category.name} ({category.productCount || 0})
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
 
             {selectedCategory && (
               <Badge

@@ -25,12 +25,14 @@ import {
 } from "../../services/request-service";
 import { ProductService } from "@/features/admin/services/product-service";
 import { Product } from "../../types/product.types";
+import { userService } from "../../services/user-service";
 import { toast } from "sonner";
 
 interface DashboardStats {
   totalRequests: number;
   pendingRequests: number;
   approvedRequests: number;
+  borrowedItems: number;
   recentActivity: RequestResponse[];
   popularProducts: Product[];
 }
@@ -44,6 +46,7 @@ export function MobileDashboard() {
     totalRequests: 0,
     pendingRequests: 0,
     approvedRequests: 0,
+    borrowedItems: 0,
     recentActivity: [],
     popularProducts: [],
   });
@@ -55,23 +58,18 @@ export function MobileDashboard() {
       try {
         setLoading(true);
 
-        // โหลดข้อมูล requests ของผู้ใช้
-        const [requests, products] = await Promise.all([
+        // โหลดข้อมูล requests ของผู้ใช้และ user stats
+        const [requests, products, userStats] = await Promise.all([
           RequestService.getMyRequests(),
           ProductService.getProducts({}), // โหลดสินค้าทั้งหมด
+          userService.getUserStats(), // ใช้ user stats เดียวกันกับ profile
         ]);
 
-        const pendingCount = requests.filter(
-          (req) => req.status === "PENDING"
-        ).length;
-        const approvedCount = requests.filter(
-          (req) => req.status === "APPROVED"
-        ).length;
-
         setStats({
-          totalRequests: requests.length,
-          pendingRequests: pendingCount,
-          approvedRequests: approvedCount,
+          totalRequests: userStats.totalRequests,
+          pendingRequests: userStats.pendingRequests,
+          approvedRequests: userStats.approvedRequests,
+          borrowedItems: userStats.borrowedItems,
           recentActivity: requests.slice(0, 3), // แสดง 3 รายการล่าสุด
           popularProducts: products.slice(0, 4), // แสดง 4 สินค้าแรก
         });

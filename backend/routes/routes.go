@@ -74,8 +74,10 @@ func setupProtectedRoutes(group *gin.RouterGroup, c *controllers.Controllers) {
 		profile := group.Group("/profile")
 		{
 			profile.GET("", c.User.GetProfile)
-			profile.PUT("", c.User.UpdateProfile)
+			profile.PUT("", c.User.UpdateProfile)   // เก้า PUT method
+			profile.PATCH("", c.User.UpdateProfile) // เพิ่ม PATCH method
 			profile.POST("/change-password", c.User.ChangePassword)
+			profile.GET("/stats", c.User.GetUserStats) // New stats endpoint
 		}
 
 		// --- Product Routes ---
@@ -116,6 +118,7 @@ func setupProtectedRoutes(group *gin.RouterGroup, c *controllers.Controllers) {
 		group.GET("/categories/:id", c.Category.GetCategory)
 		group.GET("/departments", c.Department.GetDepartments)
 		group.GET("/departments/:id", c.Department.GetDepartment)
+		group.GET("/faculties", c.Department.GetFaculties) // เพิ่ม faculties endpoint
 	}
 }
 
