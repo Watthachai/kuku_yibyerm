@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Clock,
   Package,
@@ -10,6 +11,9 @@ import {
   RefreshCw,
   ChevronRight,
   ShoppingBag,
+  CheckCircle,
+  XCircle,
+  Zap,
 } from "lucide-react";
 import { RequestService } from "../../services/request-service";
 
@@ -32,10 +36,65 @@ interface ApiResponse {
   requests: Request[];
 }
 
+type FilterStatus =
+  | "ALL"
+  | "PENDING"
+  | "APPROVED"
+  | "REJECTED"
+  | "ISSUED"
+  | "COMPLETED";
+
 export function MyRequests() {
   const [requests, setRequests] = useState<Request[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeFilter, setActiveFilter] = useState<FilterStatus>("ALL");
+
+  const statusFilters = [
+    {
+      key: "ALL" as FilterStatus,
+      label: "ทั้งหมด",
+      icon: Package,
+      color: "from-gray-500 to-gray-600",
+    },
+    {
+      key: "PENDING" as FilterStatus,
+      label: "รอดำเนินการ",
+      icon: Clock,
+      color: "from-amber-500 to-amber-600",
+    },
+    {
+      key: "APPROVED" as FilterStatus,
+      label: "อนุมัติแล้ว",
+      icon: CheckCircle,
+      color: "from-green-500 to-green-600",
+    },
+    {
+      key: "REJECTED" as FilterStatus,
+      label: "ไม่อนุมัติ",
+      icon: XCircle,
+      color: "from-red-500 to-red-600",
+    },
+    {
+      key: "ISSUED" as FilterStatus,
+      label: "เบิกแล้ว",
+      icon: Zap,
+      color: "from-blue-500 to-blue-600",
+    },
+    {
+      key: "COMPLETED" as FilterStatus,
+      label: "เสร็จสิ้น",
+      icon: CheckCircle,
+      color: "from-purple-500 to-purple-600",
+    },
+  ];
+
+  const filteredRequests = requests.filter(
+    (request) => activeFilter === "ALL" || request.status === activeFilter
+  );
+
+  const getRequestsByStatus = (status: string) =>
+    requests.filter((request) => request.status === status).length;
 
   const loadRequests = async () => {
     try {
@@ -69,23 +128,6 @@ export function MyRequests() {
   useEffect(() => {
     loadRequests();
   }, []);
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "PENDING":
-        return "bg-amber-500";
-      case "APPROVED":
-        return "bg-emerald-500";
-      case "REJECTED":
-        return "bg-red-500";
-      case "ISSUED":
-        return "bg-blue-500";
-      case "COMPLETED":
-        return "bg-slate-500";
-      default:
-        return "bg-gray-400";
-    }
-  };
 
   const getStatusText = (status: string) => {
     switch (status) {
@@ -127,20 +169,21 @@ export function MyRequests() {
 
   if (loading) {
     return (
-      <div className="bg-gray-50 min-h-screen">
-        {/* Header */}
-        <div className="bg-white sticky top-0 z-10 border-b border-gray-100 shadow-sm">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50">
+        {/* Modern Header */}
+        <div className="bg-white/80 backdrop-blur-lg border-b border-gray-200/50 sticky top-0 z-10">
           <div className="px-4 py-4">
-            <h1 className="text-lg font-semibold text-gray-900">
-              คำขอเบิกของฉัน
-            </h1>
+            <h1 className="text-xl font-bold text-gray-900">คำขอเบิกของฉัน</h1>
+            <p className="text-sm text-gray-600">ตรวจสอบสถานะการเบิก</p>
           </div>
         </div>
 
         <div className="flex items-center justify-center py-20">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-10 w-10 border-3 border-blue-500 border-t-transparent mx-auto mb-4"></div>
-            <p className="text-gray-600 text-sm font-medium">
+            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-lg animate-pulse">
+              <Package className="w-8 h-8 text-white" />
+            </div>
+            <p className="text-gray-600 text-lg font-medium">
               กำลังโหลดข้อมูล...
             </p>
           </div>
@@ -151,34 +194,36 @@ export function MyRequests() {
 
   if (error) {
     return (
-      <div className="bg-gray-50 min-h-screen">
-        {/* Header */}
-        <div className="bg-white sticky top-0 z-10 border-b border-gray-100 shadow-sm">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50">
+        {/* Modern Header */}
+        <div className="bg-white/80 backdrop-blur-lg border-b border-gray-200/50 sticky top-0 z-10">
           <div className="px-4 py-4">
-            <h1 className="text-lg font-semibold text-gray-900">
-              คำขอเบิกของฉัน
-            </h1>
+            <h1 className="text-xl font-bold text-gray-900">คำขอเบิกของฉัน</h1>
+            <p className="text-sm text-gray-600">ตรวจสอบสถานะการเบิก</p>
           </div>
         </div>
 
         <div className="flex items-center justify-center py-20 px-4">
-          <div className="text-center max-w-sm">
-            <div className="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <Package className="w-8 h-8 text-red-500" />
-            </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              เกิดข้อผิดพลาด
-            </h3>
-            <p className="text-gray-600 text-sm mb-6 leading-relaxed">
-              {error}
-            </p>
-            <Button
-              onClick={loadRequests}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg font-medium"
-            >
-              ลองใหม่
-            </Button>
-          </div>
+          <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-xl max-w-sm">
+            <CardContent className="p-8 text-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-red-100 to-red-200 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                <XCircle className="w-8 h-8 text-red-600" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">
+                เกิดข้อผิดพลาด
+              </h3>
+              <p className="text-gray-600 text-sm mb-6 leading-relaxed">
+                {error}
+              </p>
+              <Button
+                onClick={loadRequests}
+                className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-6 py-2.5 rounded-xl font-medium shadow-lg"
+              >
+                <RefreshCw className="w-4 h-4 mr-2" />
+                ลองใหม่
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
@@ -186,52 +231,54 @@ export function MyRequests() {
 
   if (!Array.isArray(requests) || requests.length === 0) {
     return (
-      <div className="bg-gray-50 min-h-screen">
-        {/* Header */}
-        <div className="bg-white sticky top-0 z-10 border-b border-gray-100 shadow-sm">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+        {/* Modern Header */}
+        <div className="bg-white/80 backdrop-blur-lg border-b border-gray-200/50 sticky top-0 z-10">
           <div className="px-4 py-4">
-            <h1 className="text-lg font-semibold text-gray-900">
-              คำขอเบิกของฉัน
-            </h1>
+            <h1 className="text-xl font-bold text-gray-900">คำขอเบิกของฉัน</h1>
+            <p className="text-sm text-gray-600">ตรวจสอบสถานะการเบิก</p>
           </div>
         </div>
 
         <div className="flex items-center justify-center py-20 px-4">
-          <div className="text-center max-w-sm">
-            <div className="w-20 h-20 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
-              <ShoppingBag className="w-10 h-10 text-blue-500" />
-            </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-3">
-              ยังไม่มีคำขอเบิก
-            </h3>
-            <p className="text-gray-600 text-sm mb-8 leading-relaxed">
-              เมื่อคุณส่งคำขอเบิกครุภัณฑ์แล้ว จะแสดงรายการและสถานะที่นี่
-            </p>
-            <Button
-              onClick={() => window.history.back()}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-2.5 rounded-lg font-medium"
-            >
-              เลือกสินค้า
-            </Button>
-          </div>
+          <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-xl max-w-sm">
+            <CardContent className="p-8 text-center">
+              <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-blue-200 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                <ShoppingBag className="w-10 h-10 text-blue-600" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">
+                ยังไม่มีคำขอเบิก
+              </h3>
+              <p className="text-gray-600 text-sm mb-8 leading-relaxed">
+                เมื่อคุณส่งคำขอเบิกครุภัณฑ์แล้ว จะแสดงรายการและสถานะที่นี่
+              </p>
+              <Button
+                onClick={() => window.history.back()}
+                className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-8 py-2.5 rounded-xl font-medium shadow-lg"
+              >
+                <ShoppingBag className="w-4 h-4 mr-2" />
+                เลือกสินค้า
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-gray-50 min-h-screen pb-20">
-      {/* Header with Stats */}
-      <div className="bg-white sticky top-0 z-10 border-b border-gray-100 shadow-sm">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 pb-16">
+      {/* Modern Header with Stats */}
+      <div className="bg-white/80 backdrop-blur-lg border-b border-gray-200/50 sticky top-0 z-10">
         <div className="px-4 py-4">
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-lg font-semibold text-gray-900 mb-1">
+              <h1 className="text-xl font-bold text-gray-900 mb-1">
                 คำขอเบิกของฉัน
               </h1>
               <p className="text-sm text-gray-600">
                 ทั้งหมด{" "}
-                <span className="font-medium text-blue-600">
+                <span className="font-semibold text-blue-600">
                   {requests.length}
                 </span>{" "}
                 รายการ
@@ -242,136 +289,206 @@ export function MyRequests() {
               variant="ghost"
               size="sm"
               disabled={loading}
-              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 p-2.5 rounded-lg"
+              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50/50 p-2.5 rounded-xl backdrop-blur-sm"
             >
               <RefreshCw
                 className={`w-4 h-4 ${loading ? "animate-spin" : ""}`}
               />
             </Button>
           </div>
+
+          {/* Status Filter Tabs */}
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2">
+            {statusFilters.map((filter) => {
+              const Icon = filter.icon;
+              const count =
+                filter.key === "ALL"
+                  ? requests.length
+                  : getRequestsByStatus(filter.key);
+              const isActive = activeFilter === filter.key;
+
+              return (
+                <button
+                  key={filter.key}
+                  onClick={() => setActiveFilter(filter.key)}
+                  className={`flex items-center px-4 py-2.5 rounded-xl whitespace-nowrap text-sm font-medium transition-all duration-200 ${
+                    isActive
+                      ? `bg-gradient-to-r ${filter.color} text-white shadow-lg shadow-opacity-25`
+                      : "bg-white/60 text-gray-600 hover:bg-white/80 backdrop-blur-sm"
+                  }`}
+                >
+                  <Icon className="w-4 h-4 mr-2" />
+                  {filter.label}
+                  <span
+                    className={`ml-2 px-2 py-0.5 rounded-full text-xs ${
+                      isActive
+                        ? "bg-white/20 text-white"
+                        : "bg-gray-100 text-gray-600"
+                    }`}
+                  >
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
       {/* Requests List */}
-      <div className="px-4 py-4 space-y-4">
-        {requests.map((request) => (
-          <div
-            key={request.id}
-            className="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden"
-          >
-            {/* Header */}
-            <div className="p-4 border-b border-gray-50">
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex-1 pr-3">
-                  <h3 className="font-semibold text-gray-900 text-base leading-6 mb-2">
-                    {request.purpose}
-                  </h3>
-                  <div className="flex items-center text-sm text-gray-500">
-                    <Calendar className="w-4 h-4 mr-1.5" />
-                    <span>{formatDate(request.request_date)}</span>
-                    <span className="mx-2">•</span>
-                    <Clock className="w-4 h-4 mr-1" />
-                    <span>{formatTime(request.request_date)}</span>
+      <div className="px-4 py-6 space-y-4">
+        {filteredRequests.length === 0 ? (
+          <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-xl">
+            <CardContent className="p-8 text-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                <Package className="w-8 h-8 text-gray-600" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">
+                ไม่พบคำขอในสถานะนี้
+              </h3>
+              <p className="text-gray-600 text-sm">
+                {activeFilter === "ALL"
+                  ? "ยังไม่มีคำขอเบิกใดๆ"
+                  : `ไม่มีคำขอที่มีสถานะ "${
+                      statusFilters.find((f) => f.key === activeFilter)?.label
+                    }"`}
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          filteredRequests.map((request) => (
+            <Card
+              key={request.id}
+              className="bg-white/60 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden group"
+            >
+              {/* Header */}
+              <div className="p-6 border-b border-gray-100/50 relative">
+                {/* Status Indicator - เปลี่ยนจากแถบเป็นจุดแสง */}
+                <div className="absolute top-4 right-4">
+                  <div
+                    className={`w-3 h-3 rounded-full bg-gradient-to-r ${
+                      statusFilters.find((f) => f.key === request.status)
+                        ?.color || "from-gray-400 to-gray-500"
+                    } shadow-lg animate-pulse`}
+                  />
+                </div>
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex-1 pr-4">
+                    <h3 className="font-bold text-gray-900 text-lg leading-6 mb-2">
+                      {request.purpose}
+                    </h3>
+                    <div className="flex items-center text-sm text-gray-500">
+                      <Calendar className="w-4 h-4 mr-2" />
+                      <span>{formatDate(request.request_date)}</span>
+                      <span className="mx-3">•</span>
+                      <Clock className="w-4 h-4 mr-1" />
+                      <span>{formatTime(request.request_date)}</span>
+                    </div>
+                  </div>
+                  <div
+                    className={`bg-gradient-to-r ${
+                      statusFilters.find((f) => f.key === request.status)
+                        ?.color || "from-gray-400 to-gray-500"
+                    } text-white px-4 py-2 rounded-xl text-sm font-semibold whitespace-nowrap shadow-lg`}
+                  >
+                    {getStatusText(request.status)}
                   </div>
                 </div>
-                <div
-                  className={`${getStatusColor(
-                    request.status
-                  )} text-white px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap`}
-                >
-                  {getStatusText(request.status)}
-                </div>
+
+                {request.request_number && (
+                  <div className="bg-gray-50/80 backdrop-blur-sm rounded-xl px-4 py-3 border border-gray-100/50">
+                    <div className="flex items-center">
+                      <FileText className="w-4 h-4 text-gray-400 mr-3" />
+                      <span className="text-sm text-gray-600 font-mono">
+                        รหัส: {request.request_number}
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
 
-              {request.request_number && (
-                <div className="flex items-center bg-gray-50 rounded-lg px-3 py-2">
-                  <FileText className="w-4 h-4 text-gray-400 mr-2" />
-                  <span className="text-sm text-gray-600 font-mono">
-                    รหัส: {request.request_number}
-                  </span>
-                </div>
-              )}
-            </div>
-
-            {/* Items Summary */}
-            <div className="p-4">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center">
-                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
-                    <Package className="w-4 h-4 text-blue-600" />
+              {/* Items Summary */}
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center">
+                    <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-blue-200 rounded-2xl flex items-center justify-center mr-4">
+                      <Package className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <p className="text-base font-semibold text-gray-900">
+                        {Array.isArray(request.items)
+                          ? request.items.length
+                          : 0}{" "}
+                        รายการ
+                      </p>
+                      <p className="text-sm text-gray-500">รายการที่ขอเบิก</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      {Array.isArray(request.items) ? request.items.length : 0}{" "}
-                      รายการ
+                  <div className="text-right">
+                    <p className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">
+                      {getTotalItems(request.items)}
                     </p>
-                    <p className="text-xs text-gray-500">รายการที่ขอเบิก</p>
+                    <p className="text-sm text-gray-500">ชิ้น</p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-2xl font-bold text-blue-600">
-                    {getTotalItems(request.items)}
-                  </p>
-                  <p className="text-xs text-gray-500">ชิ้น</p>
-                </div>
-              </div>
 
-              {/* Items Preview */}
-              {Array.isArray(request.items) && request.items.length > 0 && (
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-gray-700 mb-2">
-                    รายละเอียด:
-                  </p>
-                  {request.items.slice(0, 2).map((item, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2"
-                    >
-                      <div className="flex items-center flex-1">
-                        <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
-                        <span className="text-sm text-gray-700 truncate">
-                          {item.product?.name || "ไม่ระบุ"}
+                {/* Items Preview */}
+                {Array.isArray(request.items) && request.items.length > 0 && (
+                  <div className="space-y-3">
+                    <p className="text-sm font-semibold text-gray-700 mb-3">
+                      รายละเอียด:
+                    </p>
+                    {request.items.slice(0, 2).map((item, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between bg-white/80 backdrop-blur-sm rounded-xl px-4 py-3 border border-gray-100/50"
+                      >
+                        <div className="flex items-center flex-1">
+                          <div className="w-3 h-3 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full mr-4"></div>
+                          <span className="text-sm text-gray-700 font-medium truncate">
+                            {item.product?.name || "ไม่ระบุ"}
+                          </span>
+                        </div>
+                        <span className="text-sm font-bold text-blue-600 ml-4 bg-blue-50 px-3 py-1 rounded-lg">
+                          {item.quantity} ชิ้น
                         </span>
                       </div>
-                      <span className="text-sm font-semibold text-blue-600 ml-3">
-                        {item.quantity} ชิ้น
-                      </span>
-                    </div>
-                  ))}
+                    ))}
 
-                  {request.items.length > 2 && (
-                    <div className="text-center py-2">
-                      <span className="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-                        และอีก {request.items.length - 2} รายการ
-                      </span>
-                    </div>
-                  )}
-                </div>
-              )}
+                    {request.items.length > 2 && (
+                      <div className="text-center py-3">
+                        <span className="text-xs text-gray-500 bg-white/60 backdrop-blur-sm px-4 py-2 rounded-full border border-gray-100/50">
+                          และอีก {request.items.length - 2} รายการ
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
 
-              {/* Empty State */}
-              {(!Array.isArray(request.items) ||
-                request.items.length === 0) && (
-                <div className="text-center py-6 bg-gray-50 rounded-lg">
-                  <Package className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                  <span className="text-sm text-gray-500">
-                    ไม่มีรายการสินค้า
-                  </span>
-                </div>
-              )}
-            </div>
-
-            {/* Action Footer */}
-            <div className="px-4 py-3 bg-gradient-to-r from-gray-50 to-gray-100 border-t border-gray-100">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-500">
-                  สร้างเมื่อ {formatDate(request.request_date)}
-                </span>
-                <ChevronRight className="w-4 h-4 text-gray-400" />
+                {/* Empty State */}
+                {(!Array.isArray(request.items) ||
+                  request.items.length === 0) && (
+                  <div className="text-center py-8 bg-white/60 backdrop-blur-sm rounded-xl border border-gray-100/50">
+                    <Package className="w-10 h-10 text-gray-400 mx-auto mb-3" />
+                    <span className="text-sm text-gray-500 font-medium">
+                      ไม่มีรายการสินค้า
+                    </span>
+                  </div>
+                )}
               </div>
-            </div>
-          </div>
-        ))}
+
+              {/* Action Footer */}
+              <div className="px-6 py-4 bg-gradient-to-r from-gray-50/80 to-gray-100/80 backdrop-blur-sm border-t border-gray-100/50">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-500 font-medium">
+                    สร้างเมื่อ {formatDate(request.request_date)}
+                  </span>
+                  <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-blue-500 transition-colors" />
+                </div>
+              </div>
+            </Card>
+          ))
+        )}
       </div>
     </div>
   );

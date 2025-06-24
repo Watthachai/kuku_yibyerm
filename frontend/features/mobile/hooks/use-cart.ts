@@ -15,7 +15,6 @@ export function useCart() {
     updateQuantity,
     updateItemPurpose,
     updateItemNotes,
-    updateItemPeriod,
     clearCart,
     getTotalItems,
     getItemQuantity,
@@ -48,10 +47,12 @@ export function useCart() {
 
   const submitCartRequest = async () => {
     try {
-      await submitRequest();
+      const result = await submitRequest();
       toast.success("ส่งคำขอเบิกสำเร็จ!");
+      return result; // ⭐ Return result
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "เกิดข้อผิดพลาด");
+      throw error; // ⭐ Re-throw error
     }
   };
 
@@ -67,7 +68,6 @@ export function useCart() {
     updateQuantity,
     updateItemPurpose,
     updateItemNotes,
-    updateItemPeriod,
     clearCart,
 
     // Selectors

@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { CartItem, RequestPeriod } from "../types/cart.types";
 import { Product } from "../types/product.types";
-import { RequestService } from "../services/request-service";
+import { RequestService, RequestResponse } from "../services/request-service"; // ⭐ เพิ่ม RequestResponse import
 
 interface CartStore {
   items: CartItem[];
@@ -23,7 +23,7 @@ interface CartStore {
 
   // Validation & Submission
   validateCart: () => boolean;
-  submitRequest: () => Promise<void>;
+  submitRequest: () => Promise<RequestResponse>; // ⭐ ใช้ RequestResponse type
 
   // Selectors
   getItemQuantity: (productId: string) => number;
@@ -71,24 +71,35 @@ export const useCartStore = create<CartStore>()(
             }
 
             const newItem: CartItem = {
-              id: product.id.toString(),
+              id: `${product.id}-${Date.now()}`,
               product: {
                 id: product.id.toString(),
+                code: product.code || "",
                 name: product.name,
+                description: product.description,
+                brand: product.brand,
+                productModel: product.productModel,
+                stock: product.stock,
+                minStock: product.minStock || 0,
+                unit: product.unit || "ชิ้น",
+                status: product.status || "ACTIVE",
+                imageUrl: product.imageUrl,
                 category: product.category,
-
-                // ⭐ ใช้ stock แทน quantity
-                quantity: product.stock, // เก็บข้อมูล stock สำหรับการตรวจสอบ
+                createdAt: product.createdAt || new Date().toISOString(),
+                updatedAt: product.updatedAt || new Date().toISOString(),
               },
               quantity,
               purpose: "",
               notes: "",
+              priority: "NORMAL", // ⭐ เพิ่ม priority
+              addedAt: new Date().toISOString(), // ⭐ เพิ่ม addedAt
               requestPeriod: {
                 startDate: period?.startDate || new Date().toISOString(),
                 endDate:
                   period?.endDate ||
                   new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
                 duration: period?.duration || 7,
+                isFlexible: period?.isFlexible || false, // ⭐ เพิ่ม isFlexible
               },
             };
 

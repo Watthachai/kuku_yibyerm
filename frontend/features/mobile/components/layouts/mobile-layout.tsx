@@ -11,10 +11,10 @@ interface MobileLayoutProps {
   className?: string;
 }
 
-export function MobileLayout({ 
-  children, 
+export function MobileLayout({
+  children,
   showBottomNav = true,
-  className 
+  className,
 }: MobileLayoutProps) {
   const { data: session } = useSession();
   const pathname = usePathname();
@@ -27,17 +27,17 @@ export function MobileLayout({
   return (
     <div className={cn("min-h-screen bg-gray-50", className)}>
       {/* Main Content */}
-      <main className={cn(
-        "relative",
-        showBottomNav && "pb-20" // Add bottom padding when bottom nav is shown
-      )}>
+      <main
+        className={cn(
+          "relative",
+          showBottomNav && "pb-16" // Add bottom padding when bottom nav is shown
+        )}
+      >
         {children}
       </main>
 
       {/* Bottom Navigation */}
-      {showBottomNav && (
-        <BottomNavigation currentPath={pathname} />
-      )}
+      {showBottomNav && <BottomNavigation currentPath={pathname} />}
     </div>
   );
 }

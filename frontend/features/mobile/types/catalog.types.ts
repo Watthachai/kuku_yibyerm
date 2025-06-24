@@ -108,8 +108,7 @@ export function convertCatalogProductToProduct(
     stock: catalogProduct.stock,
     minStock: catalogProduct.minStock,
     unit: catalogProduct.unit,
-    status:
-      catalogProduct.status === "AVAILABLE" ? "ACTIVE" : catalogProduct.status,
+    status: catalogProduct.status === "AVAILABLE" ? "ACTIVE" : "INACTIVE", // ⭐ แปลงเป็น ACTIVE/INACTIVE เท่านั้น
     imageUrl: catalogProduct.imageUrl,
     category: catalogProduct.category,
     createdAt: catalogProduct.createdAt,

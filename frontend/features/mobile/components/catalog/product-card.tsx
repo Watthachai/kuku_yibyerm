@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -111,22 +111,22 @@ export function ProductCard({
   // ⭐ Card variants สำหรับ styling
   const getCardClasses = () => {
     const baseClasses =
-      "group relative overflow-hidden transition-all duration-200 hover:shadow-lg";
+      "group relative overflow-hidden transition-all duration-300 hover:shadow-2xl bg-white/60 backdrop-blur-sm border-0 shadow-xl rounded-lg";
 
     switch (variant) {
       case "compact":
         return cn(baseClasses, "h-auto");
       case "featured":
-        return cn(baseClasses, "h-full border-2 border-ku-green/20 shadow-md");
+        return cn(baseClasses, "h-full border-2 border-blue-200/50 shadow-2xl");
       default:
         return cn(baseClasses, "h-full");
     }
   };
 
   return (
-    <Card className={cn(getCardClasses(), className)}>
+    <div className={cn(getCardClasses(), className)}>
       {/* ⭐ Product Image Section */}
-      <div className="relative h-48 bg-gray-100 overflow-hidden">
+      <div className="relative h-48 overflow-hidden rounded-t-lg">
         {product.imageUrl && !imageError ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -147,50 +147,81 @@ export function ProductCard({
           </div>
         )}
 
-        {/* ⭐ Favorite Button (แสดงเมื่อ hover) */}
-        <Button
-          variant="ghost"
-          size="sm"
-          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 hover:bg-white/90 backdrop-blur-sm"
-          onClick={handleToggleFavorite}
-        >
-          <Heart
-            className={cn(
-              "w-4 h-4",
-              isFavorited ? "fill-red-500 text-red-500" : "text-gray-600"
-            )}
-          />
-        </Button>
+        {/* ⭐ Action Buttons Overlay (แสดงเมื่อ hover) */}
+        <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          {/* View Details Button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-8 h-8 p-0 bg-white/80 hover:bg-white/90 backdrop-blur-lg shadow-lg rounded-xl transition-all duration-200"
+            onClick={(e) => {
+              e.stopPropagation();
+              onViewDetails(product);
+            }}
+          >
+            <Info className="w-4 h-4 text-gray-700" />
+          </Button>
+
+          {/* Favorite Button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-8 h-8 p-0 bg-white/80 hover:bg-white/90 backdrop-blur-lg shadow-lg rounded-xl transition-all duration-200"
+            onClick={handleToggleFavorite}
+          >
+            <Heart
+              className={cn(
+                "w-4 h-4",
+                isFavorited ? "fill-red-500 text-red-500" : "text-gray-700"
+              )}
+            />
+          </Button>
+        </div>
 
         {/* Status Badge */}
         <div className="absolute top-2 left-2">
-          <Badge className={cn("text-xs", getStatusColor(product.status))}>
+          <Badge
+            className={cn(
+              "text-xs backdrop-blur-sm border-0 shadow-lg",
+              getStatusColor(product.status)
+            )}
+          >
             {getStatusText(product.status)}
           </Badge>
         </div>
 
         {/* Stock Badge */}
-        <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded-full backdrop-blur-sm">
+        <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-lg text-white text-xs px-3 py-1.5 rounded-xl shadow-lg border border-white/20">
           คงเหลือ {product.stock}
         </div>
 
         {/* ⭐ Featured Badge สำหรับ variant featured */}
         {variant === "featured" && (
-          <div className="absolute top-2 right-12">
-            <Badge className="bg-ku-green text-white text-xs">แนะนำ</Badge>
+          <div className="absolute bottom-2 left-2">
+            <Badge className="bg-gradient-to-r from-ku-green to-emerald-600 text-white text-xs border-0 shadow-lg backdrop-blur-sm">
+              แนะนำ
+            </Badge>
           </div>
         )}
       </div>
 
       {/* Product Info */}
-      <CardContent className={cn("p-4", variant === "compact" && "p-3")}>
+      <CardContent
+        className={cn(
+          "p-4 bg-gradient-to-b from-white/40 to-white/60 backdrop-blur-sm",
+          variant === "compact" && "p-3"
+        )}
+      >
         {/* Category & Department */}
-        <div className="flex items-center justify-between mb-2">
-          <Badge variant="outline" className="text-xs">
+        <div className="flex items-center justify-between mb-3">
+          <Badge
+            variant="outline"
+            className="text-xs bg-white/60 backdrop-blur-sm border-gray-200/50"
+          >
             {product.category.name}
           </Badge>
           {product.department?.building && (
-            <div className="flex items-center text-xs text-gray-500">
+            <div className="flex items-center text-xs text-gray-500 bg-white/40 backdrop-blur-sm px-2 py-1 rounded-lg">
               <MapPin className="w-3 h-3 mr-1" />
               {product.department.building}
             </div>
@@ -198,10 +229,10 @@ export function ProductCard({
         </div>
 
         {/* Product Info */}
-        <div className="space-y-1 mb-3">
+        <div className="space-y-2 mb-4">
           <h3
             className={cn(
-              "font-medium line-clamp-2 group-hover:text-ku-green transition-colors",
+              "font-semibold line-clamp-2 group-hover:text-blue-600 transition-colors leading-snug",
               variant === "compact" ? "text-sm" : "text-sm"
             )}
           >
@@ -209,13 +240,13 @@ export function ProductCard({
           </h3>
 
           {product.serialNumber && (
-            <p className="text-xs text-gray-500 font-mono">
+            <p className="text-xs text-gray-500 font-mono bg-gray-50/80 backdrop-blur-sm px-2 py-1 rounded-lg">
               รหัส: {product.serialNumber}
             </p>
           )}
 
           {variant !== "compact" && product.description && (
-            <p className="text-xs text-gray-600 line-clamp-2">
+            <p className="text-xs text-gray-600 line-clamp-2 leading-relaxed">
               {product.description}
             </p>
           )}
@@ -223,7 +254,7 @@ export function ProductCard({
 
         {/* Stats */}
         {variant !== "compact" && (
-          <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
+          <div className="flex items-center justify-between text-xs text-gray-500 mb-4 bg-white/40 backdrop-blur-sm rounded-lg p-2">
             <div className="flex items-center">
               <Users className="w-3 h-3 mr-1" />
               ใช้ {product.usageCount || 0} ครั้ง
@@ -238,34 +269,11 @@ export function ProductCard({
         )}
 
         {/* Actions */}
-        <div
-          className={cn(
-            "flex gap-2",
-            variant === "featured" ? "flex-col" : "flex-row"
-          )}
-        >
-          <Button
-            variant="outline"
-            size="sm"
-            className={cn(
-              "text-xs",
-              variant === "featured" ? "w-full h-9" : "flex-1 h-8"
-            )}
-            onClick={(e) => {
-              e.stopPropagation();
-              onViewDetails(product);
-            }}
-          >
-            <Info className="h-3 w-3 mr-1" />
-            ดูรายละเอียด
-          </Button>
-
+        <div className="space-y-2">
+          {/* Add to Cart Button - Full Width */}
           <Button
             size="sm"
-            className={cn(
-              "text-xs bg-ku-green hover:bg-ku-green-dark disabled:opacity-50",
-              variant === "featured" ? "w-full h-9" : "flex-1 h-8"
-            )}
+            className="w-full h-9 text-sm bg-gradient-to-r from-ku-green to-emerald-600 hover:from-ku-green-dark hover:to-emerald-700 disabled:opacity-50 shadow-lg transition-all duration-200"
             onClick={(e) => {
               e.stopPropagation();
               handleAddToCart();
@@ -273,10 +281,10 @@ export function ProductCard({
             disabled={!isAvailable || !canAddMore || isLoading}
           >
             {isLoading ? (
-              <div className="h-3 w-3 animate-spin rounded-full border border-white border-t-transparent" />
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
             ) : (
               <>
-                <ShoppingCart className="h-3 w-3 mr-1" />
+                <ShoppingCart className="h-4 w-4 mr-2" />
                 {isInCart(product.id) ? `เพิ่ม (${inCartQuantity})` : "เบิก"}
               </>
             )}
@@ -285,13 +293,13 @@ export function ProductCard({
 
         {/* ⭐ เพิ่มข้อมูลเสริมสำหรับ featured variant */}
         {variant === "featured" && (
-          <div className="mt-3 pt-3 border-t border-gray-100">
+          <div className="mt-3 pt-3 border-t border-gray-100/50">
             <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="text-gray-500">
+              <div className="text-gray-500 bg-white/40 backdrop-blur-sm rounded-lg p-2">
                 <span className="font-medium">แบรนด์:</span>{" "}
                 {product.brand || "ไม่ระบุ"}
               </div>
-              <div className="text-gray-500">
+              <div className="text-gray-500 bg-white/40 backdrop-blur-sm rounded-lg p-2">
                 <span className="font-medium">หน่วย:</span>{" "}
                 {product.unit || "ชิ้น"}
               </div>
@@ -299,6 +307,6 @@ export function ProductCard({
           </div>
         )}
       </CardContent>
-    </Card>
+    </div>
   );
 }

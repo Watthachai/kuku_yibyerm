@@ -10,7 +10,7 @@ export const BOTTOM_NAV_ITEMS: BottomNavItem[] = [
   },
   {
     id: "catalog",
-    label: "คลังครุภัณฑ์",
+    label: "เบิกครุภัณฑ์",
     icon: Search,
     href: "/products",
   },
