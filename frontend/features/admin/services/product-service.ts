@@ -13,6 +13,7 @@ interface ProductApiResponse {
   min_stock?: number;
   unit?: string;
   status?: string;
+  image_url?: string; // ⭐ เพิ่ม image_url field
   category?: {
     id: number | string;
     name: string;
@@ -41,12 +42,19 @@ export class ProductService {
       throw new Error("Failed to fetch products");
     }
     const responseData = await response.json();
-    return responseData.data?.products || [];
+    const rawProducts = responseData.data?.products || [];
+
+    // ⭐ แปลงข้อมูลผ่าน mapProductResponse
+    return rawProducts.map((product: ProductApiResponse) =>
+      this.mapProductResponse(product)
+    );
   }
 
   // ⭐ แก้ไข mapping ให้ใช้ stock แทน quantity
   private static mapProductResponse(data: ProductApiResponse): Product {
-    return {
+    console.log("Mapping product data:", data); // ⭐ Debug log
+
+    const product = {
       id: data.id?.toString() || "0",
       code: data.code || "",
       name: data.name || "",
@@ -58,7 +66,12 @@ export class ProductService {
       stock: data.stock || 0, // จำนวนคงเหลือ
       minStock: data.min_stock || 0, // จำนวนขั้นต่ำ
       unit: data.unit || "ชิ้น", // หน่วยนับ
-      status: data.status || "ACTIVE",
+      status: (data.status === "ACTIVE" || data.status === "INACTIVE"
+        ? data.status
+        : "ACTIVE") as "ACTIVE" | "INACTIVE",
+
+      // ⭐ เพิ่ม imageUrl mapping
+      imageUrl: data.image_url || undefined,
 
       category: data.category
         ? {
@@ -70,11 +83,14 @@ export class ProductService {
       createdAt: data.created_at || new Date().toISOString(),
       updatedAt: data.updated_at || new Date().toISOString(),
     };
+
+    console.log("Mapped product:", product); // ⭐ Debug log
+    return product;
   }
 
   // ⭐ อัปเดต CreateProduct request
   static async createProduct(
-    productData: CreateProductFormData
+    productData: CreateProductFormData & { image_url?: string }
   ): Promise<Product> {
     try {
       const headers = await getAuthHeaders();
@@ -85,12 +101,13 @@ export class ProductService {
         body: JSON.stringify({
           name: productData.name,
           description: productData.description,
-          category_id: productData.categoryId,
+          category_id: productData.category_id,
           brand: productData.brand,
-          product_model: productData.productModel,
+          product_model: productData.product_model,
           stock: productData.stock,
-          min_stock: productData.minStock,
+          min_stock: productData.min_stock,
           unit: productData.unit,
+          image_url: productData.image_url || undefined,
         }),
       });
 
@@ -110,7 +127,7 @@ export class ProductService {
   // ⭐ อัปเดต UpdateProduct request
   static async updateProduct(
     id: string,
-    productData: Partial<CreateProductFormData>
+    productData: Partial<CreateProductFormData & { image_url?: string }>
   ): Promise<Product> {
     try {
       const headers = await getAuthHeaders();
@@ -121,14 +138,15 @@ export class ProductService {
         body: JSON.stringify({
           name: productData.name,
           description: productData.description,
-          category_id: productData.categoryId,
+          category_id: productData.category_id,
           brand: productData.brand,
-          product_model: productData.productModel,
+          product_model: productData.product_model,
 
           // ⭐ ส่ง stock แทน quantity
           stock: productData.stock,
-          min_stock: productData.minStock,
+          min_stock: productData.min_stock,
           unit: productData.unit,
+          image_url: productData.image_url,
         }),
       });
 

@@ -13,6 +13,7 @@ type Controllers struct {
 	Category   *CategoryController
 	Department *DepartmentController
 	Dashboard  *DashboardController
+	Upload     *UploadController
 }
 
 func NewControllers(s *services.Services) *Controllers {
@@ -24,5 +25,6 @@ func NewControllers(s *services.Services) *Controllers {
 		Category:   NewCategoryController(s.Category),
 		Department: NewDepartmentController(s.Department),
 		Dashboard:  NewDashboardController(s.Dashboard),
+		Upload:     NewUploadController(),
 	}
 }

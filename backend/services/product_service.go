@@ -27,7 +27,7 @@ func NewProductService(db *gorm.DB) ProductService {
 }
 
 func (s *productService) CreateProduct(req *dto.CreateProductRequest) (*dto.ProductResponse, error) {
-	// ⭐ สร้าง Code อัตโนมัติ
+	// สร้าง Code อัตโนมัติ
 	code, err := s.generateProductCode()
 	if err != nil {
 		return nil, err
@@ -41,11 +41,14 @@ func (s *productService) CreateProduct(req *dto.CreateProductRequest) (*dto.Prod
 		Brand:        req.Brand,
 		ProductModel: req.ProductModel,
 
-		// ⭐ ใช้ Stock ตัวเดียว
-		Stock:    req.Stock, // จำนวนเริ่มต้น
+		// Stock fields
+		Stock:    req.Stock,
 		MinStock: req.MinStock,
 		Unit:     req.Unit,
 		Status:   models.ProductStatusActive,
+
+		// ⭐ เพิ่ม ImageURL
+		ImageURL: req.ImageURL,
 	}
 
 	// ตั้งค่า default unit
@@ -135,7 +138,7 @@ func (s *productService) UpdateProduct(id uint, req *dto.UpdateProductRequest) (
 	if req.ProductModel != "" {
 		product.ProductModel = req.ProductModel
 	}
-	if req.Stock >= 0 { // ⭐ ใช้ Stock ตัวเดียว
+	if req.Stock >= 0 {
 		product.Stock = req.Stock
 	}
 	if req.MinStock >= 0 {
@@ -146,6 +149,11 @@ func (s *productService) UpdateProduct(id uint, req *dto.UpdateProductRequest) (
 	}
 	if req.CategoryID > 0 {
 		product.CategoryID = req.CategoryID
+	}
+
+	// ⭐ อัปเดต ImageURL (รวมถึงการลบรูป)
+	if req.ImageURL != nil {
+		product.ImageURL = req.ImageURL
 	}
 
 	if err := s.db.Save(&product).Error; err != nil {
@@ -184,7 +192,7 @@ func (s *productService) generateProductCode() (string, error) {
 	return fmt.Sprintf("PRD%04d", nextID), nil
 }
 
-// ⭐ แก้ไข mapProductToResponse
+// ⭐ อัปเดต mapProductToResponse
 func mapProductToResponse(p *models.Product) *dto.ProductResponse {
 	res := &dto.ProductResponse{
 		ID:           p.ID,
@@ -193,12 +201,16 @@ func mapProductToResponse(p *models.Product) *dto.ProductResponse {
 		Description:  p.Description,
 		Brand:        p.Brand,
 		ProductModel: p.ProductModel,
-		Stock:        p.Stock, // ⭐ ใช้ Stock ตัวเดียว
+		Stock:        p.Stock,
 		MinStock:     p.MinStock,
 		Unit:         p.Unit,
 		Status:       string(p.Status),
-		CreatedAt:    p.CreatedAt,
-		UpdatedAt:    p.UpdatedAt,
+
+		// ⭐ เพิ่ม ImageURL
+		ImageURL: p.ImageURL,
+
+		CreatedAt: p.CreatedAt,
+		UpdatedAt: p.UpdatedAt,
 	}
 
 	if p.Category.ID != 0 {

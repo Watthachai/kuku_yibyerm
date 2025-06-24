@@ -14,6 +14,9 @@ export const createProductSchema = z.object({
     .min(0, "จำนวนขั้นต่ำต้องมากกว่าหรือเท่ากับ 0")
     .optional(),
   unit: z.string().min(1, "กรุณาระบุหน่วยนับ").optional(),
+  
+  // ⭐ เพิ่ม image_url field
+  image_url: z.string().url("รูปแบบ URL ไม่ถูกต้อง").optional(),
 });
 
 export type CreateProductFormData = z.infer<typeof createProductSchema>;

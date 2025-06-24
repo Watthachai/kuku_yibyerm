@@ -36,7 +36,6 @@ export function RequestManagement() {
     null
   );
   const [loading, setLoading] = useState(true);
-  const [updating, setUpdating] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<RequestStatus | "all">("PENDING");
 
   useEffect(() => {
@@ -89,8 +88,6 @@ export function RequestManagement() {
     note?: string
   ) => {
     try {
-      setUpdating(requestId);
-
       await AdminRequestService.updateRequestStatus(requestId, {
         action,
         notes: note,
@@ -112,33 +109,6 @@ export function RequestManagement() {
         description:
           error instanceof Error ? error.message : "ไม่สามารถดำเนินการได้",
       });
-    } finally {
-      setUpdating(null);
-    }
-  };
-
-  // ⭐ เบิกออก (Issue) - สำหรับคำขอที่อนุมัติแล้ว
-  const handleIssue = async (requestId: string, notes?: string) => {
-    try {
-      setUpdating(requestId);
-
-      await AdminRequestService.issueRequest(requestId, notes);
-
-      // ⭐ ใช้ sonner toast
-      toast.success("เบิกออกสำเร็จ", {
-        description: `คำขอ ${requestId} ได้ถูกเบิกออกแล้ว`,
-      });
-
-      await loadRequests(); // โหลดข้อมูลใหม่
-    } catch (error) {
-      console.error("Failed to issue request:", error);
-      // ⭐ ใช้ sonner toast
-      toast.error("เกิดข้อผิดพลาด", {
-        description:
-          error instanceof Error ? error.message : "ไม่สามารถเบิกออกได้",
-      });
-    } finally {
-      setUpdating(null);
     }
   };
 
@@ -346,10 +316,8 @@ export function RequestManagement() {
                   key={request.id}
                   request={request}
                   onAction={(req) => setSelectedRequest(req)}
-                  onIssue={handleIssue}
                   getStatusColor={getStatusColor}
                   getStatusText={getStatusText}
-                  isUpdating={updating === request.id}
                 />
               ))}
             </div>
@@ -364,7 +332,6 @@ export function RequestManagement() {
           isOpen={!!selectedRequest}
           onClose={() => setSelectedRequest(null)}
           onApproval={handleApproval}
-          isUpdating={updating === selectedRequest.id}
         />
       )}
     </div>

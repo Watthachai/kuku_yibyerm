@@ -148,22 +148,20 @@ export class ProductManagementService {
           brand: productData.brand,
           product_model: productData.productModel,
           stock: productData.stock,
-          min_stock: productData.minStock || 0,
-          unit: productData.unit || "ชิ้น",
+          min_stock: productData.minStock,
+          unit: productData.unit,
+
+          // ⭐ เพิ่ม image_url
+          image_url: productData.imageUrl,
         }),
       });
 
       if (!response.ok) {
-        const errorData: BaseApiResponse = await response.json();
+        const errorData = await response.json();
         throw new Error(errorData.message || "Failed to create product");
       }
 
-      const result: ProductApiResponse = await response.json();
-
-      if (!result.success || !result.data) {
-        throw new Error("Invalid create response");
-      }
-
+      const result = await response.json();
       return this.mapProductResponse(result.data);
     } catch (error) {
       console.error("Error creating product:", error);
@@ -303,32 +301,32 @@ export class ProductManagementService {
   }
 
   // ⭐ Helper Methods
-  private static mapProductResponse(data: ProductResponseData): Product {
-    console.log("🔄 Mapping product data:", data);
-
-    const mapped: Product = {
-      id: data.id.toString(),
-      code: data.code || `PRD${data.id}`,
-      name: data.name || "ไม่ระบุชื่อ",
+  private static mapProductResponse(data: any): Product {
+    return {
+      id: data.id?.toString() || "0",
+      code: data.code || "",
+      name: data.name || "",
       description: data.description || "",
       brand: data.brand || "",
       productModel: data.product_model || "",
-      stock: Number(data.stock) || 0,
-      minStock: Number(data.min_stock) || 0,
+      stock: data.stock || 0,
+      minStock: data.min_stock || 0,
       unit: data.unit || "ชิ้น",
       status: data.status || "ACTIVE",
+
+      // ⭐ เพิ่ม imageUrl mapping
+      imageUrl: data.image_url || undefined,
+
       category: data.category
         ? {
-            id: data.category.id.toString(),
-            name: data.category.name,
+            id: data.category.id?.toString() || "0",
+            name: data.category.name || "",
           }
         : undefined,
+
       createdAt: data.created_at || new Date().toISOString(),
       updatedAt: data.updated_at || new Date().toISOString(),
     };
-
-    console.log("✅ Mapped product:", mapped);
-    return mapped;
   }
 
   private static calculateStatsFromProducts(products: Product[]): ProductStats {

@@ -19,10 +19,13 @@ type CreateProductRequest struct {
 	Brand        string `json:"brand"`
 	ProductModel string `json:"product_model"`
 
-	// ⭐ ใช้ stock แทน quantity
+	// Stock fields
 	Stock    int    `json:"stock" binding:"required,min=0"` // จำนวนเริ่มต้น
 	MinStock int    `json:"min_stock" binding:"min=0"`      // จำนวนขั้นต่ำ
 	Unit     string `json:"unit"`                           // หน่วยนับ
+
+	// ⭐ เพิ่ม ImageURL field (optional)
+	ImageURL *string `json:"image_url"`
 }
 
 // UpdateProductRequest defines the request body for updating a product.
@@ -35,6 +38,9 @@ type UpdateProductRequest struct {
 	Stock        int    `json:"stock"` // ⭐ ใช้ stock แทน quantity
 	MinStock     int    `json:"min_stock"`
 	Unit         string `json:"unit"`
+
+	// ⭐ เพิ่ม ImageURL field
+	ImageURL *string `json:"image_url"`
 }
 
 // ProductResponse is the standard representation of a product returned by the API.
@@ -46,11 +52,14 @@ type ProductResponse struct {
 	Brand        string `json:"brand"`
 	ProductModel string `json:"product_model"`
 
-	// ⭐ ใช้แค่ Stock
+	// Stock fields
 	Stock    int    `json:"stock"`     // จำนวนคงเหลือ
 	MinStock int    `json:"min_stock"` // จำนวนขั้นต่ำ
 	Unit     string `json:"unit"`      // หน่วยนับ
 	Status   string `json:"status"`
+
+	// ⭐ เพิ่ม ImageURL field
+	ImageURL *string `json:"image_url"`
 
 	Category  *CategoryResponse `json:"category,omitempty"`
 	CreatedAt time.Time         `json:"created_at"`

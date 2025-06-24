@@ -10,7 +10,10 @@ export interface Product {
   stock: number; // จำนวนคงเหลือ
   minStock: number; // จำนวนขั้นต่ำ
   unit: string; // หน่วยนับ
-  status: string;
+  status: "ACTIVE" | "INACTIVE"; // ⭐ แก้ไขให้เป็น union type
+
+  // ⭐ เพิ่ม imageUrl field
+  imageUrl?: string;
 
   category?: {
     id: string;

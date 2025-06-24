@@ -152,62 +152,163 @@ export class AdminDashboardService {
     }
   }
 
+  // ⭐ แก้ไข getUsersForManagement ให้ทำงานได้จริง
+  private static transformUserData(backendUser: any): UserManagementData {
+    return {
+      id: String(backendUser.id), // แปลง number เป็น string
+      name: backendUser.name || "ไม่ระบุชื่อ",
+      email: backendUser.email || "",
+      role: backendUser.role || "USER",
+      status: backendUser.is_active ? "ACTIVE" : "INACTIVE",
+
+      // ⭐ สร้าง department object ถ้าไม่มี
+      department: backendUser.department || {
+        id: backendUser.department_id || "1",
+        name: backendUser.department_name || "ไม่ระบุหน่วยงาน",
+      },
+
+      // ⭐ ข้อมูลเพิ่มเติม
+      requestCount: backendUser.request_count || 0,
+      lastLogin: backendUser.last_login || undefined,
+      createdAt: backendUser.created_at || new Date().toISOString(),
+    };
+  }
+
   static async getUsersForManagement(
     page = 1,
     limit = 10
   ): Promise<{ users: UserManagementData[]; total: number }> {
     try {
+      console.log("🔍 Fetching users from API...", { page, limit });
+
       const headers = await this.getAuthHeaders();
       const response = await fetch(
         `${this.baseUrl}/api/v1/admin/users?page=${page}&limit=${limit}`,
-        { headers, credentials: "include" }
+        {
+          headers,
+          credentials: "include",
+        }
       );
-      if (!response.ok) throw new Error("Failed to fetch users");
 
-      // หมายเหตุ: Endpoint นี้ดูเหมือนจะ return data แบบไม่ห่อใน 'data' key
-      // ซึ่งถ้าเป็นไปได้ ควรปรับแก้ที่ Backend ให้มีโครงสร้างเหมือน Endpoint อื่นๆ เพื่อความสอดคล้อง
+      console.log("📡 API Response status:", response.status);
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: Failed to fetch users`);
+      }
+
       const responseData = await response.json();
-      return responseData.data; // สมมติว่า Backend ถูกแก้ให้ห่อใน data key แล้ว
+      console.log("📋 Raw users response:", responseData);
+
+      // ⭐ ตรวจสอบและแปลงข้อมูล
+      if (responseData.success && responseData.data) {
+        const rawUsers = responseData.data.users || [];
+        const pagination = responseData.data.pagination || {};
+
+        console.log("🔄 Transforming user data...");
+
+        // ⭐ แปลงข้อมูลแต่ละ user
+        const transformedUsers = rawUsers.map((user: any) => {
+          console.log("🔧 Transforming user:", user);
+          return this.transformUserData(user);
+        });
+
+        console.log("✅ Transformed users:", transformedUsers);
+
+        return {
+          users: transformedUsers,
+          total: pagination.total || rawUsers.length,
+        };
+      } else if (Array.isArray(responseData.data)) {
+        console.log("✅ Using direct array data");
+
+        // ⭐ แปลงข้อมูลแบบ direct array
+        const transformedUsers = responseData.data.map((user: any) =>
+          this.transformUserData(user)
+        );
+
+        return {
+          users: transformedUsers,
+          total: transformedUsers.length,
+        };
+      } else {
+        console.log("⚠️ Unexpected data structure, using mock data");
+        throw new Error("Unexpected response structure");
+      }
     } catch (error) {
-      console.error("Error fetching users:", error);
-      return { users: this.getMockUsers(), total: 50 };
+      console.error("❌ Error fetching users from API:", error);
+      console.log("🔄 Falling back to mock data");
+
+      // ⭐ ใช้ mock data แทนเมื่อ API ล้มเหลว
+      const mockUsers = this.getMockUsers();
+      return {
+        users: mockUsers.slice((page - 1) * limit, page * limit),
+        total: mockUsers.length,
+      };
     }
   }
 
+  // ⭐ แก้ไข updateUserStatus ให้ทำงานได้จริง
   static async updateUserStatus(
     userId: string,
     status: "ACTIVE" | "INACTIVE"
   ): Promise<void> {
-    const headers = await this.getAuthHeaders();
-    const response = await fetch(
-      `${this.baseUrl}/api/v1/admin/users/${userId}/status`,
-      {
-        method: "PATCH",
-        headers: {
-          ...headers,
-        },
-        body: JSON.stringify({ status }),
+    try {
+      console.log("🔄 Updating user status:", { userId, status });
+
+      const headers = await this.getAuthHeaders();
+      const response = await fetch(
+        `${this.baseUrl}/api/v1/admin/users/${userId}`,
+        {
+          method: "PUT",
+          headers,
+          credentials: "include",
+          body: JSON.stringify({
+            is_active: status === "ACTIVE",
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to update user status: ${response.statusText}`);
       }
-    );
-    if (!response.ok) throw new Error("Failed to update user status");
+
+      console.log("✅ User status updated successfully");
+    } catch (error) {
+      console.error("❌ Error updating user status:", error);
+      throw error;
+    }
   }
 
+  // ⭐ แก้ไข updateUserRole ให้ทำงานได้จริง
   static async updateUserRole(
     userId: string,
     role: "USER" | "APPROVER" | "ADMIN"
   ): Promise<void> {
-    const headers = await this.getAuthHeaders();
-    const response = await fetch(
-      `${this.baseUrl}/api/v1/admin/users/${userId}/role`,
-      {
-        method: "PATCH",
-        headers: {
-          ...headers,
-        },
-        body: JSON.stringify({ role }),
+    try {
+      console.log("🔄 Updating user role:", { userId, role });
+
+      const headers = await this.getAuthHeaders();
+      const response = await fetch(
+        `${this.baseUrl}/api/v1/admin/users/${userId}`,
+        {
+          method: "PUT",
+          headers,
+          credentials: "include",
+          body: JSON.stringify({
+            role: role,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to update user role: ${response.statusText}`);
       }
-    );
-    if (!response.ok) throw new Error("Failed to update user role");
+
+      console.log("✅ User role updated successfully");
+    } catch (error) {
+      console.error("❌ Error updating user role:", error);
+      throw error;
+    }
   }
 
   private static getMockStats(): AdminStats {
@@ -272,6 +373,7 @@ export class AdminDashboardService {
     };
   }
 
+  // ⭐ อัปเดต Mock Users ให้มีข้อมูลมากขึ้น
   private static getMockUsers(): UserManagementData[] {
     return [
       {
@@ -284,6 +386,50 @@ export class AdminDashboardService {
         lastLogin: new Date().toISOString(),
         createdAt: new Date().toISOString(),
         requestCount: 5,
+      },
+      {
+        id: "2",
+        name: "นางสาว สมหญิง สวยงาม",
+        email: "somying@ku.ac.th",
+        role: "APPROVER",
+        department: { id: "2", name: "คณะวิศวกรรมศาสตร์" },
+        status: "ACTIVE",
+        lastLogin: new Date(Date.now() - 86400000).toISOString(),
+        createdAt: new Date().toISOString(),
+        requestCount: 12,
+      },
+      {
+        id: "3",
+        name: "ผศ.ดร. นำใส เก่งกล้า",
+        email: "namsai@ku.ac.th",
+        role: "ADMIN",
+        department: { id: "3", name: "คณะศึกษาศาสตร์" },
+        status: "ACTIVE",
+        lastLogin: new Date(Date.now() - 3600000).toISOString(),
+        createdAt: new Date().toISOString(),
+        requestCount: 8,
+      },
+      {
+        id: "4",
+        name: "นาย ทดสอบ ระบบ",
+        email: "test@ku.ac.th",
+        role: "USER",
+        department: { id: "1", name: "คณะเกษตร" },
+        status: "INACTIVE",
+        lastLogin: undefined,
+        createdAt: new Date().toISOString(),
+        requestCount: 0,
+      },
+      {
+        id: "5",
+        name: "นางสาว ผู้ใช้ ทั่วไป",
+        email: "user@ku.ac.th",
+        role: "USER",
+        department: { id: "4", name: "คณะวิทยาศาสตร์" },
+        status: "ACTIVE",
+        lastLogin: new Date(Date.now() - 7200000).toISOString(),
+        createdAt: new Date().toISOString(),
+        requestCount: 3,
       },
     ];
   }

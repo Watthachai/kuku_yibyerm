@@ -311,7 +311,7 @@ func mapRequestToResponse(r *models.Request) *dto.RequestResponse {
 	for _, item := range r.Items {
 		itemResponses = append(itemResponses, dto.RequestItemResponse{
 			Quantity: item.Quantity,
-			Product: &dto.ProductResponse{
+			Product: dto.ProductResponse{
 				ID:   item.Product.ID,
 				Name: item.Product.Name,
 			},

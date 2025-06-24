@@ -201,9 +201,9 @@ export function RequestCard({
             </p>
           </div>
           <div className="space-y-2">
-            {request.items.slice(0, 2).map((item) => (
+            {request.items.slice(0, 2).map((item, index) => (
               <div
-                key={item.id}
+                key={`${request.id}-item-${item.id}-${index}`}
                 className="flex items-center justify-between p-2 bg-gray-50 rounded text-sm"
               >
                 <div className="flex-1">

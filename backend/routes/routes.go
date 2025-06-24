@@ -83,10 +83,21 @@ func setupProtectedRoutes(group *gin.RouterGroup, c *controllers.Controllers) {
 		{
 			products.GET("", c.Product.GetProducts)
 			products.GET("/:id", c.Product.GetProduct)
-			// การสร้าง/แก้ไข/ลบ Product ให้สิทธิ์เฉพาะ Admin
+
+			// Admin only routes
 			products.POST("", middleware.AuthorizeRole("ADMIN"), c.Product.CreateProduct)
 			products.PUT("/:id", middleware.AuthorizeRole("ADMIN"), c.Product.UpdateProduct)
 			products.DELETE("/:id", middleware.AuthorizeRole("ADMIN"), c.Product.DeleteProduct)
+		}
+
+		// ⭐ Upload Routes (Admin only with rate limiting)
+		upload := group.Group("/upload")
+		upload.Use(middleware.AuthorizeRole("ADMIN"))
+		upload.Use(middleware.UploadRateLimiter.Middleware())   // 10 uploads per minute
+		upload.Use(middleware.UploadHourlyLimiter.Middleware()) // 50 uploads per hour
+		{
+			upload.POST("/product-image", c.Upload.UploadProductImage)
+			upload.DELETE("/product-image/:filename", c.Upload.DeleteProductImage)
 		}
 
 		// --- Request Routes (User Routes เท่านั้น) ---

@@ -80,8 +80,8 @@ func mapDepartmentToResponse(dept *models.Department) *dto.DepartmentResponse {
 	return &dto.DepartmentResponse{
 		ID:     dept.ID,
 		Code:   dept.Code,
-		NameTH: dept.NameTH,
-		NameEN: dept.NameEN,
+		NameTh: dept.NameTH,
+		NameEn: dept.NameEN,
 		Type:   string(dept.Type),
 	}
 }

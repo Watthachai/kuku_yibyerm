@@ -1,5 +1,6 @@
 import { PDFActions } from "@/components/pdf/pdf-actions";
 import { RequestReceiptTemplate } from "@/components/print/request-receipt-template";
+import { BorrowRequest } from "@/features/shared/types/request.types";
 
 export function RequestDetail({ request }: { request: BorrowRequest }) {
   return (

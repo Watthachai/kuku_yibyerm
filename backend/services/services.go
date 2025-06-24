@@ -25,5 +25,6 @@ func NewServices(db *gorm.DB) *Services {
 		Department: NewDepartmentService(db),
 		Dashboard:  NewDashboardService(db),
 		Request:    NewRequestService(db, productService), // 👈 ส่ง productService เข้าไป
+
 	}
 }

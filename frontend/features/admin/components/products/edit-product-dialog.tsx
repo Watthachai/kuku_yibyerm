@@ -28,6 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { CategoryService } from "../../services/category-service";
 import { ProductManagementService } from "../../services/product-management-service";
 import { Product, UpdateProductRequest } from "@/types/product";
@@ -155,206 +156,232 @@ export function EditProductDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>แก้ไขสินค้า</DialogTitle>
+      <DialogContent
+        className={`
+          max-w-6xl 
+          w-[95vw] 
+          max-h-[95vh] 
+          p-0 
+          overflow-hidden
+          sm:max-w-4xl 
+          lg:max-w-6xl 
+          xl:max-w-7xl
+        `}
+      >
+        <DialogHeader className="px-6 pt-6 pb-4 border-b">
+          <DialogTitle className="text-xl font-semibold text-gray-900">
+            แก้ไขข้อมูลสินค้า
+          </DialogTitle>
+          <p className="text-sm text-gray-600 mt-1">
+            แก้ไขข้อมูลสินค้า: {product?.name}
+          </p>
         </DialogHeader>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* Basic Information */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">ข้อมูลพื้นฐาน</h3>
-
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>ชื่อสินค้า *</FormLabel>
-                    <FormControl>
-                      <Input placeholder="กรอกชื่อสินค้า" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>คำอธิบาย</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="คำอธิบายเพิ่มเติม (ไม่บังคับ)"
-                        className="min-h-[80px]"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="categoryId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>หมวดหมู่ *</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="เลือกหมวดหมู่" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {categories.map((category) => (
-                          <SelectItem key={category.id} value={category.id}>
-                            {category.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            {/* Product Details */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">รายละเอียดสินค้า</h3>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="brand"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>ยี่ห้อ</FormLabel>
-                      <FormControl>
-                        <Input placeholder="ยี่ห้อสินค้า" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="productModel"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>รุ่น</FormLabel>
-                      <FormControl>
-                        <Input placeholder="รุ่นสินค้า" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </div>
-
-            {/* Stock Information */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-medium">ข้อมูลสต็อก</h3>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <FormField
-                  control={form.control}
-                  name="stock"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>จำนวนปัจจุบัน *</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min="0"
-                          placeholder="0"
-                          {...field}
-                          onChange={(e) =>
-                            field.onChange(parseInt(e.target.value) || 0)
-                          }
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="minStock"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>สต็อกขั้นต่ำ *</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min="0"
-                          placeholder="0"
-                          {...field}
-                          onChange={(e) =>
-                            field.onChange(parseInt(e.target.value) || 0)
-                          }
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="unit"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>หน่วยนับ *</FormLabel>
-                      <FormControl>
-                        <Input placeholder="ชิ้น, กล่อง, ชุด" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              {/* Stock Alert */}
-              {form.watch("stock") <= form.watch("minStock") && (
-                <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <p className="text-yellow-800 text-sm">
-                    ⚠️ จำนวนสต็อกปัจจุบันต่ำกว่าหรือเท่ากับสต็อกขั้นต่ำ
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* Actions */}
-            <div className="flex items-center justify-end gap-3 pt-4 border-t">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleCancel}
-                disabled={loading}
+        <ScrollArea className="flex-1 px-6 pb-6">
+          <div className="py-4">
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-6"
               >
-                <X className="w-4 h-4 mr-2" />
-                ยกเลิก
-              </Button>
-              <Button type="submit" disabled={loading}>
-                {loading ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : (
-                  <Save className="w-4 h-4 mr-2" />
-                )}
-                บันทึกการเปลี่ยนแปลง
-              </Button>
-            </div>
-          </form>
-        </Form>
+                {/* Basic Information */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">ข้อมูลพื้นฐาน</h3>
+
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>ชื่อสินค้า *</FormLabel>
+                        <FormControl>
+                          <Input placeholder="กรอกชื่อสินค้า" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>คำอธิบาย</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="คำอธิบายเพิ่มเติม (ไม่บังคับ)"
+                            className="min-h-[80px]"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="categoryId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>หมวดหมู่ *</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="เลือกหมวดหมู่" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {categories.map((category) => (
+                              <SelectItem key={category.id} value={category.id}>
+                                {category.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                {/* Product Details */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">รายละเอียดสินค้า</h3>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="brand"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>ยี่ห้อ</FormLabel>
+                          <FormControl>
+                            <Input placeholder="ยี่ห้อสินค้า" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="productModel"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>รุ่น</FormLabel>
+                          <FormControl>
+                            <Input placeholder="รุ่นสินค้า" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+
+                {/* Stock Information */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">ข้อมูลสต็อก</h3>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="stock"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>จำนวนปัจจุบัน *</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              min="0"
+                              placeholder="0"
+                              {...field}
+                              onChange={(e) =>
+                                field.onChange(parseInt(e.target.value) || 0)
+                              }
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="minStock"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>สต็อกขั้นต่ำ *</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              min="0"
+                              placeholder="0"
+                              {...field}
+                              onChange={(e) =>
+                                field.onChange(parseInt(e.target.value) || 0)
+                              }
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="unit"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>หน่วยนับ *</FormLabel>
+                          <FormControl>
+                            <Input placeholder="ชิ้น, กล่อง, ชุด" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  {/* Stock Alert */}
+                  {form.watch("stock") <= form.watch("minStock") && (
+                    <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                      <p className="text-yellow-800 text-sm">
+                        ⚠️ จำนวนสต็อกปัจจุบันต่ำกว่าหรือเท่ากับสต็อกขั้นต่ำ
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center justify-end gap-3 pt-4 border-t">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleCancel}
+                    disabled={loading}
+                  >
+                    <X className="w-4 h-4 mr-2" />
+                    ยกเลิก
+                  </Button>
+                  <Button type="submit" disabled={loading}>
+                    {loading ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Save className="w-4 h-4 mr-2" />
+                    )}
+                    บันทึกการเปลี่ยนแปลง
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </div>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );

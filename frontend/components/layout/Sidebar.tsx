@@ -11,7 +11,6 @@ import {
   FileText,
   Users,
   Building2,
-  BarChart,
   Settings,
   LogOut,
   X,
@@ -92,12 +91,6 @@ export function Sidebar({ isOpen, onClose, session }: SidebarProps) {
       name: "จัดการหน่วยงาน",
       href: "/management/departments",
       icon: Building2,
-      roles: ["ADMIN"],
-    },
-    {
-      name: "รายงาน",
-      href: "/reports",
-      icon: BarChart,
       roles: ["ADMIN"],
     },
     {

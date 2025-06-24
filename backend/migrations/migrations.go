@@ -14,8 +14,9 @@ func GetAllMigrations() []*gormigrate.Migration {
 		M25680619123002CreateCoreTables,             // 2. สร้างตาราง Core (categories, departments)
 		M25680619123003CreateUsersAndProductsTables, // 3. สร้างตาราง Users และ Products
 		M25680623001AddProductFields,                // 4. ⭐ เพิ่มฟิลด์ Product ใหม่
-		M25680619123005CreateRequestsTables,         // 5. สร้างตาราง Requests
-		M25680621173000SeedCoreData,                 // 6. Seed ข้อมูลสุดท้าย
+		M25680623002AddProductImageURL,              // 5. ⭐ เพิ่ม ImageURL field
+		M25680619123005CreateRequestsTables,         // 6. สร้างตาราง Requests
+		M25680621173000SeedCoreData,                 // 7. Seed ข้อมูลสุดท้าย
 	}
 }
 

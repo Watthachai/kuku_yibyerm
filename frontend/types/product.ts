@@ -15,11 +15,14 @@ export interface Product {
   brand?: string;
   productModel?: string;
 
-  // ⭐ เปลี่ยนจาก quantity เป็น stock
-  stock: number; // จำนวนคงเหลือ (แทน quantity)
-  minStock: number; // จำนวนขั้นต่ำ
-  unit: string; // หน่วยนับ
+  // Stock fields
+  stock: number;
+  minStock: number;
+  unit: string;
   status: "ACTIVE" | "INACTIVE";
+
+  // ⭐ เพิ่ม imageUrl field
+  imageUrl?: string;
 
   category?: {
     id: string;
@@ -57,6 +60,9 @@ export interface CreateProductRequest {
   stock: number;
   minStock?: number;
   unit?: string;
+
+  // ⭐ เพิ่ม imageUrl field
+  imageUrl?: string;
 }
 
 // ⭐ Update Product Request

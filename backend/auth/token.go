@@ -2,6 +2,7 @@ package auth
 
 import (
 	"errors"
+	"os"
 	"strconv"
 	"time"
 
@@ -20,14 +21,27 @@ type Claims struct {
 
 var jwtSecret = []byte("your-secret-key") // ในการใช้งานจริงควรอ่านจาก ENV
 
+// getTokenDuration returns token duration from env or default
+func getTokenDuration(envKey string, defaultDuration time.Duration) time.Duration {
+	if value := os.Getenv(envKey); value != "" {
+		if hours, err := strconv.Atoi(value); err == nil {
+			return time.Duration(hours) * time.Hour
+		}
+	}
+	return defaultDuration
+}
+
 // GenerateAccessToken generates a new access token
 func GenerateAccessToken(userID uint, role models.Role) (string, error) {
+	// ⭐ อ่านค่าจาก ENV หรือใช้ default 24 ชั่วโมง
+	duration := getTokenDuration("JWT_ACCESS_TOKEN_DURATION_HOURS", 24*time.Hour)
+
 	claims := &Claims{
 		UserID: userID,
 		Role:   role,
 		Type:   "access",
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(15 * time.Minute)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(duration)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			Subject:   strconv.Itoa(int(userID)),
 		},
@@ -39,11 +53,14 @@ func GenerateAccessToken(userID uint, role models.Role) (string, error) {
 
 // GenerateRefreshToken generates a new refresh token
 func GenerateRefreshToken(userID uint) (string, error) {
+	// ⭐ อ่านค่าจาก ENV หรือใช้ default 7 วัน
+	duration := getTokenDuration("JWT_REFRESH_TOKEN_DURATION_HOURS", 7*24*time.Hour)
+
 	claims := &Claims{
 		UserID: userID,
 		Type:   "refresh",
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(7 * 24 * time.Hour)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(duration)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			Subject:   strconv.Itoa(int(userID)),
 		},
