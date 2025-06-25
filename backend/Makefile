@@ -61,8 +61,8 @@ lint:
 # Docker
 docker-build:
 	@echo "🐳 Building Docker image..."
-	docker build -t kuku-yipyerm-backend .
+	docker build -t ku-asset-backend .
 
 docker-run:
 	@echo "🐳 Running Docker container..."
-	docker run -p 8080:8080 kuku-yipyerm-backend
+	docker run -p 8080:8080 ku-asset-backend
