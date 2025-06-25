@@ -65,7 +65,9 @@ func NewAuthService(db *gorm.DB) AuthService {
 // ⭐ 4. เพิ่มเมธอด HandleGoogleCallback ที่ขาดไป
 func (s *authService) HandleGoogleCallback(code string, state string) (*dto.AuthResponse, error) {
 	// 1. แลก "code" เป็น "token" จาก Google
-	token, err := s.googleOauthConfig.Exchange(context.Background(), code)
+	ctx := context.WithValue(context.Background(), oauth2.HTTPClient, http.DefaultClient)
+	token, err := s.googleOauthConfig.Exchange(ctx, code) // 👈 ใช้ ctx ที่สร้างใหม่
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to exchange code: %w", err)
 	}
