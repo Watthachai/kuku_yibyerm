@@ -1,7 +1,7 @@
 # --- Build Stage ---
 FROM golang:1.24.4 AS build
 
-RUN apk --no-cache add ca-certificates
+RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
