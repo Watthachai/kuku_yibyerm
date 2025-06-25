@@ -246,16 +246,17 @@ export function RequestCard({
         <div className="flex justify-end">
           {getActionButton()}
 
-          {request.status === "APPROVED" && (
+          {["APPROVED", "ISSUED", "COMPLETED"].includes(request.status) && (
             <div className="flex gap-2">
-              <Button
-                onClick={() => onAction(request)}
-                className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2"
-              >
-                <Truck className="h-4 w-4" />
-                เบิกออก
-              </Button>
-
+              {request.status === "APPROVED" && (
+                <Button
+                  onClick={() => onAction(request)}
+                  className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2"
+                >
+                  <Truck className="h-4 w-4" />
+                  เบิกออก
+                </Button>
+              )}
               {/* ดาวน์โหล PDF */}
               <Button
                 onClick={() =>

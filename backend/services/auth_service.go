@@ -1,30 +1,26 @@
 package services
 
 import (
-	// --- IMPORT ที่จำเป็น ---
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
-
-	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/google"
-
-	// --------------------------
-
-	"errors"
-	"ku-asset/dto"
-	"ku-asset/models"
 	"os"
 	"time"
 
+	"ku-asset/dto"
+	"ku-asset/models"
+
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
 	"gorm.io/gorm"
 )
 
-// AuthService interface (ถูกต้องแล้ว)
+// AuthService interface
 type AuthService interface {
 	Login(req *dto.LoginRequest) (*dto.AuthResponse, error)
 	Register(req *dto.RegisterRequest) (*dto.UserResponse, error)
@@ -33,19 +29,17 @@ type AuthService interface {
 	HandleGoogleCallback(code string, state string) (*dto.AuthResponse, error)
 }
 
-// authService struct (ถูกต้องแล้ว)
 type authService struct {
 	db                *gorm.DB
 	googleOauthConfig *oauth2.Config
 }
 
-// NewAuthService (ฉบับแก้ไขกลับเป็นปกติ + ใช้ Redirect URI ที่ถูกต้อง)
+// NewAuthService constructor
 func NewAuthService(db *gorm.DB) AuthService {
 	conf := &oauth2.Config{
 		ClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
 		ClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
-		// ⭐ ใช้ Redirect URI ที่ไม่มี /v1/ ซึ่งเป็นตัวที่ใช้งานได้จริงล่าสุด
-		RedirectURL: "https://backend-go-production-2ba8.up.railway.app/api/auth/callback/google",
+		RedirectURL:  os.Getenv("GOOGLE_REDIRECT_URI"), // อ่านจาก Env ที่ถูกต้อง
 		Scopes: []string{
 			"https://www.googleapis.com/auth/userinfo.email",
 			"https://www.googleapis.com/auth/userinfo.profile",
@@ -59,16 +53,13 @@ func NewAuthService(db *gorm.DB) AuthService {
 	}
 }
 
-// HandleGoogleCallback (ฉบับแก้ไขกลับเป็นปกติ)
+// HandleGoogleCallback (ฉบับปกติและปลอดภัย)
 func (s *authService) HandleGoogleCallback(code string, state string) (*dto.AuthResponse, error) {
-	// 1. แลก "code" เป็น "token" จาก Google โดยใช้ context ปกติ
-	// โค้ดส่วนนี้จะทำงานได้ถูกต้องเมื่อ Dockerfile ของคุณมี ca-certificates แล้ว
 	token, err := s.googleOauthConfig.Exchange(context.Background(), code)
 	if err != nil {
 		return nil, fmt.Errorf("failed to exchange code: %w", err)
 	}
 
-	// 2. ใช้ "token" เพื่อยิง request ไปขอข้อมูลผู้ใช้จาก Google
 	response, err := http.Get("https://www.googleapis.com/oauth2/v2/userinfo?access_token=" + token.AccessToken)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user info: %w", err)
@@ -80,19 +71,16 @@ func (s *authService) HandleGoogleCallback(code string, state string) (*dto.Auth
 		return nil, fmt.Errorf("failed to read user info response: %w", err)
 	}
 
-	// 3. แปลงข้อมูลผู้ใช้ (JSON) มาเป็น struct
 	var googleUser dto.GoogleOAuthRequest
 	if err := json.Unmarshal(contents, &googleUser); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal user info: %w", err)
 	}
 
-	// 4. เรียกใช้ฟังก์ชันเดิมเพื่อสร้าง/ค้นหาผู้ใช้ และสร้าง JWT ของเราเอง
 	return s.FindOrCreateUserByGoogle(&googleUser)
 }
 
-// --- โค้ดเดิมของคุณทั้งหมด ไม่ต้องแก้ไข ---
-
-// RefreshToken validates the refresh token and issues a new access token.
+// โค้ดส่วนที่เหลือของคุณ... (Login, Register, etc.)
+// ... (วางโค้ดส่วนที่เหลือของไฟล์ auth_service.go ของคุณที่นี่) ...
 func (s *authService) RefreshToken(tokenString string) (string, error) {
 	secret := os.Getenv("JWT_REFRESH_SECRET")
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
@@ -114,21 +102,20 @@ func (s *authService) RefreshToken(tokenString string) (string, error) {
 		return "", errors.New("user not found")
 	}
 
-	// Generate new access token
 	return s.generateAccessToken(user)
 }
 
-// FindOrCreateUserByGoogle handles logic for Google OAuth.
 func (s *authService) FindOrCreateUserByGoogle(req *dto.GoogleOAuthRequest) (*dto.AuthResponse, error) {
 	var user models.User
 	err := s.db.Where("email = ?", req.Email).First(&user).Error
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		newUser := models.User{
-			Email:  req.Email,
-			Name:   req.Name,
-			Role:   models.RoleUser,
-			Avatar: req.Avatar,
+			Email:    req.Email,
+			Name:     req.Name,
+			Role:     models.RoleUser,
+			Avatar:   req.Avatar,
+			Provider: "google",
 		}
 
 		if createErr := s.db.Create(&newUser).Error; createErr != nil {
@@ -164,7 +151,6 @@ func (s *authService) FindOrCreateUserByGoogle(req *dto.GoogleOAuthRequest) (*dt
 	return authResponse, nil
 }
 
-// Login handles the user login logic.
 func (s *authService) Login(req *dto.LoginRequest) (*dto.AuthResponse, error) {
 	var user models.User
 	if err := s.db.Where("email = ?", req.Email).First(&user).Error; err != nil {
@@ -204,7 +190,6 @@ func (s *authService) Login(req *dto.LoginRequest) (*dto.AuthResponse, error) {
 	return authResponse, nil
 }
 
-// Register handles the user registration logic.
 func (s *authService) Register(req *dto.RegisterRequest) (*dto.UserResponse, error) {
 	var existingUser models.User
 	if err := s.db.Where("email = ?", req.Email).First(&existingUser).Error; err == nil {
@@ -245,7 +230,6 @@ func (s *authService) Register(req *dto.RegisterRequest) (*dto.UserResponse, err
 	return userResponse, nil
 }
 
-// --- Helper methods for token generation ---
 func (s *authService) generateAccessToken(user models.User) (string, error) {
 	claims := jwt.MapClaims{
 		"user_id": user.ID,
