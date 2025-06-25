@@ -134,17 +134,21 @@ export function MobileDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
       {/* Modern Header */}
-      <div className="bg-white/80 backdrop-blur-lg border-b border-gray-200/50 sticky top-0 z-50">
+      <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg border-b border-gray-200/50 dark:border-slate-700/50 sticky top-0 z-50">
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-gradient-to-br from-ku-green to-green-600 rounded-2xl flex items-center justify-center shadow-lg">
               <span className="text-white font-bold text-sm">KU</span>
             </div>
             <div>
-              <h1 className="font-bold text-gray-900 text-lg">แดชบอร์ด</h1>
-              <p className="text-xs text-gray-500">มหาวิทยาลัยเกษตรศาสตร์</p>
+              <h1 className="font-bold text-gray-900 dark:text-white text-lg">
+                แดชบอร์ด
+              </h1>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                มหาวิทยาลัยเกษตรศาสตร์
+              </p>
             </div>
           </div>
 
@@ -201,33 +205,35 @@ export function MobileDashboard() {
 
         {/* Stats Overview */}
         <div className="grid grid-cols-3 gap-3">
-          <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
+          <Card className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm border-0 shadow-lg">
             <CardContent className="p-4 text-center">
               <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-2 shadow-md">
                 <Package className="w-5 h-5 text-white" />
               </div>
-              <div className="text-2xl font-bold text-gray-900 mb-1">
+              <div className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
                 {stats.totalRequests}
               </div>
-              <div className="text-xs text-gray-600 font-medium">
+              <div className="text-xs text-gray-600 dark:text-gray-300 font-medium">
                 รายการทั้งหมด
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
+          <Card className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm border-0 shadow-lg">
             <CardContent className="p-4 text-center">
               <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-2 shadow-md">
                 <Clock className="w-5 h-5 text-white" />
               </div>
-              <div className="text-2xl font-bold text-gray-900 mb-1">
+              <div className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
                 {stats.pendingRequests}
               </div>
-              <div className="text-xs text-gray-600 font-medium">รออนุมัติ</div>
+              <div className="text-xs text-gray-600 dark:text-gray-300 font-medium">
+                รออนุมัติ
+              </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-lg">
+          <Card className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm border-0 shadow-lg">
             <CardContent className="p-4 text-center">
               <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center mx-auto mb-2 shadow-md">
                 <CheckCircle className="w-5 h-5 text-white" />

@@ -78,31 +78,21 @@ export function ProductCard({
   const [inputValue, setInputValue] = useState("1"); // ⭐ เพิ่ม input state แยกจาก quantity
 
   const inCartQuantity = getItemQuantity(product.id);
-  const canAddMore = inCartQuantity < product.stock;
-  const maxQuantity = Math.min(product.stock - inCartQuantity, product.stock); // ⭐ คำนวณจำนวนสูงสุดที่เพิ่มได้
   const isAvailable = product.status === "AVAILABLE" && product.stock > 0;
 
-  // ⭐ Debug logging สำหรับรูปภาพ
-  console.log(`Product ${product.name} imageUrl:`, product.imageUrl);
+  // ⭐ สำหรับ setItemQuantity เราจะ set quantity โดยตรง ไม่ใช่ add
+  // ดังนั้น maxQuantity ควรเป็น stock ทั้งหมด
+  const maxQuantity = product.stock;
+  const canAddMore = selectedQuantity <= maxQuantity;
 
   const handleAddToCart = async () => {
     if (!canAddMore || !isAvailable || selectedQuantity <= 0) return;
-
-    console.log("🛒 Adding to cart:", {
-      productId: product.id,
-      productName: product.name,
-      selectedQuantity,
-      currentInCart: inCartQuantity,
-      action: "setItemQuantity",
-    });
 
     setIsLoading(true);
     try {
       const cartProduct = convertCatalogProductToProduct(product);
       await setItemQuantity(cartProduct, selectedQuantity); // ⭐ เปลี่ยนเป็น setItemQuantity
       onAddToCart?.(product, selectedQuantity); // ⭐ ส่ง selectedQuantity ด้วย
-
-      console.log("✅ Successfully added to cart");
     } catch (error) {
       console.error("❌ Failed to add to cart:", error);
     } finally {
@@ -178,13 +168,16 @@ export function ProductCard({
   // ⭐ Card variants สำหรับ styling
   const getCardClasses = () => {
     const baseClasses =
-      "group relative overflow-hidden transition-all duration-300 hover:shadow-2xl bg-white/60 backdrop-blur-sm border-0 shadow-xl rounded-lg";
+      "group relative overflow-hidden transition-all duration-300 hover:shadow-2xl bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm border-0 shadow-xl rounded-lg";
 
     switch (variant) {
       case "compact":
         return cn(baseClasses, "h-auto");
       case "featured":
-        return cn(baseClasses, "h-full border-2 border-blue-200/50 shadow-2xl");
+        return cn(
+          baseClasses,
+          "h-full border-2 border-blue-200/50 dark:border-blue-800/50 shadow-2xl"
+        );
       default:
         return cn(baseClasses, "h-full");
     }
@@ -206,9 +199,9 @@ export function ProductCard({
           />
         ) : (
           // ⭐ แสดง placeholder เมื่อไม่มีรูปภาพ
-          <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex flex-col items-center justify-center">
-            <Package className="w-16 h-16 text-gray-400 mb-2" />
-            <span className="text-xs text-gray-500 text-center px-2">
+          <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-slate-700 dark:to-slate-800 flex flex-col items-center justify-center">
+            <Package className="w-16 h-16 text-gray-400 dark:text-gray-500 mb-2" />
+            <span className="text-xs text-gray-500 dark:text-gray-400 text-center px-2">
               {imageError ? "โหลดรูปภาพไม่ได้" : "ไม่มีรูปภาพ"}
             </span>
           </div>
@@ -220,26 +213,28 @@ export function ProductCard({
           <Button
             variant="ghost"
             size="sm"
-            className="w-8 h-8 p-0 bg-white/80 hover:bg-white/90 backdrop-blur-lg shadow-lg rounded-xl transition-all duration-200"
+            className="w-8 h-8 p-0 bg-white/80 dark:bg-slate-800/80 hover:bg-white/90 dark:hover:bg-slate-800/90 backdrop-blur-lg shadow-lg rounded-xl transition-all duration-200"
             onClick={(e) => {
               e.stopPropagation();
               onViewDetails(product);
             }}
           >
-            <Info className="w-4 h-4 text-gray-700" />
+            <Info className="w-4 h-4 text-gray-700 dark:text-gray-300" />
           </Button>
 
           {/* Favorite Button */}
           <Button
             variant="ghost"
             size="sm"
-            className="w-8 h-8 p-0 bg-white/80 hover:bg-white/90 backdrop-blur-lg shadow-lg rounded-xl transition-all duration-200"
+            className="w-8 h-8 p-0 bg-white/80 dark:bg-slate-800/80 hover:bg-white/90 dark:hover:bg-slate-800/90 backdrop-blur-lg shadow-lg rounded-xl transition-all duration-200"
             onClick={handleToggleFavorite}
           >
             <Heart
               className={cn(
                 "w-4 h-4",
-                isFavorited ? "fill-red-500 text-red-500" : "text-gray-700"
+                isFavorited
+                  ? "fill-red-500 text-red-500"
+                  : "text-gray-700 dark:text-gray-300"
               )}
             />
           </Button>
@@ -258,7 +253,7 @@ export function ProductCard({
         </div>
 
         {/* Stock Badge */}
-        <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-lg text-white text-xs px-3 py-1.5 rounded-xl shadow-lg border border-white/20">
+        <div className="absolute bottom-2 right-2 bg-black/60 dark:bg-black/80 backdrop-blur-lg text-white text-xs px-3 py-1.5 rounded-xl shadow-lg border border-white/20 dark:border-white/10">
           คงเหลือ {product.stock}
         </div>
 
@@ -275,7 +270,7 @@ export function ProductCard({
       {/* Product Info */}
       <CardContent
         className={cn(
-          "p-4 bg-gradient-to-b from-white/40 to-white/60 backdrop-blur-sm",
+          "p-4 bg-gradient-to-b from-white/40 to-white/60 dark:from-slate-800/40 dark:to-slate-800/60 backdrop-blur-sm",
           variant === "compact" && "p-3"
         )}
       >
@@ -283,12 +278,12 @@ export function ProductCard({
         <div className="flex items-center justify-between mb-3">
           <Badge
             variant="outline"
-            className="text-xs bg-white/60 backdrop-blur-sm border-gray-200/50"
+            className="text-xs bg-white/60 dark:bg-slate-700/60 backdrop-blur-sm border-gray-200/50 dark:border-slate-600/50"
           >
             {product.category.name}
           </Badge>
           {product.department?.building && (
-            <div className="flex items-center text-xs text-gray-500 bg-white/40 backdrop-blur-sm px-2 py-1 rounded-lg">
+            <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 bg-white/40 dark:bg-slate-700/40 backdrop-blur-sm px-2 py-1 rounded-lg">
               <MapPin className="w-3 h-3 mr-1" />
               {product.department.building}
             </div>
@@ -299,7 +294,7 @@ export function ProductCard({
         <div className="space-y-2 mb-4">
           <h3
             className={cn(
-              "font-semibold line-clamp-2 group-hover:text-blue-600 transition-colors leading-snug",
+              "font-semibold line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors leading-snug text-gray-900 dark:text-gray-100",
               variant === "compact" ? "text-sm" : "text-sm"
             )}
           >
@@ -307,13 +302,13 @@ export function ProductCard({
           </h3>
 
           {product.serialNumber && (
-            <p className="text-xs text-gray-500 font-mono bg-gray-50/80 backdrop-blur-sm px-2 py-1 rounded-lg">
+            <p className="text-xs text-gray-500 dark:text-gray-400 font-mono bg-gray-50/80 dark:bg-slate-700/80 backdrop-blur-sm px-2 py-1 rounded-lg">
               รหัส: {product.serialNumber}
             </p>
           )}
 
           {variant !== "compact" && product.description && (
-            <p className="text-xs text-gray-600 line-clamp-2 leading-relaxed">
+            <p className="text-xs text-gray-600 dark:text-gray-300 line-clamp-2 leading-relaxed">
               {product.description}
             </p>
           )}
@@ -321,7 +316,7 @@ export function ProductCard({
 
         {/* Stats */}
         {variant !== "compact" && (
-          <div className="flex items-center justify-between text-xs text-gray-500 mb-4 bg-white/40 backdrop-blur-sm rounded-lg p-2">
+          <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-4 bg-white/40 dark:bg-slate-700/40 backdrop-blur-sm rounded-lg p-2">
             <div className="flex items-center">
               <Users className="w-3 h-3 mr-1" />
               ใช้ {product.usageCount || 0} ครั้ง
@@ -339,15 +334,17 @@ export function ProductCard({
         <div className="space-y-3">
           {/* Quantity Selector */}
           {isAvailable && maxQuantity > 0 && (
-            <div className="flex items-center justify-between bg-white/40 backdrop-blur-sm rounded-lg p-2">
-              <span className="text-xs text-gray-600 font-medium">จำนวน:</span>
+            <div className="flex items-center justify-between bg-white/40 dark:bg-slate-700/40 backdrop-blur-sm rounded-lg p-2">
+              <span className="text-xs text-gray-600 dark:text-gray-300 font-medium">
+                จำนวน:
+              </span>
               <div className="flex items-center gap-2">
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={decreaseQuantity}
                   disabled={selectedQuantity <= 1}
-                  className="h-7 w-7 p-0 bg-white/60 hover:bg-white/80 border-gray-200/50"
+                  className="h-7 w-7 p-0 bg-white/60 dark:bg-slate-600/60 hover:bg-white/80 dark:hover:bg-slate-600/80 border-gray-200/50 dark:border-slate-500/50"
                 >
                   <Minus className="h-3 w-3" />
                 </Button>
@@ -359,14 +356,14 @@ export function ProductCard({
                   onChange={handleQuantityChange}
                   onFocus={handleQuantityFocus}
                   onBlur={handleQuantityBlur}
-                  className="w-12 h-7 text-center text-xs bg-white/60 border-gray-200/50 p-1"
+                  className="w-12 h-7 text-center text-xs bg-white/60 dark:bg-slate-600/60 border-gray-200/50 dark:border-slate-500/50 p-1"
                 />
                 <Button
                   size="sm"
                   variant="outline"
                   onClick={increaseQuantity}
                   disabled={selectedQuantity >= maxQuantity}
-                  className="h-7 w-7 p-0 bg-white/60 hover:bg-white/80 border-gray-200/50"
+                  className="h-7 w-7 p-0 bg-white/60 dark:bg-slate-600/60 hover:bg-white/80 dark:hover:bg-slate-600/80 border-gray-200/50 dark:border-slate-500/50"
                 >
                   <Plus className="h-3 w-3" />
                 </Button>
@@ -392,9 +389,7 @@ export function ProductCard({
               <>
                 <ShoppingCart className="h-4 w-4 mr-2" />
                 {isInCart(product.id)
-                  ? `เพิ่ม ${selectedQuantity} ชิ้น (รวม ${
-                      inCartQuantity + selectedQuantity
-                    })`
+                  ? `ตั้งเป็น ${selectedQuantity} ชิ้น`
                   : `เบิก ${selectedQuantity} ชิ้น`}
               </>
             )}
@@ -402,10 +397,10 @@ export function ProductCard({
 
           {/* Stock Info */}
           {isAvailable && (
-            <div className="text-xs text-gray-500 text-center bg-white/30 backdrop-blur-sm rounded-lg p-1.5">
+            <div className="text-xs text-gray-500 dark:text-gray-400 text-center bg-white/30 dark:bg-slate-700/30 backdrop-blur-sm rounded-lg p-1.5">
               สามารถเบิกได้สูงสุด {maxQuantity} ชิ้น
               {inCartQuantity > 0 && (
-                <span className="ml-1 text-blue-600 font-medium">
+                <span className="ml-1 text-blue-600 dark:text-blue-400 font-medium">
                   (ในตะกร้า {inCartQuantity} ชิ้น)
                 </span>
               )}
@@ -415,13 +410,13 @@ export function ProductCard({
 
         {/* ⭐ เพิ่มข้อมูลเสริมสำหรับ featured variant */}
         {variant === "featured" && (
-          <div className="mt-3 pt-3 border-t border-gray-100/50">
+          <div className="mt-3 pt-3 border-t border-gray-100/50 dark:border-slate-600/50">
             <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="text-gray-500 bg-white/40 backdrop-blur-sm rounded-lg p-2">
+              <div className="text-gray-500 dark:text-gray-400 bg-white/40 dark:bg-slate-700/40 backdrop-blur-sm rounded-lg p-2">
                 <span className="font-medium">แบรนด์:</span>{" "}
                 {product.brand || "ไม่ระบุ"}
               </div>
-              <div className="text-gray-500 bg-white/40 backdrop-blur-sm rounded-lg p-2">
+              <div className="text-gray-500 dark:text-gray-400 bg-white/40 dark:bg-slate-700/40 backdrop-blur-sm rounded-lg p-2">
                 <span className="font-medium">หน่วย:</span>{" "}
                 {product.unit || "ชิ้น"}
               </div>

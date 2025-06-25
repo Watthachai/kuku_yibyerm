@@ -10,7 +10,7 @@ export function ProductCardSkeleton({
   variant = "compact",
 }: ProductCardSkeletonProps) {
   return (
-    <div className="bg-white rounded-lg border overflow-hidden">
+    <div className="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 overflow-hidden">
       {/* Image Skeleton */}
       <Skeleton className="h-48 w-full" />
 

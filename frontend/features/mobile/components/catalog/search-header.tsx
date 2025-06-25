@@ -20,19 +20,14 @@ export function SearchHeader({
   showFilters,
 }: SearchHeaderProps) {
   return (
-    <div className="sticky top-0 z-50 bg-white border-b border-gray-200">
+    <div className="sticky top-0 z-50 bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700">
       <div className="flex items-center p-4 space-x-3">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onBack}
-          className="p-2"
-        >
+        <Button variant="ghost" size="sm" onClick={onBack} className="p-2">
           <ArrowLeft className="w-5 h-5" />
         </Button>
-        
+
         <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
           <Input
             placeholder="ค้นหาครุภัณฑ์..."
             value={searchTerm}
@@ -40,7 +35,7 @@ export function SearchHeader({
             className="pl-10"
           />
         </div>
-        
+
         <Button
           variant={showFilters ? "default" : "ghost"}
           size="sm"

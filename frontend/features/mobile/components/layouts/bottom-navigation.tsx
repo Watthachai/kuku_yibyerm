@@ -44,7 +44,7 @@ export function BottomNavigation({
   return (
     <nav
       className={cn(
-        "fixed bottom-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-t border-gray-200/50 shadow-lg",
+        "fixed bottom-0 left-0 right-0 z-50 bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg border-t border-gray-200/50 dark:border-slate-700/50 shadow-lg",
         "safe-area-pb", // For iOS safe area
         className
       )}
@@ -61,17 +61,19 @@ export function BottomNavigation({
               onClick={() => handleNavigation(item)}
               className={cn(
                 "flex flex-col items-center justify-center space-y-1 transition-all duration-200 relative rounded-lg mx-1 my-2",
-                "hover:bg-white/60 active:bg-white/80 active:scale-95",
+                "hover:bg-white/60 dark:hover:bg-slate-700/50 active:bg-white/80 dark:active:bg-slate-700/80 active:scale-95",
                 active
-                  ? "text-ku-green bg-white/40"
-                  : "text-gray-500 hover:text-gray-700"
+                  ? "text-ku-green bg-white/40 dark:bg-slate-700/40"
+                  : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
               )}
             >
               <div className="relative">
                 <Icon
                   className={cn(
                     "w-5 h-5 transition-all duration-200",
-                    active ? "text-ku-green scale-110" : "text-gray-500"
+                    active
+                      ? "text-ku-green scale-110"
+                      : "text-gray-500 dark:text-gray-400"
                   )}
                 />
                 {badgeCount > 0 && (
@@ -86,7 +88,9 @@ export function BottomNavigation({
               <span
                 className={cn(
                   "text-xs transition-all duration-200",
-                  active ? "text-ku-green font-semibold" : "text-gray-500"
+                  active
+                    ? "text-ku-green font-semibold"
+                    : "text-gray-500 dark:text-gray-400"
                 )}
               >
                 {item.label}

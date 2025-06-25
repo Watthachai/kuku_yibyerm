@@ -154,10 +154,12 @@ export function FirstTimeSetup({ onComplete, onSkip }: FirstTimeSetupProps) {
                 <User className="w-10 h-10 text-white" />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
                   ยินดีต้อนรับ!
                 </h3>
-                <p className="text-gray-600">มาตั้งค่าโปรไฟล์ของคุณกันเถอะ</p>
+                <p className="text-gray-600 dark:text-gray-300">
+                  มาตั้งค่าโปรไฟล์ของคุณกันเถอะ
+                </p>
               </div>
             </div>
 
@@ -165,7 +167,7 @@ export function FirstTimeSetup({ onComplete, onSkip }: FirstTimeSetupProps) {
               <div className="space-y-2">
                 <Label
                   htmlFor="name"
-                  className="text-sm font-medium text-gray-700"
+                  className="text-sm font-medium text-gray-700 dark:text-gray-300"
                 >
                   ชื่อของคุณ *
                 </Label>
@@ -176,7 +178,7 @@ export function FirstTimeSetup({ onComplete, onSkip }: FirstTimeSetupProps) {
                   onChange={(e) =>
                     setSetupData({ ...setupData, name: e.target.value })
                   }
-                  className="bg-white/60 backdrop-blur-sm border-gray-200/50"
+                  className="bg-white/60 dark:bg-slate-700/60 backdrop-blur-sm border-gray-200/50 dark:border-slate-600/50"
                   placeholder="กรอกชื่อจริงของคุณ"
                   required
                 />
@@ -185,7 +187,7 @@ export function FirstTimeSetup({ onComplete, onSkip }: FirstTimeSetupProps) {
               <div className="space-y-2">
                 <Label
                   htmlFor="phone"
-                  className="text-sm font-medium text-gray-700"
+                  className="text-sm font-medium text-gray-700 dark:text-gray-300"
                 >
                   เบอร์โทรศัพท์ (ไม่บังคับ)
                 </Label>
@@ -196,7 +198,7 @@ export function FirstTimeSetup({ onComplete, onSkip }: FirstTimeSetupProps) {
                   onChange={(e) =>
                     setSetupData({ ...setupData, phone: e.target.value })
                   }
-                  className="bg-white/60 backdrop-blur-sm border-gray-200/50"
+                  className="bg-white/60 dark:bg-slate-700/60 backdrop-blur-sm border-gray-200/50 dark:border-slate-600/50"
                   placeholder="02-123-4567 หรือ 09X-XXX-XXXX"
                 />
               </div>
@@ -212,10 +214,10 @@ export function FirstTimeSetup({ onComplete, onSkip }: FirstTimeSetupProps) {
                 <Building2 className="w-10 h-10 text-white" />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
                   เลือกคณะของคุณ
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-gray-600 dark:text-gray-300">
                   เพื่อให้เราจัดการครุภัณฑ์ได้ตรงกับหน่วยงาน
                 </p>
               </div>
@@ -223,7 +225,7 @@ export function FirstTimeSetup({ onComplete, onSkip }: FirstTimeSetupProps) {
 
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">
+                <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   คณะ *
                 </Label>
                 <Select
@@ -232,10 +234,10 @@ export function FirstTimeSetup({ onComplete, onSkip }: FirstTimeSetupProps) {
                     setSetupData({ ...setupData, faculty_id: value })
                   }
                 >
-                  <SelectTrigger className="bg-white/60 backdrop-blur-sm border-gray-200/50">
+                  <SelectTrigger className="bg-white/60 dark:bg-slate-700/60 backdrop-blur-sm border-gray-200/50 dark:border-slate-600/50">
                     <SelectValue placeholder="เลือกคณะของคุณ" />
                   </SelectTrigger>
-                  <SelectContent className="bg-white/95 backdrop-blur-lg border border-gray-200/50">
+                  <SelectContent className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-lg border border-gray-200/50 dark:border-slate-700/50">
                     <SelectItem value="none">เลือกคณะ</SelectItem>
                     {faculties.map((faculty) => (
                       <SelectItem key={faculty.id} value={faculty.id}>
@@ -248,7 +250,7 @@ export function FirstTimeSetup({ onComplete, onSkip }: FirstTimeSetupProps) {
 
               {selectedFaculty && selectedFaculty.departments.length > 0 && (
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-700">
+                  <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     ภาควิชา/หน่วยงาน (ไม่บังคับ)
                   </Label>
                   <Select
@@ -257,17 +259,17 @@ export function FirstTimeSetup({ onComplete, onSkip }: FirstTimeSetupProps) {
                       setSetupData({ ...setupData, department_id: value })
                     }
                   >
-                    <SelectTrigger className="bg-white/60 backdrop-blur-sm border-gray-200/50">
+                    <SelectTrigger className="bg-white/60 dark:bg-slate-700/60 backdrop-blur-sm border-gray-200/50 dark:border-slate-600/50">
                       <SelectValue placeholder="เลือกภาควิชา/หน่วยงาน" />
                     </SelectTrigger>
-                    <SelectContent className="bg-white/95 backdrop-blur-lg border border-gray-200/50">
+                    <SelectContent className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-lg border border-gray-200/50 dark:border-slate-700/50">
                       <SelectItem value="none">ไม่ระบุ</SelectItem>
                       {selectedFaculty.departments.map((dept) => (
                         <SelectItem key={dept.id} value={dept.id}>
                           <div className="flex flex-col items-start">
                             <span>{dept.name}</span>
                             {dept.building && (
-                              <span className="text-xs text-gray-500">
+                              <span className="text-xs text-gray-500 dark:text-gray-400">
                                 {dept.building}
                               </span>
                             )}
@@ -294,42 +296,48 @@ export function FirstTimeSetup({ onComplete, onSkip }: FirstTimeSetupProps) {
                 <CheckCircle className="w-10 h-10 text-white" />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
                   ยืนยันข้อมูล
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-gray-600 dark:text-gray-300">
                   ตรวจสอบข้อมูลของคุณก่อนเสร็จสิ้น
                 </p>
               </div>
             </div>
 
             <div className="space-y-4">
-              <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4 space-y-3">
+              <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm rounded-xl p-4 space-y-3">
                 <div className="flex items-center">
-                  <User className="w-5 h-5 text-blue-600 mr-3" />
+                  <User className="w-5 h-5 text-blue-600 dark:text-blue-400 mr-3" />
                   <div>
-                    <p className="text-sm text-gray-600">ชื่อ</p>
-                    <p className="font-medium text-gray-900">
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
+                      ชื่อ
+                    </p>
+                    <p className="font-medium text-gray-900 dark:text-gray-100">
                       {setupData.name}
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-center">
-                  <Phone className="w-5 h-5 text-green-600 mr-3" />
+                  <Phone className="w-5 h-5 text-green-600 dark:text-green-400 mr-3" />
                   <div>
-                    <p className="text-sm text-gray-600">เบอร์โทรศัพท์</p>
-                    <p className="font-medium text-gray-900">
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
+                      เบอร์โทรศัพท์
+                    </p>
+                    <p className="font-medium text-gray-900 dark:text-gray-100">
                       {setupData.phone || "ไม่ได้ระบุ"}
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-center">
-                  <Building2 className="w-5 h-5 text-purple-600 mr-3" />
+                  <Building2 className="w-5 h-5 text-purple-600 dark:text-purple-400 mr-3" />
                   <div>
-                    <p className="text-sm text-gray-600">คณะ</p>
-                    <p className="font-medium text-gray-900">
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
+                      คณะ
+                    </p>
+                    <p className="font-medium text-gray-900 dark:text-gray-100">
                       {selectedFaculty?.name || "ไม่ได้ระบุ"}
                     </p>
                   </div>
@@ -337,14 +345,16 @@ export function FirstTimeSetup({ onComplete, onSkip }: FirstTimeSetupProps) {
 
                 {selectedDepartment && (
                   <div className="flex items-center">
-                    <MapPin className="w-5 h-5 text-orange-600 mr-3" />
+                    <MapPin className="w-5 h-5 text-orange-600 dark:text-orange-400 mr-3" />
                     <div>
-                      <p className="text-sm text-gray-600">ภาควิชา/หน่วยงาน</p>
-                      <p className="font-medium text-gray-900">
+                      <p className="text-sm text-gray-600 dark:text-gray-300">
+                        ภาควิชา/หน่วยงาน
+                      </p>
+                      <p className="font-medium text-gray-900 dark:text-gray-100">
                         {selectedDepartment.name}
                       </p>
                       {selectedDepartment.building && (
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
                           {selectedDepartment.building}
                         </p>
                       )}
@@ -353,8 +363,8 @@ export function FirstTimeSetup({ onComplete, onSkip }: FirstTimeSetupProps) {
                 )}
               </div>
 
-              <div className="bg-blue-50/60 rounded-lg p-3">
-                <p className="text-xs text-gray-600 text-center">
+              <div className="bg-blue-50/60 dark:bg-blue-900/20 rounded-lg p-3">
+                <p className="text-xs text-gray-600 dark:text-gray-300 text-center">
                   ข้อมูลเหล่านี้จะช่วยให้เราจัดการครุภัณฑ์ได้ดีขึ้น
                   <br />
                   คุณสามารถแก้ไขได้ทุกเวลาในหน้าโปรไฟล์
@@ -370,12 +380,12 @@ export function FirstTimeSetup({ onComplete, onSkip }: FirstTimeSetupProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md bg-white/80 backdrop-blur-lg border-0 shadow-2xl">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 flex items-center justify-center p-4">
+      <Card className="w-full max-w-md bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg border-0 shadow-2xl">
         <CardHeader className="text-center pb-2">
           <div className="flex items-center justify-center space-x-2 mb-4">
-            <Sparkles className="w-6 h-6 text-blue-600" />
-            <CardTitle className="text-lg font-bold text-gray-900">
+            <Sparkles className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+            <CardTitle className="text-lg font-bold text-gray-900 dark:text-gray-100">
               ตั้งค่าเริ่มต้น
             </CardTitle>
           </div>
@@ -384,7 +394,7 @@ export function FirstTimeSetup({ onComplete, onSkip }: FirstTimeSetupProps) {
           </CardDescription>
 
           {/* Progress Bar */}
-          <div className="w-full bg-gray-200 rounded-full h-2 mt-4">
+          <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2 mt-4">
             <div
               className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full transition-all duration-300"
               style={{ width: `${(currentStep / totalSteps) * 100}%` }}
@@ -401,7 +411,7 @@ export function FirstTimeSetup({ onComplete, onSkip }: FirstTimeSetupProps) {
                 variant="outline"
                 onClick={handlePrevious}
                 disabled={isLoading}
-                className="flex-1 bg-gray-50/60 backdrop-blur-sm border-gray-200/50 hover:bg-gray-50/80"
+                className="flex-1 bg-gray-50/60 dark:bg-slate-700/60 backdrop-blur-sm border-gray-200/50 dark:border-slate-600/50 hover:bg-gray-50/80 dark:hover:bg-slate-700/80"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 ย้อนกลับ
@@ -413,7 +423,7 @@ export function FirstTimeSetup({ onComplete, onSkip }: FirstTimeSetupProps) {
                 variant="ghost"
                 onClick={onSkip}
                 disabled={isLoading}
-                className="flex-1 text-gray-500 hover:text-gray-700"
+                className="flex-1 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
               >
                 ข้ามไป
               </Button>

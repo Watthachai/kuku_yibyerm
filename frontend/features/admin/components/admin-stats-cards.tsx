@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { KULoading } from "@/components/ui/ku-loading";
 import { AdminStats } from "@/types/admin-dashboard";
 import {
   Users,
@@ -100,7 +101,9 @@ export function AdminStatsCards({ stats }: AdminStatsCardsProps) {
           ? "text-green-600"
           : "text-blue-600",
       bgColor:
-        calculations.activeUserPercentage > 50 ? "bg-green-50" : "bg-blue-50",
+        calculations.activeUserPercentage > 50
+          ? "bg-green-50 dark:bg-green-900/20"
+          : "bg-blue-50 dark:bg-blue-900/20",
       iconColor:
         calculations.activeUserPercentage > 50 ? "bg-green-500" : "bg-blue-500",
     },
@@ -125,10 +128,10 @@ export function AdminStatsCards({ stats }: AdminStatsCardsProps) {
           : "text-green-600",
       bgColor:
         calculations.lowStockPercentage > 20
-          ? "bg-red-50"
+          ? "bg-red-50 dark:bg-red-900/20"
           : calculations.lowStockPercentage > 0
-          ? "bg-orange-50"
-          : "bg-green-50",
+          ? "bg-orange-50 dark:bg-orange-900/20"
+          : "bg-green-50 dark:bg-green-900/20",
       iconColor:
         calculations.lowStockPercentage > 20
           ? "bg-red-500"
@@ -161,10 +164,10 @@ export function AdminStatsCards({ stats }: AdminStatsCardsProps) {
       })(),
       bgColor: (() => {
         const pendingCount = stats?.pendingRequests || 0;
-        if (pendingCount === 0) return "bg-green-50";
-        if (pendingCount <= 5) return "bg-yellow-50";
-        if (pendingCount <= 10) return "bg-orange-50";
-        return "bg-red-50";
+        if (pendingCount === 0) return "bg-green-50 dark:bg-green-900/20";
+        if (pendingCount <= 5) return "bg-yellow-50 dark:bg-yellow-900/20";
+        if (pendingCount <= 10) return "bg-orange-50 dark:bg-orange-900/20";
+        return "bg-red-50 dark:bg-red-900/20";
       })(),
       iconColor: (() => {
         const pendingCount = stats?.pendingRequests || 0;
@@ -202,7 +205,7 @@ export function AdminStatsCards({ stats }: AdminStatsCardsProps) {
         if (percentage >= 25) return "text-blue-600";
         return "text-indigo-600";
       })(),
-      bgColor: "bg-purple-50",
+      bgColor: "bg-purple-50 dark:bg-purple-900/20",
       iconColor: "bg-purple-500",
     },
   ];
@@ -268,33 +271,21 @@ export function AdminStatsCards({ stats }: AdminStatsCardsProps) {
   // ⭐ ถ้า stats เป็น null หรือ undefined
   if (!stats) {
     console.log("❌ No stats provided to AdminStatsCards");
-    return (
-      <div className="space-y-6">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {[...Array(4)].map((_, i) => (
-            <Card key={i} className="animate-pulse">
-              <CardContent className="p-6">
-                <div className="h-16 bg-gray-200 rounded"></div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-    );
+    return <KULoading variant="cards" message="กำลังโหลดสถิติระบบ..." />;
   }
 
   return (
     <div className="space-y-6">
       {/* คำขอที่ต้องดำเนินการด่วน */}
       {(stats?.pendingRequests || 0) > 5 && (
-        <div className="bg-gradient-to-r from-orange-100 to-red-100 border-l-4 border-orange-500 p-4 rounded-lg">
+        <div className="bg-gradient-to-r from-orange-100 to-red-100 dark:from-orange-900/30 dark:to-red-900/30 border-l-4 border-orange-500 dark:border-orange-400 p-4 rounded-lg shadow-sm">
           <div className="flex items-center">
-            <AlertTriangle className="h-5 w-5 text-orange-500 mr-3" />
+            <AlertTriangle className="h-5 w-5 text-orange-600 dark:text-orange-300 mr-3 flex-shrink-0" />
             <div>
-              <h4 className="text-orange-800 font-medium">
+              <h4 className="text-orange-900 dark:text-orange-100 font-semibold">
                 ⚠️ แจ้งเตือน: มีคำขอรออนุมัติ {stats?.pendingRequests} รายการ
               </h4>
-              <p className="text-orange-700 text-sm">
+              <p className="text-orange-800 dark:text-orange-200 text-sm font-medium">
                 ควรดำเนินการอนุมัติหรือปฏิเสธคำขอเหล่านี้ในเร็วๆ นี้
               </p>
             </div>
@@ -305,34 +296,34 @@ export function AdminStatsCards({ stats }: AdminStatsCardsProps) {
       {/* Success Rate Banner */}
       {calculations.successRate > 0 && (
         <div
-          className={`p-4 rounded-lg border-l-4 ${
+          className={`p-4 rounded-lg border-l-4 shadow-sm ${
             calculations.successRate >= 80
-              ? "bg-green-50 border-green-500"
+              ? "bg-green-50 dark:bg-green-900/30 border-green-500"
               : calculations.successRate >= 60
-              ? "bg-yellow-50 border-yellow-500"
-              : "bg-red-50 border-red-500"
+              ? "bg-yellow-50 dark:bg-yellow-900/30 border-yellow-500"
+              : "bg-red-50 dark:bg-red-900/30 border-red-500"
           }`}
         >
           <div className="flex items-center justify-between">
             <div>
               <h4
-                className={`font-medium ${
+                className={`font-semibold ${
                   calculations.successRate >= 80
-                    ? "text-green-800"
+                    ? "text-green-900 dark:text-green-100"
                     : calculations.successRate >= 60
-                    ? "text-yellow-800"
-                    : "text-red-800"
+                    ? "text-yellow-900 dark:text-yellow-100"
+                    : "text-red-900 dark:text-red-100"
                 }`}
               >
                 🎯 อัตราความสำเร็จ: {calculations.successRate}%
               </h4>
               <p
-                className={`text-sm ${
+                className={`text-sm font-medium ${
                   calculations.successRate >= 80
-                    ? "text-green-700"
+                    ? "text-green-800 dark:text-green-200"
                     : calculations.successRate >= 60
-                    ? "text-yellow-700"
-                    : "text-red-700"
+                    ? "text-yellow-800 dark:text-yellow-200"
+                    : "text-red-800 dark:text-red-200"
                 }`}
               >
                 จากคำขอทั้งหมด {calculations.totalRequests} รายการ
@@ -341,10 +332,10 @@ export function AdminStatsCards({ stats }: AdminStatsCardsProps) {
             <div
               className={`text-2xl font-bold ${
                 calculations.successRate >= 80
-                  ? "text-green-600"
+                  ? "text-green-600 dark:text-green-300"
                   : calculations.successRate >= 60
-                  ? "text-yellow-600"
-                  : "text-red-600"
+                  ? "text-yellow-600 dark:text-yellow-300"
+                  : "text-red-600 dark:text-red-300"
               }`}
             >
               {calculations.successRate >= 80
@@ -371,7 +362,7 @@ export function AdminStatsCards({ stats }: AdminStatsCardsProps) {
               key={item.title}
               className={`hover:shadow-lg transition-all duration-300 ${
                 item.urgent
-                  ? "border-orange-200 bg-gradient-to-br from-orange-50 to-orange-100 animate-pulse"
+                  ? "border-orange-500 bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-900/30 dark:to-red-900/30 ring-2 ring-orange-200 dark:ring-orange-800"
                   : item.bgColor
                   ? `bg-gradient-to-br from-${
                       item.bgColor
@@ -380,7 +371,7 @@ export function AdminStatsCards({ stats }: AdminStatsCardsProps) {
               }`}
             >
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-700">
+                <CardTitle className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   {item.title}
                 </CardTitle>
                 <div className={`p-2 rounded-lg ${item.iconColor}`}>
@@ -390,24 +381,29 @@ export function AdminStatsCards({ stats }: AdminStatsCardsProps) {
               <CardContent>
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-2xl font-bold text-gray-900">
+                    <div className="text-2xl font-bold text-gray-900 dark:text-white">
                       {formatValue(item.value)}
                     </div>
-                    <p className="text-xs text-gray-600 mt-1">
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
                       {item.description}
                     </p>
                   </div>
                   {item.urgent && (
-                    <Badge variant="destructive" className="animate-pulse">
-                      ด่วน!
+                    <Badge
+                      variant="destructive"
+                      className="bg-red-600 text-white font-semibold shadow-md"
+                    >
+                      ⚠️ ด่วน!
                     </Badge>
                   )}
                   {item.alert && (
-                    <AlertTriangle className="h-5 w-5 text-orange-500 animate-bounce" />
+                    <AlertTriangle className="h-5 w-5 text-orange-600 dark:text-orange-400" />
                   )}
                 </div>
                 <div className="mt-2">
-                  <span className={`text-xs ${item.color} font-medium`}>
+                  <span
+                    className={`text-xs ${item.color} dark:brightness-125 font-medium`}
+                  >
                     {item.trend}
                   </span>
                 </div>
@@ -424,24 +420,30 @@ export function AdminStatsCards({ stats }: AdminStatsCardsProps) {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">{item.title}</p>
-                  <p className={`text-xl font-bold ${item.color}`}>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {item.title}
+                  </p>
+                  <p
+                    className={`text-xl font-bold ${item.color} dark:brightness-110`}
+                  >
                     {formatValue(item.value)}
                   </p>
                   {/* ⭐ แสดง % หรือข้อมูลเพิ่มเติม */}
                   {item.percentage !== undefined &&
                     calculations.totalRequests > 0 && (
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
                         {item.percentage}% ของทั้งหมด
                       </p>
                     )}
                   {item.avgUsers !== undefined && item.avgUsers > 0 && (
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
                       เฉลี่ย {item.avgUsers} คน/หน่วย
                     </p>
                   )}
                 </div>
-                <item.icon className={`h-5 w-5 ${item.color}`} />
+                <item.icon
+                  className={`h-5 w-5 ${item.color} dark:brightness-110`}
+                />
               </div>
             </CardContent>
           </Card>

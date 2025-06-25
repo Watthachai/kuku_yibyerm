@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner"; // ⭐ ใช้ sonner แทน
+import { KULoading } from "@/components/ui/ku-loading";
 import {
   BorrowRequest,
   RequestStatus,
@@ -120,17 +121,17 @@ export function RequestManagement() {
   const getStatusColor = (status: RequestStatus) => {
     switch (status) {
       case "PENDING":
-        return "bg-yellow-100 text-yellow-800";
+        return "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-100 border border-yellow-200 dark:border-yellow-700";
       case "APPROVED":
-        return "bg-green-100 text-green-800";
+        return "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-100 border border-green-200 dark:border-green-700";
       case "REJECTED":
-        return "bg-red-100 text-red-800";
+        return "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-100 border border-red-200 dark:border-red-700";
       case "ISSUED":
-        return "bg-blue-100 text-blue-800";
+        return "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-100 border border-blue-200 dark:border-blue-700";
       case "COMPLETED":
-        return "bg-gray-100 text-gray-800";
+        return "bg-gray-100 dark:bg-gray-800/50 text-gray-800 dark:text-gray-100 border border-gray-200 dark:border-gray-700";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-gray-100 dark:bg-gray-800/50 text-gray-800 dark:text-gray-100 border border-gray-200 dark:border-gray-700";
     }
   };
 
@@ -152,19 +153,7 @@ export function RequestManagement() {
   };
 
   if (loading) {
-    return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          {[...Array(5)].map((_, i) => (
-            <div
-              key={i}
-              className="h-24 bg-gray-200 rounded-lg animate-pulse"
-            />
-          ))}
-        </div>
-        <div className="h-96 bg-gray-200 rounded-lg animate-pulse" />
-      </div>
-    );
+    return <KULoading variant="dashboard" message="กำลังโหลดข้อมูลคำขอ..." />;
   }
 
   return (
@@ -172,8 +161,12 @@ export function RequestManagement() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">จัดการคำขอเบิก</h1>
-          <p className="text-gray-600">อนุมัติและติดตามคำขอเบิกครุภัณฑ์</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            จัดการคำขอเบิก
+          </h1>
+          <p className="text-gray-600 dark:text-gray-300">
+            อนุมัติและติดตามคำขอเบิกครุภัณฑ์
+          </p>
         </div>
         <Button
           onClick={loadRequests}
@@ -196,13 +189,17 @@ export function RequestManagement() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">รออนุมัติ</p>
-                <p className="text-2xl font-bold text-yellow-600">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  รออนุมัติ
+                </p>
+                <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
                   {stats.pending}
                 </p>
               </div>
               {stats.pending > 0 && (
-                <Badge className="bg-yellow-100 text-yellow-800">ด่วน</Badge>
+                <Badge className="bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-100">
+                  ด่วน
+                </Badge>
               )}
             </div>
           </CardContent>
@@ -217,8 +214,10 @@ export function RequestManagement() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">อนุมัติแล้ว</p>
-                <p className="text-2xl font-bold text-green-600">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  อนุมัติแล้ว
+                </p>
+                <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                   {stats.approved}
                 </p>
               </div>
@@ -235,8 +234,10 @@ export function RequestManagement() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">เบิกออกแล้ว</p>
-                <p className="text-2xl font-bold text-blue-600">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  เบิกออกแล้ว
+                </p>
+                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                   {stats.issued}
                 </p>
               </div>
@@ -253,8 +254,10 @@ export function RequestManagement() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">ปฏิเสธ</p>
-                <p className="text-2xl font-bold text-red-600">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  ปฏิเสธ
+                </p>
+                <p className="text-2xl font-bold text-red-600 dark:text-red-400">
                   {stats.rejected}
                 </p>
               </div>
@@ -271,8 +274,10 @@ export function RequestManagement() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">เสร็จสิ้น</p>
-                <p className="text-2xl font-bold text-gray-600">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  เสร็จสิ้น
+                </p>
+                <p className="text-2xl font-bold text-gray-600 dark:text-gray-300">
                   {stats.completed}
                 </p>
               </div>
@@ -302,7 +307,7 @@ export function RequestManagement() {
           {filteredRequests.length === 0 ? (
             <Card>
               <CardContent className="p-12 text-center">
-                <p className="text-gray-500">
+                <p className="text-gray-500 dark:text-gray-400">
                   {activeTab === "all"
                     ? "ยังไม่มีคำขอในระบบ"
                     : `ไม่มีคำขอ${getStatusText(activeTab as RequestStatus)}`}

@@ -43,7 +43,7 @@ export default function ProductsPage() {
   // ⭐ ถ้าเป็น User ทั่วไป ให้แสดงหน้า Shopping
   if (!isAdmin) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 dark:bg-slate-900">
         <UserCatalogShoppingView />
       </div>
     );
@@ -188,8 +188,10 @@ function ProductManagementView() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">จัดการสินค้า</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            จัดการสินค้า
+          </h1>
+          <p className="text-gray-600 dark:text-gray-300 mt-1">
             เพิ่ม แก้ไข และจัดการสินค้าในระบบ
           </p>
         </div>
@@ -220,8 +222,10 @@ function ProductManagementView() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">สินค้าทั้งหมด</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  สินค้าทั้งหมด
+                </p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   {totalProducts}
                 </p>
               </div>
@@ -234,7 +238,9 @@ function ProductManagementView() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">พร้อมใช้งาน</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  พร้อมใช้งาน
+                </p>
                 <p className="text-2xl font-bold text-green-600">{inStock}</p>
               </div>
               <BarChart3 className="w-8 h-8 text-green-600" />
@@ -246,7 +252,9 @@ function ProductManagementView() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">สต็อกต่ำ</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  สต็อกต่ำ
+                </p>
                 <p className="text-2xl font-bold text-yellow-600">{lowStock}</p>
               </div>
               <TrendingDown className="w-8 h-8 text-yellow-600" />
@@ -258,7 +266,9 @@ function ProductManagementView() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">หมดสต็อก</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  หมดสต็อก
+                </p>
                 <p className="text-2xl font-bold text-red-600">{outOfStock}</p>
               </div>
               <AlertTriangle className="w-8 h-8 text-red-600" />
@@ -270,13 +280,13 @@ function ProductManagementView() {
       {/* Filters */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-lg">ค้นหาและกรอง</CardTitle>
+          <CardTitle className="text-lg text-gray-900 dark:text-white">ค้นหาและกรอง</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-col sm:flex-row gap-4">
             {/* Search */}
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4" />
               <Input
                 placeholder="ค้นหาชื่อสินค้า, รหัส, ยี่ห้อ..."
                 value={searchTerm}
@@ -320,13 +330,13 @@ function ProductManagementView() {
           {/* Active Filters */}
           {(statusFilter !== "ALL" || searchTerm) && (
             <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">กรองโดย:</span>
+              <span className="text-sm text-gray-600 dark:text-gray-400">กรองโดย:</span>
               {statusFilter !== "ALL" && (
                 <Badge variant="secondary" className="gap-1">
                   สถานะ: {statusFilter}
                   <button
                     onClick={() => setStatusFilter("ALL")}
-                    className="ml-1 hover:bg-gray-300 rounded-full"
+                    className="ml-1 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-full"
                   >
                     ×
                   </button>
@@ -337,7 +347,7 @@ function ProductManagementView() {
                   ค้นหา: {searchTerm}
                   <button
                     onClick={() => setSearchTerm("")}
-                    className="ml-1 hover:bg-gray-300 rounded-full"
+                    className="ml-1 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-full"
                   >
                     ×
                   </button>

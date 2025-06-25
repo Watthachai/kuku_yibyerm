@@ -232,23 +232,26 @@ export function EditProfileModal({
         {trigger || (
           <Button
             variant="outline"
-            className="w-full justify-start bg-white/60 backdrop-blur-sm border-gray-200/50 hover:bg-white/80 transition-all duration-200"
+            className="w-full justify-start bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm border-gray-200/50 dark:border-slate-700/50 hover:bg-white/80 dark:hover:bg-slate-800/80 transition-all duration-200"
           >
-            <User className="w-5 h-5 mr-3 text-blue-600" />
+            <User className="w-5 h-5 mr-3 text-blue-600 dark:text-blue-400" />
             แก้ไขข้อมูลส่วนตัว
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md bg-white/95 backdrop-blur-lg border border-gray-200/50 shadow-xl">
+      <DialogContent className="sm:max-w-md bg-white/95 dark:bg-slate-800/95 backdrop-blur-lg border border-gray-200/50 dark:border-slate-700/50 shadow-xl">
         <DialogHeader>
-          <DialogTitle className="text-lg font-bold text-gray-900">
+          <DialogTitle className="text-lg font-bold text-gray-900 dark:text-gray-100">
             แก้ไขข้อมูลส่วนตัว
           </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name" className="text-sm font-medium text-gray-700">
+            <Label
+              htmlFor="name"
+              className="text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
               ชื่อ *
             </Label>
             <Input
@@ -258,7 +261,7 @@ export function EditProfileModal({
               onChange={(e) =>
                 setFormData({ ...formData, name: e.target.value })
               }
-              className="bg-white/60 backdrop-blur-sm border-gray-200/50"
+              className="bg-white/60 dark:bg-slate-700/60 backdrop-blur-sm border-gray-200/50 dark:border-slate-600/50"
               placeholder="กรอกชื่อของคุณ"
               required
               disabled={isLoading}
@@ -268,7 +271,7 @@ export function EditProfileModal({
           <div className="space-y-2">
             <Label
               htmlFor="phone"
-              className="text-sm font-medium text-gray-700"
+              className="text-sm font-medium text-gray-700 dark:text-gray-300"
             >
               เบอร์โทรศัพท์
             </Label>
@@ -279,7 +282,7 @@ export function EditProfileModal({
               onChange={(e) =>
                 setFormData({ ...formData, phone: e.target.value })
               }
-              className="bg-white/60 backdrop-blur-sm border-gray-200/50"
+              className="bg-white/60 dark:bg-slate-700/60 backdrop-blur-sm border-gray-200/50 dark:border-slate-600/50"
               placeholder="02-123-4567 หรือ 09X-XXX-XXXX"
               disabled={isLoading}
             />
@@ -288,7 +291,7 @@ export function EditProfileModal({
           <div className="space-y-2">
             <Label
               htmlFor="faculty"
-              className="text-sm font-medium text-gray-700"
+              className="text-sm font-medium text-gray-700 dark:text-gray-300"
             >
               คณะ
             </Label>

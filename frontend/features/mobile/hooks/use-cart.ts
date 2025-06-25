@@ -10,11 +10,15 @@ export function useCart() {
     items: cart = [], // ⭐ เพิ่ม default value
     isLoading,
     error,
+    globalPurpose, // ⭐ เพิ่ม global purpose
+    globalNotes, // ⭐ เพิ่ม global notes
     addItem,
     removeItem,
     updateQuantity,
     updateItemPurpose,
     updateItemNotes,
+    updateGlobalPurpose, // ⭐ เพิ่มฟังก์ชันอัปเดต global purpose
+    updateGlobalNotes, // ⭐ เพิ่มฟังก์ชันอัปเดต global notes
     clearCart,
     getTotalItems,
     getItemQuantity,
@@ -46,11 +50,18 @@ export function useCart() {
   };
 
   const submitCartRequest = async () => {
+    console.log("🎯 [HOOK] submitCartRequest called");
     try {
+      console.log("🎯 [HOOK] Calling store submitRequest...");
       const result = await submitRequest();
-      toast.success("ส่งคำขอเบิกสำเร็จ!");
+      console.log("🎯 [HOOK] Store returned result:", result);
+
+      // ⭐ ไม่แสดง toast ที่นี่ เพราะจะ redirect ทันที
+      // toast.success("ส่งคำขอเบิกสำเร็จ!");
+      console.log("🎯 [HOOK] Returning result to component:", result);
       return result; // ⭐ Return result
     } catch (error) {
+      console.error("❌ [HOOK] Error in submitCartRequest:", error);
       toast.error(error instanceof Error ? error.message : "เกิดข้อผิดพลาด");
       throw error; // ⭐ Re-throw error
     }
@@ -61,6 +72,8 @@ export function useCart() {
     cart: cart || [], // ⭐ เพิ่ม fallback
     isLoading: isLoading || false,
     error,
+    globalPurpose: globalPurpose || "", // ⭐ เพิ่ม global purpose
+    globalNotes: globalNotes || "", // ⭐ เพิ่ม global notes
 
     // Actions
     addToCart,
@@ -68,6 +81,8 @@ export function useCart() {
     updateQuantity,
     updateItemPurpose,
     updateItemNotes,
+    updateGlobalPurpose, // ⭐ เพิ่มฟังก์ชันอัปเดต global purpose
+    updateGlobalNotes, // ⭐ เพิ่มฟังก์ชันอัปเดต global notes
     clearCart,
 
     // Selectors

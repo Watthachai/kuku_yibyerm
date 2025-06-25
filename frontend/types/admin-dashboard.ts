@@ -50,3 +50,42 @@ export interface UserManagementData {
   createdAt: string;
   requestCount: number;
 }
+
+// ⭐ Backend Data Structures
+export interface BackendUser {
+  id: number;
+  name: string;
+  email: string;
+  role: "USER" | "APPROVER" | "ADMIN";
+  is_active: boolean;
+  department_id?: string;
+  department_name?: string;
+  department?: {
+    id: string;
+    name: string;
+    building?: string;
+  };
+  request_count?: number;
+  last_login?: string;
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface BackendStatsResponse {
+  total_users: number;
+  total_products: number;
+  total_departments: number;
+  pending_requests: number;
+  approved_requests: number;
+  rejected_requests: number;
+  completed_requests: number;
+  monthly_requests: number;
+  active_users: number;
+  low_stock_products: number;
+}
+
+export interface BackendApiResponse<T> {
+  success: boolean;
+  data: T;
+  message?: string;
+}

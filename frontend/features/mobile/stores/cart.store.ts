@@ -8,6 +8,8 @@ interface CartStore {
   items: CartItem[];
   isLoading: boolean;
   error: string | null;
+  globalPurpose: string; // ⭐ เพิ่มวัตถุประสงค์ส่วนกลาง
+  globalNotes: string; // ⭐ เพิ่มหมายเหตุส่วนกลาง
 
   // Actions
   addItem: (
@@ -22,8 +24,10 @@ interface CartStore {
   ) => void; // ⭐ เพิ่มฟังก์ชันสำหรับ set quantity
   removeItem: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
-  updateItemPurpose: (productId: string, purpose: string) => void;
-  updateItemNotes: (productId: string, notes: string) => void;
+  updateItemPurpose: (productId: string, purpose: string) => void; // ⭐ เก็บไว้เผื่อใช้ภายหลัง
+  updateItemNotes: (productId: string, notes: string) => void; // ⭐ เก็บไว้เผื่อใช้ภายหลัง
+  updateGlobalPurpose: (purpose: string) => void; // ⭐ เพิ่มฟังก์ชันอัปเดตวัตถุประสงค์ส่วนกลาง
+  updateGlobalNotes: (notes: string) => void; // ⭐ เพิ่มฟังก์ชันอัปเดตหมายเหตุส่วนกลาง
   clearCart: () => void;
 
   // Validation & Submission
@@ -44,6 +48,8 @@ export const useCartStore = create<CartStore>()(
       items: [],
       isLoading: false,
       error: null,
+      globalPurpose: "", // ⭐ เพิ่มวัตถุประสงค์ส่วนกลาง
+      globalNotes: "", // ⭐ เพิ่มหมายเหตุส่วนกลาง
 
       addItem: async (
         product: Product,
@@ -124,27 +130,11 @@ export const useCartStore = create<CartStore>()(
         quantity: number,
         period?: Partial<RequestPeriod>
       ) => {
-        console.log("🛒 setItemQuantity called:", {
-          productId: product.id,
-          productName: product.name,
-          quantity,
-          currentItems: get().items.length,
-        });
-
         try {
           const items = get().items || [];
           const existingItem = items.find(
             (item) => item.product.id === product.id.toString()
           );
-
-          console.log("🔍 Existing item search:", {
-            searching: product.id.toString(),
-            found: existingItem ? existingItem.id : "not found",
-            allItemIds: items.map((item) => ({
-              itemId: item.id,
-              productId: item.product.id,
-            })),
-          });
 
           // ตรวจสอบ stock
           if (quantity > product.stock) {
@@ -155,16 +145,9 @@ export const useCartStore = create<CartStore>()(
 
           if (existingItem) {
             // ถ้ามีอยู่แล้ว ให้ update quantity
-            console.log(
-              "✏️ Updating existing item:",
-              existingItem.id,
-              "to quantity:",
-              quantity
-            );
             get().updateQuantity(existingItem.id, quantity);
           } else {
             // ถ้าไม่มี ให้เพิ่มใหม่
-            console.log("➕ Creating new item for product:", product.id);
             const newItem: CartItem = {
               id: `${product.id}-${Date.now()}`,
               product: {
@@ -243,29 +226,51 @@ export const useCartStore = create<CartStore>()(
         }));
       },
 
-      clearCart: () => set({ items: [] }),
+      updateGlobalPurpose: (purpose) => {
+        set({ globalPurpose: purpose });
+      },
+
+      updateGlobalNotes: (notes) => {
+        set({ globalNotes: notes });
+      },
+
+      clearCart: () =>
+        set({
+          items: [],
+          globalPurpose: "",
+          globalNotes: "",
+        }),
 
       // ⭐ เพิ่ม validateCart function
       validateCart: () => {
         const items = get().items || [];
+        const globalPurpose = get().globalPurpose;
+
         if (items.length === 0) return false;
 
-        // ตรวจสอบว่าทุกรายการมี purpose
-        return items.every(
-          (item) => item.purpose && item.purpose.trim().length > 0
-        );
+        // ตรวจสอบว่ามีวัตถุประสงค์ส่วนกลาง
+        return !!(globalPurpose && globalPurpose.trim().length > 0);
       },
 
       // ⭐ อัปเดต submitRequest function
       submitRequest: async () => {
         const items = get().items || [];
+        const globalPurpose = get().globalPurpose;
+        const globalNotes = get().globalNotes;
+
+        console.log("🚀 [STORE] Starting submitRequest...");
+        console.log("📦 [STORE] Items:", items);
+        console.log("🎯 [STORE] Purpose:", globalPurpose);
+        console.log("📝 [STORE] Notes:", globalNotes);
 
         if (items.length === 0) {
+          console.error("❌ [STORE] Cart is empty");
           throw new Error("ตะกร้าว่างเปล่า");
         }
 
         if (!get().validateCart()) {
-          throw new Error("กรุณากรอกวัตถุประสงค์ให้ครบถ้วนทุกรายการ");
+          console.error("❌ [STORE] Validation failed");
+          throw new Error("กรุณากรอกวัตถุประสงค์ให้ครบถ้วน");
         }
 
         try {
@@ -273,28 +278,40 @@ export const useCartStore = create<CartStore>()(
 
           // แปลงข้อมูลให้ตรงกับ Backend ต้องการ
           const requestData = {
-            purpose: items[0].purpose, // ใช้วัตถุประสงค์ของรายการแรกเป็นหลัก
-            notes: items
-              .map((item) => item.notes)
-              .filter(Boolean)
-              .join("; "),
+            purpose: globalPurpose, // ⭐ ใช้วัตถุประสงค์ส่วนกลาง
+            notes: globalNotes || "", // ⭐ ใช้หมายเหตุส่วนกลาง
             items: items.map((item) => ({
-              product_id: parseInt(item.id),
+              product_id: parseInt(item.product.id),
               quantity: item.quantity,
             })),
           };
 
-          console.log("Submitting request data:", requestData);
+          console.log("📤 [STORE] Sending request data:", requestData);
 
           const result = await RequestService.createRequest(requestData);
 
+          console.log("📥 [STORE] Received result:");
+          console.log("📦 [STORE] Full result object:", result);
+          console.log("🔍 [STORE] Result type:", typeof result);
+          console.log(
+            "🔍 [STORE] Result keys:",
+            result ? Object.keys(result) : "No result"
+          );
+          console.log("🆔 [STORE] Result.id:", result?.id);
+          console.log(
+            "📋 [STORE] Result.request_number:",
+            result?.request_number
+          );
+
           // เคลียร์ตะกร้าหลังส่งสำเร็จ
+          console.log("🧹 [STORE] Clearing cart...");
           get().clearCart();
 
           // ⭐ Return result เพื่อให้ component ใช้ redirect
+          console.log("✅ [STORE] Returning result to component:", result);
           return result;
         } catch (error) {
-          console.error("Failed to submit request:", error);
+          console.error("💥 [STORE] Failed to submit request:", error);
           set({
             error: error instanceof Error ? error.message : "เกิดข้อผิดพลาด",
           });

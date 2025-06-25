@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { KULoading } from "@/components/ui/ku-loading";
 import {
   User,
   Mail,
@@ -15,7 +16,6 @@ import {
   Settings,
   LogOut,
   Package,
-  Loader2,
   Star,
   Bell,
   Shield,
@@ -24,8 +24,6 @@ import {
   MapPin,
   Globe,
   Eye,
-  Moon,
-  Sun,
   Zap,
   FileText,
   History,
@@ -39,6 +37,7 @@ import {
   type UserProfile as UserProfileType,
   UserStats,
 } from "../../services/user-service";
+import { SimpleThemeToggle } from "@/components/mode-toggle";
 import { EditProfileModal } from "./edit-profile-modal";
 
 export function UserProfile() {
@@ -54,7 +53,6 @@ export function UserProfile() {
     completedRequests: 0,
   });
   const [loading, setLoading] = useState(true);
-  const [isDarkMode, setIsDarkMode] = useState(false);
   const [profileCompletion, setProfileCompletion] = useState(0);
 
   // Load user data
@@ -143,39 +141,7 @@ export function UserProfile() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-        <div className="bg-white/80 backdrop-blur-lg border-b border-gray-200/50 sticky top-0 z-10">
-          <div className="px-4 py-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">โปรไฟล์</h1>
-                <p className="text-sm text-gray-600">
-                  จัดการข้อมูลส่วนตัวและการตั้งค่า
-                </p>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-gray-200 rounded-lg animate-pulse" />
-                <div className="w-8 h-8 bg-gray-200 rounded-lg animate-pulse" />
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="flex items-center justify-center py-20">
-          <div className="text-center">
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-lg animate-pulse">
-              <Loader2 className="w-8 h-8 text-white animate-spin" />
-            </div>
-            <p className="text-gray-600 text-lg font-medium">
-              กำลังโหลดข้อมูล...
-            </p>
-            <p className="text-gray-500 text-sm mt-2">
-              กำลังดึงข้อมูลจาก API...
-            </p>
-          </div>
-        </div>
-      </div>
-    );
+    return <KULoading variant="page" message="กำลังโหลดข้อมูลโปรไฟล์..." />;
   }
 
   const displayUser = userProfile || {
@@ -188,34 +154,25 @@ export function UserProfile() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-blue-900 dark:to-indigo-900">
       {/* Modern Header with Actions */}
-      <div className="bg-white/80 backdrop-blur-lg border-b border-gray-200/50 sticky top-0 z-10">
+      <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg border-b border-gray-200/50 dark:border-gray-700/50 sticky top-0 z-10">
         <div className="px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-xl font-bold text-gray-900">โปรไฟล์</h1>
-              <p className="text-sm text-gray-600">
+              <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+                โปรไฟล์
+              </h1>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
                 จัดการข้อมูลส่วนตัวและการตั้งค่า
               </p>
             </div>
             <div className="flex items-center space-x-2">
+              <SimpleThemeToggle />
               <Button
                 size="sm"
                 variant="ghost"
-                className="w-9 h-9 p-0 bg-white/60 hover:bg-white/80"
-                onClick={() => setIsDarkMode(!isDarkMode)}
-              >
-                {isDarkMode ? (
-                  <Sun className="w-4 h-4" />
-                ) : (
-                  <Moon className="w-4 h-4" />
-                )}
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="w-9 h-9 p-0 bg-white/60 hover:bg-white/80"
+                className="w-9 h-9 p-0 bg-white/60 hover:bg-white/80 dark:bg-slate-800/60 dark:hover:bg-slate-800/80"
                 onClick={() => toast.info("QR Code สำหรับโปรไฟล์")}
               >
                 <QrCode className="w-4 h-4" />
@@ -228,7 +185,7 @@ export function UserProfile() {
       <ScrollArea className="flex-1">
         <div className="px-4 py-6 space-y-6">
           {/* Hero Profile Section */}
-          <div className="bg-gradient-to-br from-ku-green/10 via-blue-50 to-indigo-50 shadow-xl overflow-hidden rounded-2xl">
+          <div className="bg-gradient-to-br from-ku-green/10 via-blue-50 to-indigo-50 dark:from-ku-green/20 dark:via-blue-900/50 dark:to-indigo-900/50 shadow-xl overflow-hidden rounded-2xl">
             {/* Cover Background */}
             <div className="h-24 bg-gradient-to-r from-ku-green to-emerald-600 relative">
               <div className="absolute inset-0 bg-black/10"></div>
@@ -238,7 +195,7 @@ export function UserProfile() {
               {/* Avatar Section - Centered */}
               <div className="flex flex-col items-center">
                 <div className="relative mb-4">
-                  <div className="w-24 h-24 rounded-full overflow-hidden shadow-xl ring-4 ring-white/80 bg-white">
+                  <div className="w-24 h-24 rounded-full overflow-hidden shadow-xl ring-4 ring-white/80 dark:ring-slate-800/80 bg-white dark:bg-slate-800">
                     {displayUser.avatar ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
@@ -255,7 +212,7 @@ export function UserProfile() {
                   </div>
                   <Button
                     size="sm"
-                    className="absolute -bottom-1 -right-1 w-8 h-8 p-0 rounded-full bg-white shadow-lg hover:bg-gray-50"
+                    className="absolute -bottom-1 -right-1 w-8 h-8 p-0 rounded-full bg-white dark:bg-slate-800 shadow-lg hover:bg-gray-50 dark:hover:bg-slate-700"
                     variant="outline"
                     onClick={() => toast.info("เปลี่ยนรูปโปรไฟล์")}
                   >
@@ -265,10 +222,10 @@ export function UserProfile() {
 
                 {/* User Info - Centered */}
                 <div className="text-center">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
                     {displayUser.name}
                   </h2>
-                  <p className="text-gray-600 mb-4 break-all">
+                  <p className="text-gray-600 dark:text-gray-300 mb-4 break-all">
                     {displayUser.email}
                   </p>
 
@@ -297,17 +254,17 @@ export function UserProfile() {
 
               {/* Profile Completion Progress */}
               {profileCompletion < 100 && (
-                <div className="mt-4 p-4 bg-white/60 backdrop-blur-sm rounded-xl border border-white/50">
+                <div className="mt-4 p-4 bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm rounded-xl border border-white/50 dark:border-slate-700/50">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-gray-700">
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                       ความสมบูรณ์ของโปรไฟล์
                     </span>
-                    <span className="text-sm font-bold text-ku-green">
+                    <span className="text-sm font-bold text-ku-green dark:text-emerald-400">
                       {profileCompletion}%
                     </span>
                   </div>
                   <Progress value={profileCompletion} className="h-2" />
-                  <p className="text-xs text-gray-600 mt-2">
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
                     เติมข้อมูลให้ครบเพื่อใช้งานระบบได้อย่างเต็มประสิทธิภาพ
                   </p>
                 </div>
@@ -316,25 +273,13 @@ export function UserProfile() {
           </div>
 
           {/* Contact Information */}
-          <div className="bg-white/60 backdrop-blur-sm shadow-xl rounded-2xl">
+          <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm shadow-xl rounded-2xl">
             <div className="px-6 pt-6">
-              <div className="text-lg font-bold text-gray-900 flex items-center justify-between">
+              <div className="text-lg font-bold text-gray-900 dark:text-white flex items-center justify-between">
                 <div className="flex items-center">
-                  <User className="w-5 h-5 mr-2 text-purple-600" />
+                  <User className="w-5 h-5 mr-2 text-purple-600 dark:text-purple-400" />
                   ข้อมูลติดต่อ
                 </div>
-                {"is_active" in displayUser && (
-                  <Badge
-                    variant={displayUser.is_active ? "default" : "destructive"}
-                    className={`text-xs px-3 py-1 ${
-                      displayUser.is_active
-                        ? "bg-green-100 text-green-700 border-green-200"
-                        : "bg-red-100 text-red-700 border-red-200"
-                    }`}
-                  >
-                    {displayUser.is_active ? "ใช้งานอยู่" : "ไม่ใช้งาน"}
-                  </Badge>
-                )}
               </div>
             </div>
             <div className="px-6 pb-6 space-y-4">

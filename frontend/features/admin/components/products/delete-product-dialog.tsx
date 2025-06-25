@@ -113,13 +113,17 @@ export function DeleteProductDialog({
         </AlertDialogHeader>
 
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={handleCancel} disabled={loading}>
+          <AlertDialogCancel
+            onClick={handleCancel}
+            disabled={loading}
+            className="border-gray-300 dark:border-slate-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-700"
+          >
             ยกเลิก
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={handleDelete}
             disabled={!isConfirmValid || loading}
-            className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            className="bg-red-600 hover:bg-red-700 focus:ring-red-600 text-white"
           >
             {loading ? (
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />

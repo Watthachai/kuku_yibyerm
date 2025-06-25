@@ -34,12 +34,12 @@ export function CartItem({
   };
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+    <div className="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 overflow-hidden">
       {/* Main Item Display */}
       <div className="p-4">
         <div className="flex items-start space-x-3">
           {/* Product Image */}
-          <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+          <div className="w-16 h-16 bg-gray-100 dark:bg-slate-700 rounded-lg flex items-center justify-center flex-shrink-0">
             {item.product.imageUrl ? (
               <Image
                 src={item.product.imageUrl}
@@ -47,18 +47,22 @@ export function CartItem({
                 className="w-full h-full object-cover rounded-lg"
               />
             ) : (
-              <Package className="w-8 h-8 text-gray-400" />
+              <Package className="w-8 h-8 text-gray-400 dark:text-gray-500" />
             )}
           </div>
 
           {/* Product Info */}
           <div className="flex-1 min-w-0">
-            <h3 className="font-medium text-gray-900 line-clamp-2">
+            <h3 className="font-medium text-gray-900 dark:text-gray-100 line-clamp-2">
               {item.product.name}
             </h3>
-            <p className="text-sm text-gray-600">{item.product.category.name}</p>
+            <p className="text-sm text-gray-600 dark:text-gray-300">
+              {item.product.category.name}
+            </p>
             {item.product.code && (
-              <p className="text-xs text-gray-500">รหัส: {item.product.code}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                รหัส: {item.product.code}
+              </p>
             )}
           </div>
 
@@ -110,18 +114,18 @@ export function CartItem({
             onClick={() => setShowDetails(!showDetails)}
             className="text-ku-green"
           >
-            {showDetails ? 'ซ่อนรายละเอียด' : 'แสดงรายละเอียด'}
+            {showDetails ? "ซ่อนรายละเอียด" : "แสดงรายละเอียด"}
           </Button>
         </div>
 
         {/* Period Display */}
-        <div className="flex items-center mt-2 text-sm text-gray-600">
+        <div className="flex items-center mt-2 text-sm text-gray-600 dark:text-gray-300">
           <Calendar className="w-4 h-4 mr-2" />
           <span>
-            {new Date(item.requestPeriod.startDate).toLocaleDateString('th-TH')} - 
-            {new Date(item.requestPeriod.endDate).toLocaleDateString('th-TH')}
+            {new Date(item.requestPeriod.startDate).toLocaleDateString("th-TH")}{" "}
+            -{new Date(item.requestPeriod.endDate).toLocaleDateString("th-TH")}
           </span>
-          <span className="ml-2 text-gray-500">
+          <span className="ml-2 text-gray-500 dark:text-gray-400">
             ({item.requestPeriod.duration} วัน)
           </span>
         </div>
@@ -129,10 +133,13 @@ export function CartItem({
 
       {/* Details Section */}
       {showDetails && (
-        <div className="border-t border-gray-200 p-4 space-y-4">
+        <div className="border-t border-gray-200 dark:border-slate-700 p-4 space-y-4">
           {/* Purpose */}
           <div>
-            <Label htmlFor={`purpose-${item.id}`} className="text-sm font-medium">
+            <Label
+              htmlFor={`purpose-${item.id}`}
+              className="text-sm font-medium"
+            >
               วัตถุประสงค์ <span className="text-red-500">*</span>
             </Label>
             <Input
@@ -151,7 +158,7 @@ export function CartItem({
             </Label>
             <Textarea
               id={`notes-${item.id}`}
-              value={item.notes || ''}
+              value={item.notes || ""}
               onChange={(e) => onUpdateNotes(item.id, e.target.value)}
               placeholder="หมายเหตุเพิ่มเติม (ไม่บังคับ)"
               rows={2}
@@ -160,14 +167,28 @@ export function CartItem({
           </div>
 
           {/* Product Details */}
-          <div className="bg-gray-50 rounded-lg p-3">
-            <h4 className="text-sm font-medium text-gray-900 mb-2">รายละเอียดครุภัณฑ์</h4>
-            <div className="space-y-1 text-xs text-gray-600">
-              <p><span className="font-medium">หน่วยงาน:</span> {item.product.department.name}</p>
-              <p><span className="font-medium">สถานะ:</span> พร้อมใช้งาน</p>
-              <p><span className="font-medium">จำนวนที่มี:</span> {item.product.availableQuantity} จาก {item.product.totalQuantity}</p>
+          <div className="bg-gray-50 dark:bg-slate-700 rounded-lg p-3">
+            <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
+              รายละเอียดครุภัณฑ์
+            </h4>
+            <div className="space-y-1 text-xs text-gray-600 dark:text-gray-300">
+              <p>
+                <span className="font-medium">หน่วยงาน:</span>{" "}
+                {item.product.department.name}
+              </p>
+              <p>
+                <span className="font-medium">สถานะ:</span> พร้อมใช้งาน
+              </p>
+              <p>
+                <span className="font-medium">จำนวนที่มี:</span>{" "}
+                {item.product.availableQuantity} จาก{" "}
+                {item.product.totalQuantity}
+              </p>
               {item.product.location && (
-                <p><span className="font-medium">สถานที่:</span> {item.product.location}</p>
+                <p>
+                  <span className="font-medium">สถานที่:</span>{" "}
+                  {item.product.location}
+                </p>
               )}
             </div>
           </div>

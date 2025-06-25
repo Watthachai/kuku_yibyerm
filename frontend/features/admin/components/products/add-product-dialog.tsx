@@ -48,11 +48,11 @@ export function AddProductDialog({
         )}
       >
         {/* ⭐ Header - Fixed */}
-        <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b bg-white flex-shrink-0">
-          <DialogTitle className="text-lg sm:text-xl font-semibold text-gray-900">
+        <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b bg-white dark:bg-slate-800 dark:border-slate-700 flex-shrink-0">
+          <DialogTitle className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">
             เพิ่มสินค้า / ครุภัณฑ์ใหม่
           </DialogTitle>
-          <p className="text-xs sm:text-sm text-gray-600 mt-1">
+          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mt-1">
             กรอกข้อมูลสินค้าหรือครุภัณฑ์ที่ต้องการเพิ่มเข้าระบบ
           </p>
         </DialogHeader>

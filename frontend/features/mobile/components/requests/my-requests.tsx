@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { KULoading } from "@/components/ui/ku-loading";
 import {
   Clock,
   Package,
@@ -168,28 +169,7 @@ export function MyRequests() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50">
-        {/* Modern Header */}
-        <div className="bg-white/80 backdrop-blur-lg border-b border-gray-200/50 sticky top-0 z-10">
-          <div className="px-4 py-4">
-            <h1 className="text-xl font-bold text-gray-900">คำขอเบิกของฉัน</h1>
-            <p className="text-sm text-gray-600">ตรวจสอบสถานะการเบิก</p>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-center py-20">
-          <div className="text-center">
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-lg animate-pulse">
-              <Package className="w-8 h-8 text-white" />
-            </div>
-            <p className="text-gray-600 text-lg font-medium">
-              กำลังโหลดข้อมูล...
-            </p>
-          </div>
-        </div>
-      </div>
-    );
+    return <KULoading variant="page" message="กำลังโหลดข้อมูลคำขอของคุณ..." />;
   }
 
   if (error) {

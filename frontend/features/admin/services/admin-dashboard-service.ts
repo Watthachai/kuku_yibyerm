@@ -5,6 +5,9 @@ import {
   RecentActivity,
   UserManagementData,
   SystemStats,
+  BackendUser, // ⭐ เพิ่ม
+  BackendStatsResponse, // ⭐ เพิ่ม
+  BackendApiResponse, // ⭐ เพิ่ม
 } from "@/types/admin-dashboard";
 import { getSession } from "next-auth/react";
 
@@ -45,7 +48,8 @@ export class AdminDashboardService {
         throw new Error(`HTTP ${response.status}: Failed to fetch admin stats`);
       }
 
-      const responseData = await response.json();
+      const responseData: BackendApiResponse<BackendStatsResponse> =
+        await response.json();
 
       // ⭐ เพิ่ม debug logs เพื่อดูข้อมูลที่ได้รับจาก Backend
       console.log("🔍 Raw response from backend:", responseData);
@@ -54,7 +58,8 @@ export class AdminDashboardService {
       console.log("  - Direct data:", responseData);
 
       // Backend ส่งมาในรูปแบบ { "success": true, "data": {...} }
-      const statsData = responseData.data || responseData;
+      const statsData: BackendStatsResponse =
+        responseData.data || (responseData as unknown as BackendStatsResponse);
 
       console.log("🔍 Final stats data:", statsData);
       console.log("🔍 Stats data keys:", Object.keys(statsData));
@@ -153,7 +158,9 @@ export class AdminDashboardService {
   }
 
   // ⭐ แก้ไข getUsersForManagement ให้ทำงานได้จริง
-  private static transformUserData(backendUser: any): UserManagementData {
+  private static transformUserData(
+    backendUser: BackendUser
+  ): UserManagementData {
     return {
       id: String(backendUser.id), // แปลง number เป็น string
       name: backendUser.name || "ไม่ระบุชื่อ",
@@ -196,18 +203,21 @@ export class AdminDashboardService {
         throw new Error(`HTTP ${response.status}: Failed to fetch users`);
       }
 
-      const responseData = await response.json();
+      const responseData: BackendApiResponse<{
+        users: BackendUser[];
+        pagination?: { total: number; page: number; limit: number };
+      }> = await response.json();
       console.log("📋 Raw users response:", responseData);
 
       // ⭐ ตรวจสอบและแปลงข้อมูล
       if (responseData.success && responseData.data) {
-        const rawUsers = responseData.data.users || [];
-        const pagination = responseData.data.pagination || {};
+        const rawUsers: BackendUser[] = responseData.data.users || [];
+        const pagination = responseData.data.pagination || { total: 0 };
 
         console.log("🔄 Transforming user data...");
 
         // ⭐ แปลงข้อมูลแต่ละ user
-        const transformedUsers = rawUsers.map((user: any) => {
+        const transformedUsers = rawUsers.map((user: BackendUser) => {
           console.log("🔧 Transforming user:", user);
           return this.transformUserData(user);
         });
@@ -222,7 +232,7 @@ export class AdminDashboardService {
         console.log("✅ Using direct array data");
 
         // ⭐ แปลงข้อมูลแบบ direct array
-        const transformedUsers = responseData.data.map((user: any) =>
+        const transformedUsers = responseData.data.map((user: BackendUser) =>
           this.transformUserData(user)
         );
 

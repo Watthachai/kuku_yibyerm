@@ -40,11 +40,11 @@ export class RequestService {
     data: CreateRequestData
   ): Promise<RequestResponse> {
     try {
-      console.log("🔍 Creating request with data:", data);
-      console.log("🔍 Backend URL:", this.baseUrl);
+      console.log("� [SERVICE] Creating request with data:", data);
+      console.log("🌐 [SERVICE] Backend URL:", this.baseUrl);
 
       const headers = await getAuthHeaders();
-      console.log("🔍 Request headers:", headers);
+      console.log("� [SERVICE] Request headers:", headers);
 
       const response = await fetch(`${this.baseUrl}/api/v1/requests`, {
         method: "POST",
@@ -52,11 +52,14 @@ export class RequestService {
         body: JSON.stringify(data),
       });
 
-      console.log("🔍 Response status:", response.status);
-      console.log("🔍 Response headers:", Object.fromEntries(response.headers));
+      console.log("� [SERVICE] Response status:", response.status);
+      console.log(
+        "� [SERVICE] Response headers:",
+        Object.fromEntries(response.headers)
+      );
 
       const responseText = await response.text();
-      console.log("🔍 Response text:", responseText);
+      console.log("� [SERVICE] Response text:", responseText);
 
       if (!response.ok) {
         let errorData;
@@ -66,17 +69,33 @@ export class RequestService {
           errorData = { message: responseText || `HTTP ${response.status}` };
         }
 
-        console.error("❌ Request failed:", errorData);
+        console.error("❌ [SERVICE] Request failed:", errorData);
         throw new Error(
           errorData.message || errorData.error || "ไม่สามารถส่งคำขอได้"
         );
       }
 
       const responseData = JSON.parse(responseText);
-      console.log("✅ Request success:", responseData);
-      return responseData.data;
+      console.log("📦 [SERVICE] Parsed response data:", responseData);
+      console.log("🔍 [SERVICE] Response data structure:", {
+        hasData: !!responseData.data,
+        hasId: !!(responseData.data?.id || responseData.id),
+        dataKeys: responseData.data ? Object.keys(responseData.data) : [],
+        rootKeys: Object.keys(responseData),
+      });
+
+      // ⭐ Handle different response structures
+      const result = responseData.data || responseData;
+      console.log("🎯 [SERVICE] Final result extracted:", result);
+      console.log("🆔 [SERVICE] Final result ID:", result?.id);
+      console.log(
+        "📋 [SERVICE] Final result request_number:",
+        result?.request_number
+      );
+
+      return result;
     } catch (error) {
-      console.error("💥 Request service error:", error);
+      console.error("💥 [SERVICE] Request service error:", error);
       throw error;
     }
   }

@@ -568,21 +568,21 @@ export function AddProductForm({ onSuccess, onCancel }: AddProductFormProps) {
           </div>
 
           {/* ⭐ Fixed Bottom Actions - ใน Dialog */}
-          <div className="sticky bottom-0 left-0 right-0 bg-white border-t border-gray-200 pt-4 mt-8">
+          <div className="mt-8 pt-6 border-t border-gray-200 dark:border-slate-700">
             <div className="flex justify-end gap-3">
               <Button
                 type="button"
                 variant="outline"
                 onClick={onCancel}
                 disabled={isSubmitting}
-                className="px-8 h-11 text-base"
+                className="px-8 h-11 text-base border-gray-300 dark:border-slate-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-700"
               >
                 ยกเลิก
               </Button>
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="bg-ku-green hover:bg-ku-green-dark px-8 h-11 text-base font-medium"
+                className="bg-ku-green hover:bg-ku-green-dark px-8 h-11 text-base font-medium text-white"
               >
                 {isSubmitting && (
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />

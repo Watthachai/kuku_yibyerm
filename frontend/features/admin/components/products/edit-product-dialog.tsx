@@ -359,12 +359,13 @@ export function EditProductDialog({
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center justify-end gap-3 pt-4 border-t">
+                <div className="flex items-center justify-end gap-3 pt-6 mt-6 border-t border-gray-200 dark:border-slate-700">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={handleCancel}
                     disabled={loading}
+                    className="border-gray-300 dark:border-slate-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-700"
                   >
                     <X className="w-4 h-4 mr-2" />
                     ยกเลิก

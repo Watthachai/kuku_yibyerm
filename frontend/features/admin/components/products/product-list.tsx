@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { KULoading } from "@/components/ui/ku-loading";
 import {
   Edit,
   Trash2,
@@ -52,32 +53,18 @@ export function ProductList({
   };
 
   if (loading) {
-    return (
-      <div className="space-y-4">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <Card key={i} className="animate-pulse">
-            <CardContent className="p-4">
-              <div className="space-y-3">
-                <div className="h-6 bg-gray-200 rounded"></div>
-                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    );
+    return <KULoading variant="table" message="กำลังโหลดรายการสินค้า..." />;
   }
 
   if (products.length === 0) {
     return (
       <Card>
         <CardContent className="text-center py-12">
-          <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
+          <Package className="w-16 h-16 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
             ไม่พบสินค้าในระบบ
           </h3>
-          <p className="text-gray-600">
+          <p className="text-gray-600 dark:text-gray-300">
             เริ่มต้นด้วยการเพิ่มสินค้าใหม่เข้าสู่ระบบ
           </p>
         </CardContent>
@@ -89,19 +76,22 @@ export function ProductList({
     if (stock === 0) {
       return {
         label: "หมดสต็อก",
-        color: "bg-red-100 text-red-800",
+        color:
+          "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-100 border border-red-200 dark:border-red-700",
         icon: AlertTriangle,
       };
     } else if (stock <= minStock) {
       return {
         label: "สต็อกต่ำ",
-        color: "bg-yellow-100 text-yellow-800",
+        color:
+          "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-100 border border-yellow-200 dark:border-yellow-700",
         icon: TrendingDown,
       };
     } else {
       return {
         label: "พร้อมใช้งาน",
-        color: "bg-green-100 text-green-800",
+        color:
+          "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-100 border border-green-200 dark:border-green-700",
         icon: CheckCircle,
       };
     }
@@ -134,10 +124,10 @@ export function ProductList({
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="space-y-1 flex-1 min-w-0">
-                    <h3 className="font-semibold text-gray-900 line-clamp-2 group-hover:text-ku-green transition-colors">
+                    <h3 className="font-semibold text-gray-900 dark:text-white line-clamp-2 group-hover:text-ku-green dark:group-hover:text-ku-green transition-colors">
                       {product.name}
                     </h3>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
                       รหัส: {product.code || `PRD${product.id}`}
                     </p>
                   </div>
@@ -158,8 +148,10 @@ export function ProductList({
                 <div className="space-y-2 text-sm">
                   {product.category && (
                     <div className="flex items-center justify-between">
-                      <span className="text-gray-600">หมวดหมู่:</span>
-                      <span className="font-medium">
+                      <span className="text-gray-600 dark:text-gray-400">
+                        หมวดหมู่:
+                      </span>
+                      <span className="font-medium text-gray-900 dark:text-white">
                         {product.category.name}
                       </span>
                     </div>
@@ -167,21 +159,27 @@ export function ProductList({
 
                   {product.brand && (
                     <div className="flex items-center justify-between">
-                      <span className="text-gray-600">ยี่ห้อ:</span>
-                      <span className="font-medium">{product.brand}</span>
+                      <span className="text-gray-600 dark:text-gray-400">
+                        ยี่ห้อ:
+                      </span>
+                      <span className="font-medium text-gray-900 dark:text-white">
+                        {product.brand}
+                      </span>
                     </div>
                   )}
 
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-600">คงเหลือ:</span>
+                    <span className="text-gray-600 dark:text-gray-400">
+                      คงเหลือ:
+                    </span>
                     <span
                       className={cn(
                         "font-bold",
                         product.stock === 0
-                          ? "text-red-600"
+                          ? "text-red-600 dark:text-red-400"
                           : product.stock <= (product.minStock || 0)
-                          ? "text-yellow-600"
-                          : "text-green-600"
+                          ? "text-yellow-600 dark:text-yellow-400"
+                          : "text-green-600 dark:text-green-400"
                       )}
                     >
                       {product.stock} {product.unit || "ชิ้น"}
@@ -190,8 +188,10 @@ export function ProductList({
 
                   {product.minStock !== undefined && (
                     <div className="flex items-center justify-between">
-                      <span className="text-gray-600">ขั้นต่ำ:</span>
-                      <span className="text-gray-500">
+                      <span className="text-gray-600 dark:text-gray-400">
+                        ขั้นต่ำ:
+                      </span>
+                      <span className="text-gray-500 dark:text-gray-400">
                         {product.minStock} {product.unit || "ชิ้น"}
                       </span>
                     </div>
@@ -200,7 +200,7 @@ export function ProductList({
 
                 {/* Description */}
                 {product.description && (
-                  <p className="text-xs text-gray-600 line-clamp-2">
+                  <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">
                     {product.description}
                   </p>
                 )}
@@ -255,7 +255,7 @@ export function ProductList({
                   <Button
                     variant="outline"
                     size="sm"
-                    className="flex-1 text-xs hover:bg-red-50 hover:text-red-600"
+                    className="flex-1 text-xs hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400"
                     onClick={() => onDelete?.(product)}
                   >
                     <Trash2 className="w-3 h-3 mr-1" />
@@ -276,15 +276,33 @@ export function ProductList({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>รหัส</TableHead>
-            <TableHead>ชื่อสินค้า</TableHead>
-            <TableHead>หมวดหมู่</TableHead>
-            <TableHead>ยี่ห้อ</TableHead>
-            <TableHead className="text-right">คงเหลือ</TableHead>
-            <TableHead className="text-right">ขั้นต่ำ</TableHead>
-            <TableHead>สถานะ</TableHead>
-            <TableHead>วันที่อัปเดต</TableHead>
-            <TableHead className="text-center">จัดการ</TableHead>
+            <TableHead className="text-gray-900 dark:text-gray-100 font-semibold">
+              รหัส
+            </TableHead>
+            <TableHead className="text-gray-900 dark:text-gray-100 font-semibold">
+              ชื่อสินค้า
+            </TableHead>
+            <TableHead className="text-gray-900 dark:text-gray-100 font-semibold">
+              หมวดหมู่
+            </TableHead>
+            <TableHead className="text-gray-900 dark:text-gray-100 font-semibold">
+              ยี่ห้อ
+            </TableHead>
+            <TableHead className="text-right text-gray-900 dark:text-gray-100 font-semibold">
+              คงเหลือ
+            </TableHead>
+            <TableHead className="text-right text-gray-900 dark:text-gray-100 font-semibold">
+              ขั้นต่ำ
+            </TableHead>
+            <TableHead className="text-gray-900 dark:text-gray-100 font-semibold">
+              สถานะ
+            </TableHead>
+            <TableHead className="text-gray-900 dark:text-gray-100 font-semibold">
+              วันที่อัปเดต
+            </TableHead>
+            <TableHead className="text-center text-gray-900 dark:text-gray-100 font-semibold">
+              จัดการ
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -295,32 +313,41 @@ export function ProductList({
             );
 
             return (
-              <TableRow key={product.id} className="hover:bg-gray-50">
-                <TableCell className="font-mono text-sm">
+              <TableRow
+                key={product.id}
+                className="hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors"
+              >
+                <TableCell className="font-mono text-sm text-gray-900 dark:text-gray-100">
                   {product.code || `PRD${product.id}`}
                 </TableCell>
                 <TableCell>
                   <div>
-                    <p className="font-medium">{product.name}</p>
+                    <p className="font-medium text-gray-900 dark:text-white">
+                      {product.name}
+                    </p>
                     {product.productModel && (
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
                         รุ่น: {product.productModel}
                       </p>
                     )}
                   </div>
                 </TableCell>
-                <TableCell>{product.category?.name || "ไม่ระบุ"}</TableCell>
-                <TableCell>{product.brand || "ไม่ระบุ"}</TableCell>
+                <TableCell className="text-gray-900 dark:text-gray-200">
+                  {product.category?.name || "ไม่ระบุ"}
+                </TableCell>
+                <TableCell className="text-gray-900 dark:text-gray-200">
+                  {product.brand || "ไม่ระบุ"}
+                </TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-1">
                     <span
                       className={cn(
                         "font-bold",
                         product.stock === 0
-                          ? "text-red-600"
+                          ? "text-red-600 dark:text-red-400"
                           : product.stock <= (product.minStock || 0)
-                          ? "text-yellow-600"
-                          : "text-green-600"
+                          ? "text-yellow-600 dark:text-yellow-400"
+                          : "text-green-600 dark:text-green-400"
                       )}
                     >
                       {product.stock} {product.unit || "ชิ้น"}
@@ -341,7 +368,7 @@ export function ProductList({
                     )}
                   </div>
                 </TableCell>
-                <TableCell className="text-right">
+                <TableCell className="text-right text-gray-900 dark:text-gray-200">
                   {product.minStock || 0} {product.unit || "ชิ้น"}
                 </TableCell>
                 <TableCell>
@@ -349,7 +376,7 @@ export function ProductList({
                     {stockStatus.label}
                   </Badge>
                 </TableCell>
-                <TableCell className="text-sm text-gray-500">
+                <TableCell className="text-sm text-gray-500 dark:text-gray-400">
                   {formatDate(product.updatedAt)}
                 </TableCell>
                 <TableCell>
@@ -374,7 +401,7 @@ export function ProductList({
                       variant="ghost"
                       size="sm"
                       onClick={() => onDelete?.(product)}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/20"
                       title="ลบ"
                     >
                       <Trash2 className="w-4 h-4" />

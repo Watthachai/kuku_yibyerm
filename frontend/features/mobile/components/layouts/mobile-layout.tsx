@@ -25,7 +25,7 @@ export function MobileLayout({
   }
 
   return (
-    <div className={cn("min-h-screen bg-gray-50", className)}>
+    <div className={cn("min-h-screen bg-gray-50 dark:bg-slate-900", className)}>
       {/* Main Content */}
       <main
         className={cn(
