@@ -40,15 +40,14 @@ type authService struct {
 }
 
 // ⭐ 3. แก้ไข Constructor ให้สร้างและเก็บ Config (พร้อม Hardcode เพื่อ Test)
+
 func NewAuthService(db *gorm.DB) AuthService {
 	conf := &oauth2.Config{
 		ClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
 		ClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
 
-		// ================================================================
-		// ⭐⭐ [TEST] เราจะ Hardcode URL ที่ถูกต้องลงไปตรงๆ เลยครับ ⭐⭐
-		RedirectURL: "https://backend-go-production-2ba8.up.railway.app/api/v1/auth/callback/google",
-		// ================================================================
+		// ⭐ ทำให้ตรงกับความเป็นจริง (เอา v1 ออก) ⭐
+		RedirectURL: "https://backend-go-production-2ba8.up.railway.app/api/auth/callback/google",
 
 		Scopes: []string{
 			"https://www.googleapis.com/auth/userinfo.email",
