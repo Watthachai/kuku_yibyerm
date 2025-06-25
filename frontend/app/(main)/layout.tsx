@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
 import { MobileLayout } from "@/features/mobile/components/layouts/mobile-layout";
+import { KULoading } from "@/components/ui/ku-loading";
 
 export default function MainLayout({
   children,
@@ -16,14 +17,7 @@ export default function MainLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   if (status === "loading") {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="flex flex-col items-center space-y-4">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-ku-green"></div>
-          <p className="text-sm text-gray-600">กำลังโหลด...</p>
-        </div>
-      </div>
-    );
+    return <KULoading variant="page" message="กำลังตรวจสอบการเข้าสู่ระบบ..." />;
   }
 
   if (status === "unauthenticated") {
@@ -34,17 +28,13 @@ export default function MainLayout({
 
   // USER role -> Mobile UI
   if (userRole === "USER") {
-    return (
-      <MobileLayout>
-        {children}
-      </MobileLayout>
-    );
+    return <MobileLayout>{children}</MobileLayout>;
   }
 
   // ADMIN role -> Desktop UI with Responsive Design
   if (userRole === "ADMIN") {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 dark:bg-slate-900">
         <Sidebar
           isOpen={sidebarOpen}
           onClose={() => setSidebarOpen(false)}

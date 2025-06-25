@@ -108,7 +108,8 @@ export function AdminSystemStats({ detailed = false }: AdminSystemStatsProps) {
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie
-                    data={stats.departmentUsage}
+                    // ⭐️ เพิ่ม ?. และ || [] ที่นี่
+                    data={stats?.departmentUsage || []}
                     cx="50%"
                     cy="50%"
                     labelLine={false}
@@ -119,7 +120,8 @@ export function AdminSystemStats({ detailed = false }: AdminSystemStatsProps) {
                     fill="#8884d8"
                     dataKey="count"
                   >
-                    {stats.departmentUsage.map((_, index) => (
+                    {/* ⭐️ และเพิ่มที่นี่ด้วยเพื่อความปลอดภัยสูงสุด */}
+                    {(stats?.departmentUsage || []).map((_, index) => (
                       <Cell
                         key={`cell-${index}`}
                         fill={COLORS[index % COLORS.length]}
@@ -148,7 +150,8 @@ export function AdminSystemStats({ detailed = false }: AdminSystemStatsProps) {
             <div className="space-y-2">
               <h4 className="font-medium">ครุภัณฑ์ยอดนิยม</h4>
               <div className="space-y-2">
-                {stats.topRequestedItems.slice(0, 3).map((item) => (
+                {/* ⭐ เพิ่ม ?. และ || [] เพื่อป้องกัน Error */}
+                {(stats?.topRequestedItems || []).slice(0, 3).map((item) => (
                   <div
                     key={item.name}
                     className="flex items-center justify-between text-sm"
@@ -163,7 +166,8 @@ export function AdminSystemStats({ detailed = false }: AdminSystemStatsProps) {
             <div className="space-y-2">
               <h4 className="font-medium">หน่วยงานที่ใช้มากที่สุด</h4>
               <div className="space-y-2">
-                {stats.departmentUsage.slice(0, 3).map((dept) => (
+                {/* ⭐ เพิ่ม ?. และ || [] เพื่อป้องกัน Error */}
+                {(stats?.departmentUsage || []).slice(0, 3).map((dept) => (
                   <div
                     key={dept.department}
                     className="flex items-center justify-between text-sm"

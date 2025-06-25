@@ -1,66 +1,71 @@
+// main.go
 package main
 
 import (
-	"flag"
-	"fmt"
+	"ku-asset/controllers"
+	"ku-asset/database"
+	"ku-asset/migrations" // 👈 import migration
+	"ku-asset/routes"
+	"ku-asset/services"
 	"log"
 	"os"
-	"os/signal"
-	"syscall"
 
-	"kuku-yipyerm/internal/app"
-	"kuku-yipyerm/internal/database"
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 )
 
 func main() {
-	// Parse command line flags
-	migrate := flag.Bool("migrate", false, "Run database migrations")
-	rollback := flag.String("rollback", "", "Rollback to specific migration ID")
-	flag.Parse()
+	log.Println("🚀 Starting KU Asset Backend Server...")
 
-	// Load environment variables
-	// loadEnv() // ถ้ามี
-
-	// Handle migration commands
-	if *migrate {
-		fmt.Println("📊 Running migrations...")
-		database.ConnectDatabase() // This will run migrations automatically
-		fmt.Println("✅ Migrations completed")
-		return
+	if err := godotenv.Load(); err != nil {
+		log.Println("Warning: .env file not found")
+	} else {
+		log.Println("✅ .env file loaded successfully")
 	}
 
-	if *rollback != "" {
-		fmt.Printf("⏪ Rolling back to migration: %s\n", *rollback)
-		database.ConnectDatabase()
-		if err := database.RollbackMigration(database.GetDatabase(), *rollback); err != nil {
-			log.Fatal("Migration rollback failed:", err)
-		}
-		fmt.Println("✅ Rollback completed")
-		return
-	}
-
-	// Initialize application
-	application, err := app.Initialize()
+	dbConfig := database.NewConfigFromEnv()
+	db, err := database.Connect(dbConfig)
 	if err != nil {
-		log.Fatalf("Failed to initialize application: %v", err)
+		log.Fatal("Failed to connect to database:", err)
+	}
+	log.Println("✅ Database connected successfully")
+
+	// ⭐ Run migrations using the new system
+	if err := migrations.RunMigrations(db); err != nil {
+		log.Fatalf("Could not run migrations: %v", err)
 	}
 
-	// Graceful shutdown
-	go func() {
-		quit := make(chan os.Signal, 1)
-		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-		<-quit
-
-		log.Println("🛑 Shutting down server...")
-		if err := application.Shutdown(); err != nil {
-			log.Printf("Error during shutdown: %v", err)
-		}
-		os.Exit(0)
-	}()
-
-	// Start server
-	fmt.Println("🚀 Starting Kuku Yipyerm Backend Server...")
-	if err := application.Run(); err != nil {
-		log.Fatalf("Failed to start server: %v", err)
+	// --- ส่วนที่เหลือเหมือนเดิม ---
+	ginMode := getEnv("GIN_MODE", "debug")
+	if ginMode == "release" {
+		gin.SetMode(gin.ReleaseMode)
 	}
+
+	router := gin.Default()
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:3000"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+	}))
+	router.Use(gin.Logger())
+
+	services := services.NewServices(db)
+	controllers := controllers.NewControllers(services)
+	routes.SetupRoutes(router, controllers)
+
+	port := getEnv("PORT", "8080")
+	log.Printf("Server starting on port %s", port)
+	if err := router.Run(":" + port); err != nil {
+		log.Fatal("Failed to start server:", err)
+	}
+}
+
+func getEnv(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
 }

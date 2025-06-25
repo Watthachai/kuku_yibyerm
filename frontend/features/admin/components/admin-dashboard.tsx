@@ -9,6 +9,7 @@ import { AdminRecentActivity } from "@/features/admin/components/admin-recent-ac
 import { AdminUserManagement } from "@/features/admin/components/admin-user-management";
 import { AdminSystemStats } from "@/features/admin/components/admin-system-stats";
 import { AdminQuickActions } from "@/features/admin/components/admin-quick-actions";
+import { KULoading } from "@/components/ui/ku-loading";
 import { useToast } from "@/components/ui/use-toast";
 
 export function AdminDashboard() {
@@ -44,7 +45,9 @@ export function AdminDashboard() {
   }, [loadDashboardData]);
 
   if (loading) {
-    return <AdminDashboardSkeleton />;
+    return (
+      <KULoading variant="dashboard" message="กำลังโหลดข้อมูลแดชบอร์ด..." />
+    );
   }
 
   return (
@@ -52,8 +55,12 @@ export function AdminDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="text-gray-600">จัดการระบบ KU Asset แบบครบครัน</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            Admin Dashboard
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            จัดการระบบ KU Asset แบบครบครัน
+          </p>
         </div>
         <AdminQuickActions onRefresh={loadDashboardData} />
       </div>
@@ -87,35 +94,12 @@ export function AdminDashboard() {
 
         <TabsContent value="settings">
           <div className="text-center py-12">
-            <p className="text-gray-500">การตั้งค่าระบบจะเพิ่มในเร็วๆ นี้</p>
+            <p className="text-gray-500 dark:text-gray-400">
+              การตั้งค่าระบบจะเพิ่มในเร็วๆ นี้
+            </p>
           </div>
         </TabsContent>
       </Tabs>
-    </div>
-  );
-}
-
-function AdminDashboardSkeleton() {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="space-y-2">
-          <div className="h-8 w-64 bg-gray-200 rounded animate-pulse" />
-          <div className="h-4 w-96 bg-gray-200 rounded animate-pulse" />
-        </div>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {[...Array(4)].map((_, i) => (
-          <div key={i} className="h-32 bg-gray-200 rounded animate-pulse" />
-        ))}
-      </div>
-
-      <div className="grid gap-6 md:grid-cols-2">
-        {[...Array(2)].map((_, i) => (
-          <div key={i} className="h-64 bg-gray-200 rounded animate-pulse" />
-        ))}
-      </div>
     </div>
   );
 }

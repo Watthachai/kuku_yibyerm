@@ -11,7 +11,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Bell, Search, Menu, Settings, User, LogOut, RefreshCw } from "lucide-react";
+import {
+  Bell,
+  Search,
+  Menu,
+  Settings,
+  User,
+  LogOut,
+  RefreshCw,
+} from "lucide-react";
+import { ModeToggle } from "@/components/mode-toggle";
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -22,7 +31,7 @@ export function Header({ onMenuClick, onRefreshSession }: HeaderProps) {
   const { data: session } = useSession();
 
   return (
-    <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
+    <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
       {/* Mobile menu button */}
       <Button
         variant="ghost"
@@ -36,12 +45,15 @@ export function Header({ onMenuClick, onRefreshSession }: HeaderProps) {
       {/* Desktop breadcrumb area */}
       <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
         <div className="relative flex flex-1 items-center">
-          <h1 className="text-xl font-semibold text-gray-900">
-            ยินดีต้อนรับ, {session?.user?.name?.split(' ')[0] || 'ผู้ดูแลระบบ'}
+          <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
+            ยินดีต้อนรับ, {session?.user?.name?.split(" ")[0] || "ผู้ดูแลระบบ"}
           </h1>
         </div>
-        
+
         <div className="flex items-center gap-x-4 lg:gap-x-6">
+          {/* Theme Toggle */}
+          <ModeToggle />
+
           {/* Search button */}
           <Button variant="ghost" size="sm">
             <Search className="h-5 w-5 text-gray-400" />

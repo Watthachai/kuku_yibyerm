@@ -1,5 +1,5 @@
 import { Home, Search, ShoppingCart, FileText, User } from "lucide-react";
-import type { BottomNavItem } from "../types/navigation.types";
+import type { BottomNavItem } from "@/types/navigation.types";
 
 export const BOTTOM_NAV_ITEMS: BottomNavItem[] = [
   {
@@ -10,32 +10,28 @@ export const BOTTOM_NAV_ITEMS: BottomNavItem[] = [
   },
   {
     id: "catalog",
-    label: "คลังครุภัณฑ์",
+    label: "เบิกครุภัณฑ์",
     icon: Search,
-    href: "/inventory",
+    href: "/products",
   },
   {
     id: "cart",
     label: "ตะกร้า",
     icon: ShoppingCart,
-    href: "/mobile/cart",
+    href: "/cart",
   },
   {
     id: "requests",
     label: "คำขอของฉัน",
     icon: FileText,
-    href: "/mobile/requests",
+    href: "/requests",
   },
   {
     id: "profile",
     label: "โปรไฟล์",
     icon: User,
-    href: "/mobile/profile",
+    href: "/profile",
   },
 ];
 
-export const PROTECTED_MOBILE_ROUTES = [
-  "/mobile/cart",
-  "/mobile/requests",
-  "/mobile/profile",
-];
+export const PROTECTED_MOBILE_ROUTES = ["/cart", "/requests", "/profile"];

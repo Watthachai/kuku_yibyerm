@@ -1,19 +1,56 @@
+export type RequestStatus =
+  | "PENDING" // รออนุมัติ
+  | "APPROVED" // อนุมัติแล้ว
+  | "REJECTED" // ปฏิเสธ
+  | "ISSUED" // เบิกออกแล้ว (เสร็จสิ้น)
+  | "COMPLETED"; // เสร็จสิ้น (เหมือน ISSUED)
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  department?: Department; // <-- แก้ไขจาก string เป็น Department
+}
+
+export interface Department {
+  id: number;
+  name: string;
+  code?: string;
+  faculty?: string;
+}
+
+export interface Product {
+  id: string;
+  name: string;
+  code?: string;
+  category?: string;
+}
+
+export interface RequestItem {
+  id: string;
+  product: Product;
+  quantity: number;
+  purpose?: string;
+  notes?: string;
+}
+
 export interface BorrowRequest {
   id: string;
-  requestNumber: string;
-  user: {
-    id: string;
-    name: string;
-    email: string;
-    department: string;
-  };
+  requestNumber?: string;
+  user: User;
   items: RequestItem[];
   purpose: string;
-  requestDate: string;
-  expectedStartDate: string;
-  expectedEndDate: string;
+  notes?: string;
   status: RequestStatus;
+  requestDate: string;
+  approvedDate?: string;
+  issuedDate?: string;
+  completedDate?: string;
   adminNote?: string;
+  createdAt: string;
+  updatedAt: string;
+
+  // Admin info (ถ้ามี)
   approvedBy?: {
     id: string;
     name: string;
@@ -25,45 +62,18 @@ export interface BorrowRequest {
     rejectedAt: string;
     reason: string;
   };
-  createdAt: string;
-  updatedAt: string;
 }
-
-export interface RequestItem {
-  id: string;
-  product: {
-    id: string;
-    name: string;
-    code: string;
-    imageUrl?: string;
-  };
-  quantity: number;
-  purpose: string;
-  notes?: string;
-}
-
-export type RequestStatus = 
-  | "PENDING"     // รออนุมัติ
-  | "APPROVED"    // อนุมัติแล้ว
-  | "REJECTED"    // ปฏิเสธ
-  | "BORROWED"    // กำลังยืม
-  | "RETURNED"    // คืนแล้ว
-  | "OVERDUE";    // เกินกำหนด
 
 export interface CreateBorrowRequest {
-  items: {
-    productId: string;
+  purpose: string;
+  notes?: string;
+  items: Array<{
+    product_id: number;
     quantity: number;
-    purpose: string;
-    notes?: string;
-  }[];
-  generalPurpose: string;
-  expectedStartDate: string;
-  expectedEndDate: string;
+  }>;
 }
 
 export interface ApprovalAction {
-  requestId: string;
   action: "APPROVE" | "REJECT";
-  note?: string;
+  notes?: string;
 }

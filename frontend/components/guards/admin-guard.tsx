@@ -3,6 +3,7 @@
 import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
 import { useEffect } from "react";
+import { KULoading } from "@/components/ui/ku-loading";
 
 interface AdminGuardProps {
   children: React.ReactNode;
@@ -27,9 +28,7 @@ export function AdminGuard({ children }: AdminGuardProps) {
 
   if (status === "loading") {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-ku-green"></div>
-      </div>
+      <KULoading variant="page" message="กำลังตรวจสอบสิทธิ์ผู้ดูแลระบบ..." />
     );
   }
 

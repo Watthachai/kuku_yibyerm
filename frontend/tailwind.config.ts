@@ -3,6 +3,7 @@
 import tailwindcssAnimate from "tailwindcss-animate";
 
 const config = {
+  darkMode: ["class"], // ⭐ เพิ่ม dark mode support
   content: [
     "./pages/**/*.{ts,tsx}",
     "./components/**/*.{ts,tsx}",
