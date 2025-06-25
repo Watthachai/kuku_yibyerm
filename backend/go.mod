@@ -14,6 +14,7 @@ require (
 )
 
 require (
+	cloud.google.com/go/compute/metadata v0.3.0 // indirect
 	github.com/boombuler/barcode v1.0.1 // indirect
 	github.com/f-amaral/go-async v0.3.0 // indirect
 	github.com/google/uuid v1.5.0 // indirect
@@ -28,6 +29,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
 	golang.org/x/image v0.28.0 // indirect
+	golang.org/x/oauth2 v0.30.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
 

@@ -39,6 +39,8 @@ func setupAuthRoutes(group *gin.RouterGroup, authController *controllers.AuthCon
 	group.POST("/register", authController.Register)
 	group.POST("/refresh", authController.RefreshToken)
 	group.POST("/oauth/google", authController.GoogleOAuth)
+
+	group.GET("/callback/google", authController.GoogleCallbackHandler)
 }
 
 // setupAdminRoutes จัดการ Route ที่ต้องใช้สิทธิ์ "ADMIN" เท่านั้น
