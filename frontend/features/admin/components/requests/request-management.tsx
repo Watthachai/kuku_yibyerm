@@ -50,6 +50,8 @@ export function RequestManagement() {
 
       const data = await AdminRequestService.getAllRequests();
       console.log("✅ Loaded requests:", data);
+      console.log("🔍 First request user data:", data[0]?.user);
+      console.log("🔍 First request department:", data[0]?.user?.department);
 
       setRequests(data);
 

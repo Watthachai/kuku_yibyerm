@@ -63,6 +63,12 @@ func setupAdminRoutes(group *gin.RouterGroup, c *controllers.Controllers) {
 		protected.GET("/requests", c.Request.GetAllRequests)
 		protected.PUT("/requests/:id/status", c.Request.UpdateRequestStatus)
 
+		// Department Management
+		protected.GET("/departments", c.Department.GetDepartments)
+		protected.GET("/departments/:id", c.Department.GetDepartment)
+		protected.POST("/departments", c.Department.CreateDepartment) // เพิ่มเส้นทางนี้
+		protected.PATCH("/departments/:id", c.Department.UpdateDepartment)
+		protected.DELETE("/departments/:id", c.Department.DeleteDepartment)
 	}
 }
 

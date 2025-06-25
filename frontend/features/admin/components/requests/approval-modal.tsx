@@ -92,15 +92,32 @@ export function ApprovalModal({
 
                   <div className="flex items-center gap-2">
                     <User className="h-4 w-4 text-gray-500" />
+                    {/* --- ส่วนแสดงข้อมูลผู้ขอ --- */}
                     <div>
-                      <p className="text-sm text-gray-600">ผู้ขอ</p>
                       <p className="font-semibold">{request.user.name}</p>
                       <p className="text-sm text-gray-500">
                         {request.user.email}
                       </p>
-                      <p className="text-sm text-gray-500">
-                        {request.user.department}
-                      </p>
+
+                      {/* --- ส่วนแสดงหน่วยงาน --- */}
+                      {request.user.department ? (
+                        <div className="text-sm text-gray-600 mt-1">
+                          {/* แสดงชื่อคณะ ถ้ามี */}
+                          {request.user.department.faculty && (
+                            <p className="text-gray-500">
+                              {request.user.department.faculty}
+                            </p>
+                          )}
+                          {/* แสดงชื่อภาควิชา/หน่วยงานหลัก */}
+                          <p className="font-medium">
+                            {request.user.department.name}
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-md inline-block mt-1">
+                          ไม่ระบุหน่วยงาน
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -146,7 +163,13 @@ export function ApprovalModal({
                     <div className="flex-1">
                       <p className="font-semibold">{item.product.name}</p>
                       <p className="text-sm text-gray-600">
-                        รหัส: {item.product.code}
+                        รหัส:{" "}
+                        {item.product.code &&
+                        item.product.code.trim() !== "" ? (
+                          item.product.code
+                        ) : (
+                          <span className="italic text-gray-400">-</span>
+                        )}
                       </p>
                       <p className="text-sm text-gray-600">
                         วัตถุประสงค์: {item.purpose}

@@ -28,108 +28,84 @@ import {
   MoreHorizontal,
   Edit,
   Trash2,
-  Users,
 } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
-
-interface Department {
-  id: string;
-  name: string;
-  faculty: string;
-  userCount: number;
-  status: "ACTIVE" | "INACTIVE";
-  createdAt: string;
-}
+import { toast } from "sonner";
+import {
+  DepartmentService,
+  Department,
+} from "@/features/shared/services/department-service";
+import { DepartmentFormModal } from "@/features/admin/components/departments/department-form-modal";
+import { DeleteDepartmentModal } from "@/features/admin/components/departments/delete-department-modal";
 
 export default function DepartmentsManagementPage() {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const { toast } = useToast();
 
-  useEffect(() => {
-    loadDepartments();
-  }, []);
+  // Modal states
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState<"create" | "edit">("create");
+  const [selectedDepartment, setSelectedDepartment] = useState<
+    Department | undefined
+  >();
 
   const loadDepartments = async () => {
     try {
       setLoading(true);
-      // TODO: Call API to get departments
-      // const data = await DepartmentService.getDepartments();
-
-      // Mock data for now
-      const mockDepartments: Department[] = [
-        {
-          id: "1",
-          name: "ภาควิชาพืชสวน",
-          faculty: "คณะเกษตร",
-          userCount: 25,
-          status: "ACTIVE",
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: "2",
-          name: "ภาควิชาวิศวกรรมคอมพิวเตอร์",
-          faculty: "คณะวิศวกรรมศาสตร์",
-          userCount: 45,
-          status: "ACTIVE",
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: "3",
-          name: "ภาควิชาการสอน",
-          faculty: "คณะศึกษาศาสตร์",
-          userCount: 18,
-          status: "ACTIVE",
-          createdAt: new Date().toISOString(),
-        },
-      ];
-
-      setDepartments(mockDepartments);
+      const data = await DepartmentService.getAllDepartments();
+      setDepartments(data);
     } catch (error) {
       console.error("Failed to load departments:", error);
-      toast({
-        title: "เกิดข้อผิดพลาด",
+      toast.error("เกิดข้อผิดพลาด", {
         description: "ไม่สามารถโหลดข้อมูลหน่วยงานได้",
-        variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
   };
 
+  useEffect(() => {
+    loadDepartments();
+  }, []);
+
   const handleAddDepartment = () => {
-    // TODO: Implement add department modal
-    console.log("Add department");
-    toast({
-      title: "กำลังพัฒนา",
-      description: "ฟีเจอร์นี้จะเพิ่มในเร็วๆ นี้",
-    });
+    setModalMode("create");
+    setSelectedDepartment(undefined);
+    setIsFormModalOpen(true);
   };
 
-  const handleEditDepartment = (id: string) => {
-    // TODO: Implement edit department modal
-    console.log("Edit department:", id);
-    toast({
-      title: "กำลังพัฒนา",
-      description: "ฟีเจอร์นี้จะเพิ่มในเร็วๆ นี้",
-    });
+  const handleEditDepartment = (department: Department) => {
+    setModalMode("edit");
+    setSelectedDepartment(department);
+    setIsFormModalOpen(true);
   };
 
-  const handleDeleteDepartment = (id: string) => {
-    // TODO: Implement delete confirmation
-    console.log("Delete department:", id);
-    toast({
-      title: "กำลังพัฒนา",
-      description: "ฟีเจอร์นี้จะเพิ่มในเร็วๆ นี้",
-    });
+  const handleDeleteDepartment = (department: Department) => {
+    setSelectedDepartment(department);
+    setIsDeleteModalOpen(true);
   };
 
-  const filteredDepartments = departments.filter(
-    (dept) =>
-      dept.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      dept.faculty.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const handleModalSuccess = () => {
+    loadDepartments(); // Reload data after successful operation
+  };
+
+  const filteredDepartments = departments.filter((dept) => {
+    const searchLower = searchTerm.toLowerCase();
+    const nameMatch =
+      dept.name_th?.toLowerCase().includes(searchLower) || false;
+    const codeMatch = dept.code?.toLowerCase().includes(searchLower) || false;
+    const facultyMatch =
+      dept.facultyName?.toLowerCase().includes(searchLower) || false;
+    return nameMatch || codeMatch || facultyMatch;
+  });
+
+  const getDepartmentTypeBadge = (type: "FACULTY" | "DIVISION") => {
+    if (type === "FACULTY") {
+      return <Badge variant="secondary">คณะ</Badge>;
+    }
+    return <Badge variant="outline">ภาควิชา</Badge>;
+  };
 
   if (loading) {
     return (
@@ -181,8 +157,9 @@ export default function DepartmentsManagementPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>ชื่อหน่วยงาน</TableHead>
+                  <TableHead>รหัส</TableHead>
+                  <TableHead>ประเภท</TableHead>
                   <TableHead>คณะ</TableHead>
-                  <TableHead>จำนวนผู้ใช้</TableHead>
                   <TableHead>สถานะ</TableHead>
                   <TableHead>วันที่สร้าง</TableHead>
                   <TableHead className="text-right">จัดการ</TableHead>
@@ -196,31 +173,33 @@ export default function DepartmentsManagementPage() {
                         <div className="w-8 h-8 bg-ku-green rounded-lg flex items-center justify-center">
                           <Building2 className="w-4 h-4 text-white" />
                         </div>
-                        <span className="font-medium">{department.name}</span>
+                        <span className="font-medium">
+                          {department.name_th}
+                        </span>
                       </div>
                     </TableCell>
-                    <TableCell>{department.faculty}</TableCell>
                     <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <Users className="w-4 h-4 text-gray-400" />
-                        <span>{department.userCount} คน</span>
-                      </div>
+                      <Badge variant="outline">{department.code}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      {getDepartmentTypeBadge(department.type)}
+                    </TableCell>
+                    <TableCell>
+                      {department.type === "DIVISION"
+                        ? department.facultyName || "ไม่ระบุคณะ"
+                        : "-"}
                     </TableCell>
                     <TableCell>
                       <Badge
                         variant={
-                          department.status === "ACTIVE"
-                            ? "default"
-                            : "destructive"
+                          department.is_active ? "default" : "destructive"
                         }
                       >
-                        {department.status === "ACTIVE"
-                          ? "ใช้งาน"
-                          : "ปิดใช้งาน"}
+                        {department.is_active ? "ใช้งาน" : "ปิดใช้งาน"}
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {new Date(department.createdAt).toLocaleDateString(
+                      {new Date(department.created_at).toLocaleDateString(
                         "th-TH"
                       )}
                     </TableCell>
@@ -233,16 +212,14 @@ export default function DepartmentsManagementPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem
-                            onClick={() => handleEditDepartment(department.id)}
+                            onClick={() => handleEditDepartment(department)}
                           >
                             <Edit className="h-4 w-4 mr-2" />
                             แก้ไข
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
-                            onClick={() =>
-                              handleDeleteDepartment(department.id)
-                            }
+                            onClick={() => handleDeleteDepartment(department)}
                             className="text-red-600"
                           >
                             <Trash2 className="h-4 w-4 mr-2" />
@@ -270,6 +247,22 @@ export default function DepartmentsManagementPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Modals */}
+      <DepartmentFormModal
+        isOpen={isFormModalOpen}
+        onClose={() => setIsFormModalOpen(false)}
+        onSuccess={handleModalSuccess}
+        department={selectedDepartment}
+        mode={modalMode}
+      />
+
+      <DeleteDepartmentModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onSuccess={handleModalSuccess}
+        department={selectedDepartment}
+      />
     </AdminGuard>
   );
 }

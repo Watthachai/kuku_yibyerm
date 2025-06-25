@@ -15,6 +15,9 @@ type DepartmentService interface {
 	GetDepartments(query *dto.DepartmentQuery) ([]dto.DepartmentResponse, error)
 	GetDepartmentByID(id uint) (*dto.DepartmentResponse, error)
 	GetFaculties() ([]dto.DepartmentResponse, error)
+	CreateDepartment(req *dto.CreateDepartmentRequest) (*dto.DepartmentResponse, error)
+	UpdateDepartment(id uint, req *dto.UpdateDepartmentRequest) (*dto.DepartmentResponse, error)
+	DeleteDepartment(id uint) error
 }
 
 // 2. สร้าง struct ที่เป็น implementation
@@ -83,6 +86,57 @@ func (s *departmentService) GetFaculties() ([]dto.DepartmentResponse, error) {
 		response = append(response, *facultyResponse)
 	}
 	return response, nil
+}
+
+func (s *departmentService) CreateDepartment(req *dto.CreateDepartmentRequest) (*dto.DepartmentResponse, error) {
+	department := models.Department{
+		Code:     req.Code,
+		NameTH:   req.NameTh,
+		NameEN:   req.NameEn,
+		Type:     models.DepartmentType(req.Type),
+		ParentID: req.ParentID,
+		IsActive: req.IsActive,
+	}
+	if err := s.db.Create(&department).Error; err != nil {
+		return nil, err
+	}
+	return mapDepartmentToResponse(&department), nil
+}
+
+func (s *departmentService) UpdateDepartment(id uint, req *dto.UpdateDepartmentRequest) (*dto.DepartmentResponse, error) {
+	var department models.Department
+	if err := s.db.First(&department, id).Error; err != nil {
+		return nil, err
+	}
+	if req.Code != "" {
+		department.Code = req.Code
+	}
+	if req.NameTh != "" {
+		department.NameTH = req.NameTh
+	}
+	if req.NameEn != "" {
+		department.NameEN = req.NameEn
+	}
+	if req.Type != "" {
+		department.Type = models.DepartmentType(req.Type)
+	}
+	if req.ParentID != nil {
+		department.ParentID = req.ParentID
+	}
+	if req.IsActive != nil {
+		department.IsActive = *req.IsActive
+	}
+	if err := s.db.Save(&department).Error; err != nil {
+		return nil, err
+	}
+	return mapDepartmentToResponse(&department), nil
+}
+
+func (s *departmentService) DeleteDepartment(id uint) error {
+	if err := s.db.Delete(&models.Department{}, id).Error; err != nil {
+		return err
+	}
+	return nil
 }
 
 // Helper to map model to DTO

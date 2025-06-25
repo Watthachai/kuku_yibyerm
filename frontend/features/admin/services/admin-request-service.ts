@@ -2,7 +2,18 @@ import { getSession } from "next-auth/react";
 import {
   BorrowRequest,
   ApprovalAction,
+  RequestStatus,
 } from "@/features/shared/types/request.types";
+
+interface BackendDepartment {
+  id?: number;
+  name_th?: string;
+  name?: string;
+  code?: string;
+  type?: string;
+  parent_id?: number;
+  faculty?: string; // เพิ่ม field faculty
+}
 
 interface BackendRequestItem {
   id?: number | string;
@@ -27,9 +38,7 @@ interface BackendRequest {
     id?: number | string;
     name?: string;
     email?: string;
-    department?: {
-      name_th?: string;
-    };
+    department?: BackendDepartment; // ✅ FIXED: ใช้ BackendDepartment type ที่อัปเดตแล้ว
   };
   user_id?: number | string;
   items?: BackendRequestItem[];
@@ -116,9 +125,20 @@ export class AdminRequestService {
               id: req.user?.id?.toString() || req.user_id?.toString() || "0",
               name: req.user?.name || "ไม่ระบุ",
               email: req.user?.email || "",
-              department: req.user?.department?.name_th || "ไม่ระบุหน่วยงาน",
+              department: req.user?.department
+                ? {
+                    id: req.user.department.id || 0,
+                    name:
+                      req.user.department.name ||
+                      req.user.department.name_th ||
+                      req.user.department.code ||
+                      "ไม่ระบุหน่วยงาน",
+                    code: req.user.department.code,
+                    faculty: req.user.department.faculty,
+                  }
+                : undefined,
             },
-            items: (req.items || []).map((item: BackendRequest) => ({
+            items: (req.items || []).map((item: BackendRequestItem) => ({
               id: item.id?.toString() || Math.random().toString(),
               product: {
                 id:
@@ -135,14 +155,14 @@ export class AdminRequestService {
             })),
             purpose: req.purpose || "",
             notes: req.notes || "",
-            status: req.status || "PENDING",
-            requestDate: req.request_date || req.created_at,
+            status: (req.status || "PENDING") as RequestStatus,
+            requestDate: req.request_date || req.created_at || "",
             approvedDate: req.approved_date,
             issuedDate: req.issued_date,
             completedDate: req.completed_date,
             adminNote: req.admin_note || "",
-            createdAt: req.created_at,
-            updatedAt: req.updated_at,
+            createdAt: req.created_at || "",
+            updatedAt: req.updated_at || "",
 
             // Admin info
             approvedBy: req.approved_by_id

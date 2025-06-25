@@ -9,7 +9,14 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  department?: string;
+  department?: Department; // <-- แก้ไขจาก string เป็น Department
+}
+
+export interface Department {
+  id: number;
+  name: string;
+  code?: string;
+  faculty?: string;
 }
 
 export interface Product {

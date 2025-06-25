@@ -158,7 +158,11 @@ export function RequestReceiptTemplate({
             <div>
               <p className="text-sm text-gray-600">หน่วยงาน</p>
               <p className="font-medium">
-                {request.user.department || "ไม่ระบุ"}
+                {typeof request.user.department === "string"
+                  ? request.user.department
+                  : request.user.department
+                  ? request.user.department.name
+                  : "ไม่ระบุ"}
               </p>
             </div>
           </div>

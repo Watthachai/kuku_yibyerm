@@ -55,7 +55,7 @@ export function RequestCard({
             onClick={() => onAction(request)}
             className="bg-blue-600 hover:bg-blue-700"
           >
-            <Eye className="h-4 w-4 mr-2" />
+            <Eye className="h-5 w-5 mr-2" />
             ตรวจสอบ
           </Button>
         );
@@ -179,7 +179,18 @@ export function RequestCard({
             <div>
               <p className="font-medium">{request.user.name}</p>
               <p className="text-sm text-gray-600">{request.user.email}</p>
-              <p className="text-sm text-gray-600">{request.user.department}</p>
+              {request.user.department ? (
+                <div className="text-sm text-gray-600">
+                  {request.user.department.faculty && (
+                    <p className="text-gray-500">
+                      {request.user.department.faculty}
+                    </p>
+                  )}
+                  <p className="font-medium">{request.user.department.name}</p>
+                </div>
+              ) : (
+                <p className="text-sm text-gray-600">ไม่ระบุหน่วยงาน</p>
+              )}
             </div>
           </div>
         </div>
