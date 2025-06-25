@@ -1,30 +1,21 @@
-# Use a lean Go image
+# --- Build Stage ---
 FROM golang:1.24.4 AS build
-
-# Set the working directory inside the container
 WORKDIR /app
 
-# Copy the go.mod and go.sum files to download dependencies first
+# Copy go mod and sum first for better cache
 COPY go.mod go.sum ./
 RUN go mod download
 
-# Copy the rest of your application source code
+# Copy the rest of the backend source
 COPY . .
 
-# Build the application, targeting the main.go inside your cmd/server directory
-# This creates a static binary at /app/server
+# Build the Go server (main.go อยู่ที่ cmd/server)
 RUN CGO_ENABLED=0 go build -o /app/server ./cmd/server
 
 # --- Final Stage ---
-# Use a minimal image for the final container to keep it small and secure
 FROM scratch
-
-# Copy the compiled binary from the build stage
+WORKDIR /app
 COPY --from=build /app/server /app/server
-
-# Expose the port that Railway will use.
-# Your Go app must listen on the $PORT environment variable.
+COPY --from=build /usr/share/zoneinfo /usr/share/zoneinfo
 EXPOSE 8080
-
-# The command to run when the container starts
 ENTRYPOINT ["/app/server"]

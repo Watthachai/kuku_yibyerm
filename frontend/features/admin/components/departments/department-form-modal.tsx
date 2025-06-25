@@ -66,7 +66,7 @@ export function DepartmentFormModal({
       loadFaculties();
       if (mode === "edit" && department) {
         setFormData({
-          name: department.name || "",
+          name: department.name_th || "",
           name_en: department.name_en || "",
           code: department.code || "",
           type: department.type || "DIVISION",
@@ -245,7 +245,7 @@ export function DepartmentFormModal({
                 <SelectContent>
                   {faculties.map((faculty) => (
                     <SelectItem key={faculty.id} value={faculty.id}>
-                      {faculty.name} ({faculty.code})
+                      {faculty.name_th} ({faculty.code})
                     </SelectItem>
                   ))}
                 </SelectContent>
