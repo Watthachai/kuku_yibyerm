@@ -20,8 +20,6 @@ import {
   Truck,
   Download,
 } from "lucide-react";
-import { getSession } from "next-auth/react";
-import { toast } from "sonner";
 import { PDFGenerator } from "@/lib/pdf-generator";
 
 interface RequestCardProps {

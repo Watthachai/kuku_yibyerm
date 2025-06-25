@@ -2,7 +2,6 @@
 package controllers
 
 import (
-	"fmt"
 	"ku-asset/dto"
 	"ku-asset/services"
 	"net/http"
@@ -108,33 +107,4 @@ func (ctrl *AuthController) GoogleOAuth(c *gin.Context) {
 		"access_token":  authResponse.AccessToken,
 		"refresh_token": authResponse.RefreshToken,
 	})
-}
-
-func (ctrl *AuthController) GoogleCallbackHandler(c *gin.Context) {
-	// 1. ดึง "code" ที่ Google ส่งกลับมาให้จาก URL Query Parameter
-	code := c.Query("code")
-	state := c.Query("state") // ปกติ Google จะส่ง state กลับมาด้วย ควรเช็คว่าตรงกับที่ส่งไปตอนแรก
-
-	if code == "" {
-		// ถ้าไม่ได้ code กลับมา แสดงว่ามีปัญหา
-		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Authorization code not provided by Google"})
-		return
-	}
-
-	// 2. เรียก Service เพื่อนำ "code" ไปแลกเป็น Access Token กับ Google
-	//    แล้วใช้ Access Token นั้นไปขอข้อมูลผู้ใช้ (ขั้นตอนนี้จะอยู่ใน Service)
-	//    สุดท้าย Service จะสร้าง User ในระบบและสร้าง JWT ของเราเอง
-	//    *** คุณต้องไปสร้างฟังก์ชัน HandleGoogleCallback ใน authService ของคุณ ***
-	authResponse, err := ctrl.authService.HandleGoogleCallback(code, state)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
-		return
-	}
-
-	// 3. เมื่อทุกอย่างสำเร็จ ให้ Redirect ผู้ใช้กลับไปที่ Frontend พร้อมกับ Token ของเรา
-	//    เพื่อให้ Frontend รับ Token ไปเก็บแล้วเปลี่ยนหน้าเป็นหน้า "ล็อกอินสำเร็จ"
-	frontendURL := "https://kukuyibyerm-production.up.railway.app/auth-success" // หรือหน้าอื่นๆ ที่คุณต้องการ
-	redirectURL := fmt.Sprintf("%s?access_token=%s&refresh_token=%s", frontendURL, authResponse.AccessToken, authResponse.RefreshToken)
-
-	c.Redirect(http.StatusTemporaryRedirect, redirectURL)
 }

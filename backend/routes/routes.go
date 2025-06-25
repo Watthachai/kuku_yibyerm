@@ -18,10 +18,6 @@ func SetupRoutes(r *gin.Engine, controllers *controllers.Controllers) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	})
 
-	// ⭐ 1. ย้าย Route สำหรับ Google Callback มาไว้ที่นี่ (นอกกลุ่ม v1) ⭐
-	// เพื่อให้ตรงกับ URL ที่ Google เรียกกลับมาจริงๆ และแก้ปัญหา 500 Internal Server Error
-	r.GET("/api/auth/callback/google", controllers.Auth.GoogleCallbackHandler)
-
 	// จัดกลุ่ม Route ทั้งหมดภายใต้ /api/v1
 	api := r.Group("/api/v1")
 	setupAPIRoutes(api, controllers)
@@ -43,9 +39,6 @@ func setupAuthRoutes(group *gin.RouterGroup, authController *controllers.AuthCon
 	group.POST("/register", authController.Register)
 	group.POST("/refresh", authController.RefreshToken)
 	group.POST("/oauth/google", authController.GoogleOAuth)
-
-	// ⭐ 2. ลบ Route ของ Callback ออกจากตรงนี้ เพราะเราย้ายไปไว้ข้างบนแล้ว ⭐
-	// group.GET("/callback/google", authController.GoogleCallbackHandler)
 }
 
 // setupAdminRoutes จัดการ Route ที่ต้องใช้สิทธิ์ "ADMIN" เท่านั้น
