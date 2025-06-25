@@ -157,4 +157,51 @@ export class RequestService {
       throw error;
     }
   }
+
+  static async cancelRequest(requestId: string): Promise<void> {
+    try {
+      const headers = await getAuthHeaders();
+      const response = await fetch(
+        `${this.baseUrl}/api/v1/requests/${requestId}/cancel`,
+        {
+          method: "POST",
+          headers,
+        }
+      );
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to cancel request: ${errorText}`);
+      }
+    } catch (error) {
+      console.error("💥 Cancel request error:", error);
+      throw error;
+    }
+  }
+
+  static async updateRequest(
+    requestId: string,
+    updates: Partial<RequestResponse>
+  ): Promise<RequestResponse> {
+    try {
+      const headers = await getAuthHeaders();
+      headers["Content-Type"] = "application/json";
+      const response = await fetch(
+        `${this.baseUrl}/api/v1/requests/${requestId}`,
+        {
+          method: "PATCH",
+          headers,
+          body: JSON.stringify(updates),
+        }
+      );
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to update request: ${errorText}`);
+      }
+      const responseData = await response.json();
+      return responseData.data;
+    } catch (error) {
+      console.error("💥 Update request error:", error);
+      throw error;
+    }
+  }
 }
