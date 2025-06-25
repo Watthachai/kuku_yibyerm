@@ -1,12 +1,14 @@
 package services
 
 import (
-	// --- IMPORT ที่จำเป็น ---
+	// --- IMPORT ที่ต้องเพิ่ม ---
 	"context"
+	"crypto/tls" // 👈 เพิ่ม import นี้
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"net/http"
+	"log"      // 👈 เพิ่ม import นี้
+	"net/http" // 👈 เพิ่ม import นี้
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -24,31 +26,26 @@ import (
 	"gorm.io/gorm"
 )
 
-// ⭐ 1. เพิ่มเมธอดใหม่ใน Interface
+// AuthService interface (เหมือนเดิม)
 type AuthService interface {
 	Login(req *dto.LoginRequest) (*dto.AuthResponse, error)
 	Register(req *dto.RegisterRequest) (*dto.UserResponse, error)
 	RefreshToken(tokenString string) (string, error)
 	FindOrCreateUserByGoogle(req *dto.GoogleOAuthRequest) (*dto.AuthResponse, error)
-	HandleGoogleCallback(code string, state string) (*dto.AuthResponse, error) // 👈 เพิ่มบรรทัดนี้
+	HandleGoogleCallback(code string, state string) (*dto.AuthResponse, error)
 }
 
-// ⭐ 2. เพิ่ม Field สำหรับเก็บค่า Config ของ Google OAuth
 type authService struct {
 	db                *gorm.DB
-	googleOauthConfig *oauth2.Config // 👈 เพิ่มบรรทัดนี้
+	googleOauthConfig *oauth2.Config
 }
 
-// ⭐ 3. แก้ไข Constructor ให้สร้างและเก็บ Config (พร้อม Hardcode เพื่อ Test)
-
+// NewAuthService (เหมือนเดิม)
 func NewAuthService(db *gorm.DB) AuthService {
 	conf := &oauth2.Config{
 		ClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
 		ClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
-
-		// ⭐ ทำให้ตรงกับความเป็นจริง (เอา v1 ออก) ⭐
-		RedirectURL: "https://backend-go-production-2ba8.up.railway.app/api/auth/callback/google",
-
+		RedirectURL:  "https://backend-go-production-2ba8.up.railway.app/api/auth/callback/google",
 		Scopes: []string{
 			"https://www.googleapis.com/auth/userinfo.email",
 			"https://www.googleapis.com/auth/userinfo.profile",
@@ -62,39 +59,66 @@ func NewAuthService(db *gorm.DB) AuthService {
 	}
 }
 
-// ⭐ 4. เพิ่มเมธอด HandleGoogleCallback ที่ขาดไป
+// ⭐⭐⭐ แก้ไขฟังก์ชันนี้ที่เดียว ⭐⭐⭐
 func (s *authService) HandleGoogleCallback(code string, state string) (*dto.AuthResponse, error) {
-	// 1. แลก "code" เป็น "token" จาก Google
-	ctx := context.WithValue(context.Background(), oauth2.HTTPClient, http.DefaultClient)
-	token, err := s.googleOauthConfig.Exchange(ctx, code) // 👈 ใช้ ctx ที่สร้างใหม่
+	// ============================ EMERGENCY FIX FOR PRESENTATION ============================
+	// สร้าง HTTP Client ที่ไม่ตรวจสอบใบรับรองความปลอดภัย (TLS/SSL)
+	// นี่คือการแก้ปัญหา "x509: certificate signed by unknown authority" แบบฉุกเฉิน
+	// คำเตือน: ไม่ปลอดภัยสำหรับการใช้งานจริง! ต้องเอาออกหลังพรีเซนต์เสร็จ
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{Transport: tr}
+	ctx := context.WithValue(context.Background(), oauth2.HTTPClient, client)
+	// ========================================================================================
 
+	// 1. แลก "code" เป็น "token" จาก Google โดยใช้ client ที่เราสร้างขึ้น
+	token, err := s.googleOauthConfig.Exchange(ctx, code)
 	if err != nil {
+		log.Printf("🔴 FAILED TO EXCHANGE TOKEN: %v", err) // Log error เพื่อดูสาเหตุ
 		return nil, fmt.Errorf("failed to exchange code: %w", err)
 	}
 
+	log.Printf("✅ TOKEN EXCHANGED SUCCESSFULLY")
+
 	// 2. ใช้ "token" เพื่อยิง request ไปขอข้อมูลผู้ใช้จาก Google
-	response, err := http.Get("https://www.googleapis.com/oauth2/v2/userinfo?access_token=" + token.AccessToken)
+	// เราจะใช้ client ที่ไม่ปลอดภัยตัวเดิมสำหรับขั้นตอนนี้ด้วย
+	req, err := http.NewRequest("GET", "https://www.googleapis.com/oauth2/v2/userinfo?access_token="+token.AccessToken, nil)
 	if err != nil {
+		log.Printf("🔴 FAILED TO CREATE USERINFO REQUEST: %v", err)
+		return nil, fmt.Errorf("failed to create user info request: %w", err)
+	}
+
+	response, err := client.Do(req)
+	if err != nil {
+		log.Printf("🔴 FAILED TO GET USER INFO: %v", err)
 		return nil, fmt.Errorf("failed to get user info: %w", err)
 	}
 	defer response.Body.Close()
 
+	log.Printf("✅ GOT USER INFO RESPONSE, STATUS: %s", response.Status)
+
 	contents, err := ioutil.ReadAll(response.Body)
 	if err != nil {
+		log.Printf("🔴 FAILED TO READ USERINFO RESPONSE BODY: %v", err)
 		return nil, fmt.Errorf("failed to read user info response: %w", err)
 	}
 
 	// 3. แปลงข้อมูลผู้ใช้ (JSON) มาเป็น struct
 	var googleUser dto.GoogleOAuthRequest
 	if err := json.Unmarshal(contents, &googleUser); err != nil {
+		log.Printf("🔴 FAILED TO UNMARSHAL USERINFO: %v", err)
 		return nil, fmt.Errorf("failed to unmarshal user info: %w", err)
 	}
+
+	log.Printf("✅ USER INFO PARSED: %+v", googleUser)
 
 	// 4. เรียกใช้ฟังก์ชันเดิมเพื่อสร้าง/ค้นหาผู้ใช้ และสร้าง JWT ของเราเอง
 	return s.FindOrCreateUserByGoogle(&googleUser)
 }
 
-// --- โค้ดเดิมของคุณ (ถูกต้องแล้ว ไม่ต้องแก้ไข) ---
+// --- โค้ดเดิมของคุณทั้งหมด ไม่ต้องแก้ไข ---
+// (ใส่โค้ด Login, Register, FindOrCreateUserByGoogle, RefreshToken, generateAccessToken, generateRefreshToken ของคุณที่นี่)
 
 // RefreshToken validates the refresh token and issues a new access token.
 func (s *authService) RefreshToken(tokenString string) (string, error) {
