@@ -1,0 +1,17 @@
+# Ignore node_modules and frontend build artifacts
+frontend/
+node_modules/
+.git/
+.gitignore
+.vscode/
+.env
+*.md
+*.log
+Dockerfile
+.dockerignore
+# Go build cache
+**/tmp/
+**/tmp/*
+**/dist/
+**/build/
+**/.DS_Store

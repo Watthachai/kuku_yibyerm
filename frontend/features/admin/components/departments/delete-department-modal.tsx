@@ -39,7 +39,7 @@ export function DeleteDepartmentModal({
       await DepartmentService.deleteDepartment(department.id);
 
       toast.success("ลบสำเร็จ", {
-        description: `หน่วยงาน "${department.name}" ได้รับการลบแล้ว`,
+        description: `หน่วยงาน "${department.name_th}" ได้รับการลบแล้ว`,
       });
 
       onSuccess();
@@ -65,7 +65,7 @@ export function DeleteDepartmentModal({
           <DialogDescription className="text-left">
             คุณแน่ใจหรือไม่ที่จะลบหน่วยงาน{" "}
             <span className="font-semibold">
-              &ldquo;{department?.name}&rdquo;
+              &ldquo;{department?.name_th}&rdquo;
             </span>
             ?
             <br />
