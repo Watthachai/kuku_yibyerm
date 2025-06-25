@@ -1,12 +1,15 @@
 package services
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"ku-asset/dto"
 	"ku-asset/models"
 	"log"
 	"time"
+
+	"github.com/jung-kurt/gofpdf/v2"
 
 	"gorm.io/gorm"
 )
@@ -18,6 +21,7 @@ type RequestService interface {
 	GetRequestByID(requestID uint) (*dto.RequestResponse, error)
 	GetAllRequests() ([]dto.RequestResponse, error)
 	UpdateRequestStatus(requestID uint, status string, notes string) (*dto.RequestResponse, error)
+	GenerateRequestPDF(req *dto.RequestResponse) ([]byte, error) // ⭐ เพิ่ม method นี้
 }
 
 type requestService struct {
@@ -384,4 +388,35 @@ func mapRequestToResponse(r *models.Request) *dto.RequestResponse {
 	}
 
 	return res
+}
+
+// ⭐ เพิ่มฟังก์ชัน GenerateRequestPDF ใน requestService
+func (s *requestService) GenerateRequestPDF(req *dto.RequestResponse) ([]byte, error) {
+	pdf := gofpdf.New("P", "mm", "A4", "")
+	pdf.AddPage()
+	pdf.SetFont("Arial", "", 16)
+
+	pdf.Cell(40, 10, "ใบเบิกครุภัณฑ์")
+	pdf.Ln(12)
+	pdf.Cell(40, 10, fmt.Sprintf("เลขที่คำขอ: %s", req.RequestNumber))
+	pdf.Ln(8)
+	pdf.Cell(40, 10, fmt.Sprintf("ชื่อผู้ขอ: %s", req.User.Name))
+	pdf.Ln(8)
+	pdf.Cell(40, 10, fmt.Sprintf("วัตถุประสงค์: %s", req.Purpose))
+	pdf.Ln(8)
+	pdf.Cell(40, 10, fmt.Sprintf("สถานะ: %s", req.Status))
+	pdf.Ln(12)
+	pdf.Cell(40, 10, "รายการครุภัณฑ์:")
+	pdf.Ln(8)
+	for _, item := range req.Items {
+		pdf.Cell(40, 10, fmt.Sprintf("- %s x%d", item.Product.Name, item.Quantity))
+		pdf.Ln(6)
+	}
+
+	var buf bytes.Buffer
+	err := pdf.Output(&buf)
+	if err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
 }

@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { getSession } from "next-auth/react";
 import { toast } from "sonner";
+import { PDFGenerator } from "@/lib/pdf-generator";
 
 interface RequestCardProps {
   request: BorrowRequest;
@@ -107,42 +108,6 @@ export function RequestCard({
       );
     }
     return null;
-  };
-
-  // ดาวน์โหลด PDF
-  const downloadPDF = async (requestId: string, requestNumber: string) => {
-    try {
-      const session = await getSession();
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/admin/requests/${requestId}/pdf`,
-        {
-          headers: {
-            Authorization: `Bearer ${session?.accessToken}`,
-          },
-          credentials: "include",
-        }
-      );
-
-      if (!response.ok) throw new Error("Failed to download PDF");
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `receipt_${requestNumber}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-
-      toast.success("ดาวน์โหลดสำเร็จ", {
-        description: `ใบกำกับ ${requestNumber} ถูกดาวน์โหลดแล้ว`,
-      });
-    } catch {
-      toast.error("เกิดข้อผิดพลาด", {
-        description: "ไม่สามารถดาวน์โหลดได้",
-      });
-    }
   };
 
   return (
@@ -257,14 +222,9 @@ export function RequestCard({
                   เบิกออก
                 </Button>
               )}
-              {/* ดาวน์โหล PDF */}
+              {/* ดาวน์โหลด PDF ฝั่ง frontend */}
               <Button
-                onClick={() =>
-                  downloadPDF(
-                    request.id,
-                    request.requestNumber || `REQ-${request.id}`
-                  )
-                }
+                onClick={() => PDFGenerator.generateRequestReceipt(request)}
                 variant="outline"
                 className="flex items-center gap-2"
               >

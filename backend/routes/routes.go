@@ -69,6 +69,7 @@ func setupAdminRoutes(group *gin.RouterGroup, c *controllers.Controllers) {
 		// Admin Request Management
 		protected.GET("/requests", c.Request.GetAllRequests)
 		protected.PUT("/requests/:id/status", c.Request.UpdateRequestStatus)
+		protected.GET("/requests/:id/pdf", c.Request.DownloadRequestPDF) // ⭐ เพิ่มบรรทัดนี้
 
 		// Department Management
 		protected.GET("/departments", c.Department.GetDepartments)
