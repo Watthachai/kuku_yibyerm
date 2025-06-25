@@ -2,6 +2,7 @@
 package controllers
 
 import (
+	"fmt"
 	"ku-asset/dto"
 	"ku-asset/services"
 	"net/http"
@@ -111,15 +112,24 @@ func (ctrl *AuthController) GoogleOAuth(c *gin.Context) {
 
 // GoogleOAuthCallback handles Google OAuth callback (GET)
 func (ctrl *AuthController) GoogleOAuthCallback(c *gin.Context) {
-	// ดึง code, state จาก query string
 	code := c.Query("code")
 	state := c.Query("state")
 
-	// ตัวอย่าง: log ข้อมูลและตอบกลับ 200 OK (สามารถปรับ logic ได้ภายหลัง)
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"message": "Google OAuth callback received",
-		"code":    code,
-		"state":   state,
-	})
+	googleReq := &dto.GoogleOAuthRequest{
+		Code:  code,
+		State: state,
+	}
+	authResponse, err := ctrl.authService.FindOrCreateUserByGoogle(googleReq)
+	if err != nil {
+		redirectURL := "https://kukuyibyerm-production.up.railway.app/login?error=" + err.Error()
+		c.Redirect(http.StatusFound, redirectURL)
+		return
+	}
+
+	userID := fmt.Sprintf("%d", authResponse.User.ID)
+	redirectURL := "https://kukuyibyerm-production.up.railway.app/dashboard" +
+		"?access_token=" + authResponse.AccessToken +
+		"&refresh_token=" + authResponse.RefreshToken +
+		"&user_id=" + userID
+	c.Redirect(http.StatusFound, redirectURL)
 }
