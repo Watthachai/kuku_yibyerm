@@ -2,7 +2,6 @@
 package controllers
 
 import (
-	"fmt"
 	"ku-asset/dto"
 	"ku-asset/services"
 	"net/http"
@@ -115,21 +114,7 @@ func (ctrl *AuthController) GoogleOAuthCallback(c *gin.Context) {
 	code := c.Query("code")
 	state := c.Query("state")
 
-	googleReq := &dto.GoogleOAuthRequest{
-		Code:  code,
-		State: state,
-	}
-	authResponse, err := ctrl.authService.FindOrCreateUserByGoogle(googleReq)
-	if err != nil {
-		redirectURL := "https://kukuyibyerm-production.up.railway.app/login?error=" + err.Error()
-		c.Redirect(http.StatusFound, redirectURL)
-		return
-	}
-
-	userID := fmt.Sprintf("%d", authResponse.User.ID)
-	redirectURL := "https://kukuyibyerm-production.up.railway.app/dashboard" +
-		"?access_token=" + authResponse.AccessToken +
-		"&refresh_token=" + authResponse.RefreshToken +
-		"&user_id=" + userID
+	// Redirect ไปหน้า dashboard ของ frontend พร้อม code, state (ไม่แลก token ที่ backend)
+	redirectURL := "https://kukuyibyerm-production.up.railway.app/dashboard?code=" + code + "&state=" + state
 	c.Redirect(http.StatusFound, redirectURL)
 }
