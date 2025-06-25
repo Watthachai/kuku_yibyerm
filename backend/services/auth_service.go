@@ -1,7 +1,7 @@
 package services
 
 import (
-	// --- ⭐ IMPORT ที่ต้องเพิ่ม ---
+	// --- IMPORT ที่จำเป็น ---
 	"context"
 	"encoding/json"
 	"fmt"
@@ -39,13 +39,17 @@ type authService struct {
 	googleOauthConfig *oauth2.Config // 👈 เพิ่มบรรทัดนี้
 }
 
-// ⭐ 3. แก้ไข Constructor ให้สร้างและเก็บ Config
+// ⭐ 3. แก้ไข Constructor ให้สร้างและเก็บ Config (พร้อม Hardcode เพื่อ Test)
 func NewAuthService(db *gorm.DB) AuthService {
-	// สร้าง config สำหรับ Google OAuth จาก Environment Variables
 	conf := &oauth2.Config{
 		ClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
 		ClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
-		RedirectURL:  os.Getenv("GOOGLE_REDIRECT_URI"),
+
+		// ================================================================
+		// ⭐⭐ [TEST] เราจะ Hardcode URL ที่ถูกต้องลงไปตรงๆ เลยครับ ⭐⭐
+		RedirectURL: "https://backend-go-production-2ba8.up.railway.app/api/v1/auth/callback/google",
+		// ================================================================
+
 		Scopes: []string{
 			"https://www.googleapis.com/auth/userinfo.email",
 			"https://www.googleapis.com/auth/userinfo.profile",
@@ -55,11 +59,11 @@ func NewAuthService(db *gorm.DB) AuthService {
 
 	return &authService{
 		db:                db,
-		googleOauthConfig: conf, // 👈 กำหนดค่าที่สร้างขึ้น
+		googleOauthConfig: conf,
 	}
 }
 
-// ⭐ 4. เพิ่มเมธอด HandleGoogleCallback (หัวใจของขั้นตอนนี้)
+// ⭐ 4. เพิ่มเมธอด HandleGoogleCallback ที่ขาดไป
 func (s *authService) HandleGoogleCallback(code string, state string) (*dto.AuthResponse, error) {
 	// 1. แลก "code" เป็น "token" จาก Google
 	token, err := s.googleOauthConfig.Exchange(context.Background(), code)
@@ -85,15 +89,14 @@ func (s *authService) HandleGoogleCallback(code string, state string) (*dto.Auth
 		return nil, fmt.Errorf("failed to unmarshal user info: %w", err)
 	}
 
-	// 4. 🎉 เรียกใช้ฟังก์ชันเดิมที่คุณมีอยู่แล้วเพื่อสร้าง/ค้นหาผู้ใช้ และสร้าง JWT ของเราเอง
+	// 4. เรียกใช้ฟังก์ชันเดิมเพื่อสร้าง/ค้นหาผู้ใช้ และสร้าง JWT ของเราเอง
 	return s.FindOrCreateUserByGoogle(&googleUser)
 }
 
-// --- โค้ดเดิมของคุณ ไม่ต้องแก้ไข ---
+// --- โค้ดเดิมของคุณ (ถูกต้องแล้ว ไม่ต้องแก้ไข) ---
 
 // RefreshToken validates the refresh token and issues a new access token.
 func (s *authService) RefreshToken(tokenString string) (string, error) {
-	// ... โค้ดเดิม
 	secret := os.Getenv("JWT_REFRESH_SECRET")
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		return []byte(secret), nil
@@ -120,7 +123,6 @@ func (s *authService) RefreshToken(tokenString string) (string, error) {
 
 // FindOrCreateUserByGoogle handles logic for Google OAuth.
 func (s *authService) FindOrCreateUserByGoogle(req *dto.GoogleOAuthRequest) (*dto.AuthResponse, error) {
-	// ... โค้ดเดิม
 	var user models.User
 	err := s.db.Where("email = ?", req.Email).First(&user).Error
 
@@ -167,7 +169,6 @@ func (s *authService) FindOrCreateUserByGoogle(req *dto.GoogleOAuthRequest) (*dt
 
 // Login handles the user login logic.
 func (s *authService) Login(req *dto.LoginRequest) (*dto.AuthResponse, error) {
-	// ... โค้ดเดิม
 	var user models.User
 	if err := s.db.Where("email = ?", req.Email).First(&user).Error; err != nil {
 		return nil, errors.New("invalid email or password")
@@ -208,7 +209,6 @@ func (s *authService) Login(req *dto.LoginRequest) (*dto.AuthResponse, error) {
 
 // Register handles the user registration logic.
 func (s *authService) Register(req *dto.RegisterRequest) (*dto.UserResponse, error) {
-	// ... โค้ดเดิม
 	var existingUser models.User
 	if err := s.db.Where("email = ?", req.Email).First(&existingUser).Error; err == nil {
 		return nil, errors.New("user already exists")
@@ -250,7 +250,6 @@ func (s *authService) Register(req *dto.RegisterRequest) (*dto.UserResponse, err
 
 // --- Helper methods for token generation ---
 func (s *authService) generateAccessToken(user models.User) (string, error) {
-	// ... โค้ดเดิม
 	claims := jwt.MapClaims{
 		"user_id": user.ID,
 		"email":   user.Email,
@@ -263,7 +262,6 @@ func (s *authService) generateAccessToken(user models.User) (string, error) {
 }
 
 func (s *authService) generateRefreshToken(user models.User) (string, error) {
-	// ... โค้ดเดิม
 	claims := jwt.MapClaims{
 		"user_id": user.ID,
 		"exp":     time.Now().Add(time.Hour * 24 * 7).Unix(),
