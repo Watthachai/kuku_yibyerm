@@ -18,6 +18,9 @@ func SetupRoutes(r *gin.Engine, controllers *controllers.Controllers) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 	})
 
+	// เพิ่ม OAuth callback route สำหรับ Google
+	r.GET("/api/auth/callback/google", controllers.Auth.GoogleOAuthCallback)
+
 	// จัดกลุ่ม Route ทั้งหมดภายใต้ /api/v1
 	api := r.Group("/api/v1")
 	setupAPIRoutes(api, controllers)

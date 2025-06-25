@@ -108,3 +108,18 @@ func (ctrl *AuthController) GoogleOAuth(c *gin.Context) {
 		"refresh_token": authResponse.RefreshToken,
 	})
 }
+
+// GoogleOAuthCallback handles Google OAuth callback (GET)
+func (ctrl *AuthController) GoogleOAuthCallback(c *gin.Context) {
+	// ดึง code, state จาก query string
+	code := c.Query("code")
+	state := c.Query("state")
+
+	// ตัวอย่าง: log ข้อมูลและตอบกลับ 200 OK (สามารถปรับ logic ได้ภายหลัง)
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "Google OAuth callback received",
+		"code":    code,
+		"state":   state,
+	})
+}
