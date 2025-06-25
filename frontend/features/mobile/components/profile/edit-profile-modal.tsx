@@ -31,6 +31,7 @@ interface EditProfileModalProps {
   user: UserProfile;
   onProfileUpdate: (updatedUser: UserProfile) => void;
   trigger?: React.ReactNode;
+  buttonClassName?: string;
 }
 
 export function EditProfileModal({
@@ -232,10 +233,10 @@ export function EditProfileModal({
         {trigger || (
           <Button
             variant="outline"
-            className="w-full justify-start bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm border-gray-200/50 dark:border-slate-700/50 hover:bg-white/80 dark:hover:bg-slate-800/80 transition-all duration-200"
+            className="w-full justify-start bg-white/60 backdrop-blur-sm border-gray-200/50 hover:bg-blue-50/80 hover:border-blue-200 transition-all duration-200 group"
           >
-            <User className="w-5 h-5 mr-3 text-blue-600 dark:text-blue-400" />
-            แก้ไขข้อมูลส่วนตัว
+            <User className="w-5 h-5 mr-3 text-blue-600 group-hover:scale-110 transition-transform" />
+            <span className="flex-1 text-left">แก้ไขข้อมูลส่วนตัว</span>
           </Button>
         )}
       </DialogTrigger>
@@ -302,13 +303,22 @@ export function EditProfileModal({
               }
               disabled={isLoading}
             >
-              <SelectTrigger className="bg-white/60 backdrop-blur-sm border-gray-200/50">
+              <SelectTrigger className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm border-gray-200/50 dark:border-slate-700/50 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-400">
                 <SelectValue placeholder="เลือกคณะ" />
               </SelectTrigger>
-              <SelectContent className="bg-white/95 backdrop-blur-lg border border-gray-200/50">
-                <SelectItem value="none">ไม่ระบุ</SelectItem>
+              <SelectContent className="bg-white/95 dark:bg-slate-800/95 text-gray-900 dark:text-white border border-gray-200/50 dark:border-slate-700/50 backdrop-blur-lg">
+                <SelectItem
+                  value="none"
+                  className="dark:bg-slate-800/95 dark:text-white"
+                >
+                  ไม่ระบุ
+                </SelectItem>
                 {faculties.map((faculty) => (
-                  <SelectItem key={faculty.id} value={faculty.id}>
+                  <SelectItem
+                    key={faculty.id}
+                    value={faculty.id}
+                    className="dark:bg-slate-800/95 dark:text-white"
+                  >
                     {faculty.name}
                   </SelectItem>
                 ))}
@@ -319,7 +329,7 @@ export function EditProfileModal({
           <div className="space-y-2">
             <Label
               htmlFor="department"
-              className="text-sm font-medium text-gray-700"
+              className="dark:bg-slate-800/95 dark:text-white"
             >
               ภาควิชา/หน่วยงาน
             </Label>
@@ -336,21 +346,30 @@ export function EditProfileModal({
               }}
               disabled={isLoading || !selectedFaculty}
             >
-              <SelectTrigger className="bg-white/60 backdrop-blur-sm border-gray-200/50">
+              <SelectTrigger className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm border-gray-200/50 dark:border-slate-700/50 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-400">
                 <SelectValue
                   placeholder={
                     selectedFaculty ? "เลือกภาควิชา/หน่วยงาน" : "เลือกคณะก่อน"
                   }
                 />
               </SelectTrigger>
-              <SelectContent className="bg-white/95 backdrop-blur-lg border border-gray-200/50">
-                <SelectItem value="none">ไม่ระบุ</SelectItem>
+              <SelectContent className="bg-white/95 dark:bg-slate-800/95 text-gray-900 dark:text-white border border-gray-200/50 dark:border-slate-700/50 backdrop-blur-lg">
+                <SelectItem
+                  value="none"
+                  className="dark:bg-slate-800/95 dark:text-white"
+                >
+                  ไม่ระบุ
+                </SelectItem>
                 {selectedFaculty?.departments.map((dept) => (
-                  <SelectItem key={dept.id} value={dept.id}>
+                  <SelectItem
+                    key={dept.id}
+                    value={dept.id}
+                    className="dark:bg-slate-800/95 dark:text-white"
+                  >
                     <div className="flex flex-col items-start">
                       <span>{dept.name}</span>
                       {dept.building && (
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
                           {dept.building}
                         </span>
                       )}
@@ -361,7 +380,7 @@ export function EditProfileModal({
             </Select>
           </div>
 
-          <div className="text-xs text-gray-500 bg-blue-50/60 rounded-lg p-3">
+          <div className="text-xs text-gray-500 bg-blue-50/60 rounded-lg p-3 dark:bg-green-600/60 dark:text-white">
             <p className="font-medium mb-1">หมายเหตุ:</p>
             <p>• อีเมลไม่สามารถแก้ไขได้เนื่องจากใช้สำหรับเข้าสู่ระบบ</p>
             <p>• ข้อมูลที่แก้ไขจะมีผลทันทีหลังจากบันทึก</p>
@@ -381,7 +400,7 @@ export function EditProfileModal({
             <Button
               type="submit"
               disabled={isLoading}
-              className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-lg"
+              className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-lg dark:text-white"
             >
               {isLoading ? (
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />

@@ -62,7 +62,9 @@ function ProductManagementView() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  const [statusFilter, setStatusFilter] = useState<
+    "ALL" | "IN_STOCK" | "LOW_STOCK" | "OUT_OF_STOCK"
+  >("ALL");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [view, setView] = useState<"table" | "cards">("cards");
 
@@ -83,9 +85,19 @@ function ProductManagementView() {
   const loadProducts = useCallback(async () => {
     try {
       setLoading(true);
+      // Map UI status filter to backend status
+      let backendStatus: "ALL" | "ACTIVE" | "INACTIVE" | undefined;
+      if (statusFilter === "ALL") {
+        backendStatus = "ALL";
+      } else if (statusFilter === "IN_STOCK" || statusFilter === "LOW_STOCK") {
+        backendStatus = "ACTIVE";
+      } else if (statusFilter === "OUT_OF_STOCK") {
+        backendStatus = "INACTIVE";
+      }
+
       const response = await ProductManagementService.getProducts({
         search: searchTerm || undefined,
-        status: statusFilter !== "ALL" ? statusFilter : undefined,
+        status: backendStatus !== "ALL" ? backendStatus : undefined,
       });
 
       setProducts(response.products);
@@ -280,7 +292,9 @@ function ProductManagementView() {
       {/* Filters */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-lg text-gray-900 dark:text-white">ค้นหาและกรอง</CardTitle>
+          <CardTitle className="text-lg text-gray-900 dark:text-white">
+            ค้นหาและกรอง
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-col sm:flex-row gap-4">
@@ -296,7 +310,14 @@ function ProductManagementView() {
             </div>
 
             {/* Status Filter */}
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select
+              value={statusFilter}
+              onValueChange={(value) =>
+                setStatusFilter(
+                  value as "ALL" | "IN_STOCK" | "LOW_STOCK" | "OUT_OF_STOCK"
+                )
+              }
+            >
               <SelectTrigger className="w-full sm:w-48">
                 <SelectValue placeholder="สถานะสต็อก" />
               </SelectTrigger>
@@ -330,7 +351,9 @@ function ProductManagementView() {
           {/* Active Filters */}
           {(statusFilter !== "ALL" || searchTerm) && (
             <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600 dark:text-gray-400">กรองโดย:</span>
+              <span className="text-sm text-gray-600 dark:text-gray-400">
+                กรองโดย:
+              </span>
               {statusFilter !== "ALL" && (
                 <Badge variant="secondary" className="gap-1">
                   สถานะ: {statusFilter}

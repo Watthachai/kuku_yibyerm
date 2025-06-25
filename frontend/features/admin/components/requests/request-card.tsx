@@ -187,7 +187,7 @@ export function RequestCard({
         {/* Purpose */}
         <div className="mb-4">
           <p className="text-sm text-gray-600 mb-1">วัตถุประสงค์</p>
-          <p className="text-gray-900 bg-gray-50 p-3 rounded-lg text-sm">
+          <p className="text-gray-900 bg-gray-50 dark:bg-slate-800 dark:text-gray-100 p-3 rounded-lg text-sm">
             {request.purpose}
           </p>
         </div>
@@ -204,7 +204,7 @@ export function RequestCard({
             {request.items.slice(0, 2).map((item, index) => (
               <div
                 key={`${request.id}-item-${item.id}-${index}`}
-                className="flex items-center justify-between p-2 bg-gray-50 rounded text-sm"
+                className="flex items-center justify-between p-2 bg-gray-50 dark:bg-slate-800 rounded text-sm"
               >
                 <div className="flex-1">
                   <p className="font-medium">{item.product.name}</p>

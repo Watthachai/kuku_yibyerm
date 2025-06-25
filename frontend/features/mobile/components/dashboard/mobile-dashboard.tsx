@@ -88,20 +88,20 @@ export function MobileDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
         {/* Header Skeleton */}
-        <div className="bg-white/80 backdrop-blur-lg border-b border-gray-200/50 sticky top-0 z-50">
+        <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg border-b border-gray-200/50 dark:border-slate-700/50 sticky top-0 z-50">
           <div className="flex items-center justify-between p-4">
             <div className="flex items-center space-x-3">
-              <Skeleton className="w-10 h-10 rounded-2xl" />
+              <Skeleton className="w-10 h-10 rounded-2xl bg-gray-200 dark:bg-slate-700" />
               <div>
-                <Skeleton className="h-5 w-20 mb-1" />
-                <Skeleton className="h-3 w-32" />
+                <Skeleton className="h-5 w-20 mb-1 bg-gray-200 dark:bg-slate-700" />
+                <Skeleton className="h-3 w-32 bg-gray-100 dark:bg-slate-800" />
               </div>
             </div>
             <div className="flex items-center space-x-2">
-              <Skeleton className="w-9 h-9 rounded-xl" />
-              <Skeleton className="w-9 h-9 rounded-xl" />
+              <Skeleton className="w-9 h-9 rounded-xl bg-gray-200 dark:bg-slate-700" />
+              <Skeleton className="w-9 h-9 rounded-xl bg-gray-200 dark:bg-slate-700" />
             </div>
           </div>
         </div>
@@ -109,23 +109,26 @@ export function MobileDashboard() {
         <div className="px-4 pb-6 space-y-6">
           {/* Hero Skeleton */}
           <div className="pt-4">
-            <Skeleton className="h-32 rounded-3xl" />
+            <Skeleton className="h-32 rounded-3xl bg-gray-100 dark:bg-slate-800" />
           </div>
 
           {/* Stats Skeleton */}
           <div className="grid grid-cols-3 gap-3">
             {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-20 rounded-lg" />
+              <Skeleton
+                key={i}
+                className="h-20 rounded-lg bg-gray-100 dark:bg-slate-800"
+              />
             ))}
           </div>
 
           {/* Quick Actions Skeleton */}
           <div className="space-y-3">
-            <Skeleton className="h-6 w-32" />
-            <Skeleton className="h-20 rounded-3xl" />
+            <Skeleton className="h-6 w-32 bg-gray-100 dark:bg-slate-800" />
+            <Skeleton className="h-20 rounded-3xl bg-gray-100 dark:bg-slate-800" />
             <div className="grid grid-cols-2 gap-3">
-              <Skeleton className="h-16 rounded-lg" />
-              <Skeleton className="h-16 rounded-lg" />
+              <Skeleton className="h-16 rounded-lg bg-gray-100 dark:bg-slate-800" />
+              <Skeleton className="h-16 rounded-lg bg-gray-100 dark:bg-slate-800" />
             </div>
           </div>
         </div>
@@ -250,7 +253,7 @@ export function MobileDashboard() {
 
         {/* Quick Actions */}
         <div>
-          <h3 className="font-bold text-lg mb-4 text-gray-900">
+          <h3 className="font-bold text-lg mb-4 text-gray-900 dark:text-white">
             เริ่มต้นใช้งาน
           </h3>
           <div className="space-y-3">
@@ -294,10 +297,10 @@ export function MobileDashboard() {
                           </Badge>
                         )}
                       </div>
-                      <h4 className="font-semibold text-gray-900 text-sm">
+                      <h4 className="font-semibold text-gray-900 dark:text-white text-sm">
                         ตะกร้า
                       </h4>
-                      <p className="text-gray-600 text-xs">
+                      <p className="text-gray-600 dark:text-gray-300 text-xs">
                         {getTotalItems()} รายการ
                       </p>
                     </div>
@@ -315,10 +318,12 @@ export function MobileDashboard() {
                       <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center mb-2 shadow-md">
                         <Clock className="w-5 h-5 text-white" />
                       </div>
-                      <h4 className="font-semibold text-gray-900 text-sm">
+                      <h4 className="font-semibold text-gray-900 dark:text-white text-sm">
                         ประวัติ
                       </h4>
-                      <p className="text-gray-600 text-xs">ดูรายการเบิก</p>
+                      <p className="text-gray-600 dark:text-gray-300 text-xs">
+                        ดูรายการเบิก
+                      </p>
                     </div>
                   </div>
                 </CardContent>
@@ -331,7 +336,9 @@ export function MobileDashboard() {
         {stats.recentActivity.length > 0 ? (
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-lg text-gray-900">กิจกรรมล่าสุด</h3>
+              <h3 className="font-bold text-lg text-gray-900 dark:text-white">
+                กิจกรรมล่าสุด
+              </h3>
               <Button
                 variant="ghost"
                 size="sm"
@@ -366,10 +373,10 @@ export function MobileDashboard() {
                         )}
                       </div>
                       <div className="flex-1">
-                        <h4 className="font-medium text-gray-900 text-sm">
+                        <h4 className="font-medium text-gray-900 dark:text-white text-sm">
                           คำขอ #{activity.request_number}
                         </h4>
-                        <p className="text-gray-600 text-xs">
+                        <p className="text-gray-600 dark:text-gray-300 text-xs">
                           {activity.status === "PENDING"
                             ? "รออนุมัติ"
                             : activity.status === "APPROVED"
@@ -399,7 +406,7 @@ export function MobileDashboard() {
           </div>
         ) : (
           <div>
-            <h3 className="font-bold text-lg text-gray-900 mb-4">
+            <h3 className="font-bold text-lg text-gray-900 dark:text-white mb-4">
               เริ่มต้นเบิกครุภัณฑ์
             </h3>
             <Card className="bg-white/60 backdrop-blur-sm border-0 shadow-md">
@@ -407,10 +414,10 @@ export function MobileDashboard() {
                 <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-blue-200 rounded-3xl flex items-center justify-center mx-auto mb-4">
                   <Package className="w-8 h-8 text-blue-600" />
                 </div>
-                <h4 className="font-semibold text-gray-900 mb-2">
+                <h4 className="font-semibold text-gray-900 dark:text-white mb-2">
                   ยังไม่มีประวัติการเบิก
                 </h4>
-                <p className="text-gray-600 text-sm mb-4">
+                <p className="text-gray-600 dark:text-gray-300 text-sm mb-4">
                   เริ่มต้นเบิกครุภัณฑ์แรกของคุณเลย!
                 </p>
                 <Button
@@ -428,7 +435,7 @@ export function MobileDashboard() {
         {stats.popularProducts.length > 0 ? (
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-lg text-gray-900">
+              <h3 className="font-bold text-lg text-gray-900 dark:text-white">
                 <Star className="w-5 h-5 inline mr-2 text-yellow-500" />
                 สินค้าแนะนำ
               </h3>
@@ -450,7 +457,7 @@ export function MobileDashboard() {
                   onClick={() => router.push("/products")}
                 >
                   <CardContent className="p-3">
-                    <div className="aspect-square bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl mb-3 flex items-center justify-center">
+                    <div className="aspect-square bg-gradient-to-br from-gray-100 to-gray-200 dark:from-slate-800 dark:to-slate-700 rounded-2xl mb-3 flex items-center justify-center">
                       {product.imageUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
@@ -462,10 +469,10 @@ export function MobileDashboard() {
                         <Package className="w-8 h-8 text-gray-400" />
                       )}
                     </div>
-                    <h4 className="font-medium text-gray-900 text-sm truncate">
+                    <h4 className="font-medium text-gray-900 dark:text-white text-sm truncate">
                       {product.name}
                     </h4>
-                    <p className="text-gray-600 text-xs">
+                    <p className="text-gray-600 dark:text-gray-300 text-xs">
                       คงเหลือ {product.stock || 0} ชิ้น
                     </p>
                   </CardContent>

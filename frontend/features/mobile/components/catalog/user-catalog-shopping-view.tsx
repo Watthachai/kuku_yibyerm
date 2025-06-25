@@ -234,19 +234,19 @@ export function UserCatalogShoppingView({ className }: Props) {
 
   return (
     <div
-      className={`min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 pb-16 ${className}`}
+      className={`min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 dark:from-slate-900 dark:via-slate-950 dark:to-slate-900 pb-16 ${className}`}
     >
       {/* Modern Header */}
-      <div className="bg-white/80 backdrop-blur-lg border-b border-gray-200/50 sticky top-0 z-10 shadow-lg">
+      <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg border-b border-gray-200/50 dark:border-slate-700/50 sticky top-0 z-10 shadow-lg transition-colors duration-200">
         <div className="px-4 py-4">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-xl font-bold text-gray-900">
+              <h1 className="text-xl font-bold text-gray-900 dark:text-white transition-colors duration-200">
                 สินค้าครุภัณฑ์
               </h1>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-600 dark:text-gray-300 transition-colors duration-200">
                 ทั้งหมด{" "}
-                <span className="font-semibold text-blue-600">
+                <span className="font-semibold text-blue-600 dark:text-blue-400">
                   {allProducts.length}
                 </span>{" "}
                 รายการ
@@ -259,14 +259,14 @@ export function UserCatalogShoppingView({ className }: Props) {
                 variant="outline"
                 size="sm"
                 onClick={() => router.push("/cart")}
-                className="relative bg-white/60 backdrop-blur-sm border-gray-200/50 hover:bg-white/80 transition-all duration-200"
+                className="relative bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm border-gray-200/50 dark:border-slate-700/50 hover:bg-white/80 dark:hover:bg-slate-700 transition-all duration-200 text-gray-900 dark:text-white"
               >
                 <ShoppingCart className="w-4 h-4 mr-2" />
                 ตะกร้า
                 {getTotalItems() > 0 && (
                   <Badge
                     variant="destructive"
-                    className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs bg-gradient-to-r from-red-500 to-red-600 shadow-lg"
+                    className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs bg-gradient-to-r from-red-500 to-red-600 dark:from-red-700 dark:to-red-500 shadow-lg"
                   >
                     {getTotalItems()}
                   </Badge>
@@ -277,13 +277,13 @@ export function UserCatalogShoppingView({ className }: Props) {
 
           {/* Search Bar */}
           <div className="relative mb-4">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4" />
             <Input
               type="text"
               placeholder="ค้นหาสินค้าครุภัณฑ์..."
               value={searchInput}
               onChange={(e) => handleSearch(e.target.value)}
-              className="pl-10 pr-10 bg-white/60 backdrop-blur-sm border-gray-200/50 focus:bg-white/80 transition-all duration-200"
+              className="pl-10 pr-10 bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm border-gray-200/50 dark:border-slate-700/50 focus:bg-white/80 dark:focus:bg-slate-700 transition-all duration-200 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
             />
             {/* Loading indicator สำหรับการค้นหา */}
             {searching && (
@@ -300,7 +300,7 @@ export function UserCatalogShoppingView({ className }: Props) {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="bg-white/60 backdrop-blur-sm border-gray-200/50 hover:bg-white/80 transition-all duration-200"
+                  className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm border-gray-200/50 dark:border-slate-700/50 hover:bg-white/80 dark:hover:bg-slate-700 transition-all duration-200 text-gray-900 dark:text-white"
                 >
                   <Filter className="w-4 h-4 mr-2" />
                   ตัวกรอง
@@ -308,14 +308,14 @@ export function UserCatalogShoppingView({ className }: Props) {
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="start"
-                className="w-64 bg-white/95 backdrop-blur-lg border border-gray-200/50 shadow-xl rounded-xl"
+                className="w-64 bg-white/95 dark:bg-slate-900/95 backdrop-blur-lg border border-gray-200/50 dark:border-slate-700/50 shadow-xl rounded-xl transition-colors duration-200"
               >
                 <DropdownMenuItem
                   onClick={() => handleCategoryChange("")}
                   className={`cursor-pointer transition-colors ${
                     !selectedCategory
-                      ? "bg-blue-50 text-blue-700 font-medium"
-                      : "hover:bg-gray-50"
+                      ? "bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-200 font-medium"
+                      : "hover:bg-gray-50 dark:hover:bg-slate-800"
                   }`}
                 >
                   <span className="mr-2">📦</span>
@@ -345,8 +345,8 @@ export function UserCatalogShoppingView({ className }: Props) {
                     onClick={() => handleCategoryChange(category.id)}
                     className={`cursor-pointer transition-colors ${
                       selectedCategory === category.id
-                        ? "bg-blue-50 text-blue-700 font-medium"
-                        : "hover:bg-gray-50"
+                        ? "bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-200 font-medium"
+                        : "hover:bg-gray-50 dark:hover:bg-slate-800"
                     }`}
                   >
                     <span className="mr-2">{category.icon}</span>
@@ -359,7 +359,7 @@ export function UserCatalogShoppingView({ className }: Props) {
             {selectedCategory && (
               <Badge
                 variant="secondary"
-                className="text-xs bg-blue-50/80 text-blue-700 border border-blue-200/50 backdrop-blur-sm"
+                className="text-xs bg-blue-50/80 dark:bg-blue-900/40 text-blue-700 dark:text-blue-200 border border-blue-200/50 dark:border-blue-900/40 backdrop-blur-sm"
               >
                 {categories.find((c) => c.id === selectedCategory)?.name}
               </Badge>

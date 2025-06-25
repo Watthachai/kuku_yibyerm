@@ -4,14 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Package, Plus } from "lucide-react";
 import Image from "next/image";
-import { Product } from "../../types/catalog.types";
+import { CatalogProduct } from "../../types/catalog.types";
 import { KULoading } from "@/components/ui/ku-loading";
 
 interface ProductGridProps {
-  products: Product[];
+  products: CatalogProduct[];
   loading: boolean;
-  onProductClick: (product: Product) => void;
-  onAddToCart: (product: Product) => void;
+  onProductClick: (product: CatalogProduct) => void;
+  onAddToCart: (product: CatalogProduct) => void;
 }
 
 export function ProductGrid({
@@ -73,13 +73,13 @@ export function ProductGrid({
       {products.map((product) => (
         <div
           key={product.id}
-          className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 overflow-hidden"
+          className="bg-slate-50 dark:bg-slate-800 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 overflow-hidden transition-colors duration-200"
         >
           <div
             className="cursor-pointer"
             onClick={() => onProductClick(product)}
           >
-            <div className="h-32 bg-gray-100 dark:bg-slate-700 flex items-center justify-center">
+            <div className="h-32 bg-slate-100 dark:bg-slate-700 flex items-center justify-center transition-colors duration-200">
               {product.imageUrl ? (
                 <Image
                   src={product.imageUrl}
@@ -99,11 +99,11 @@ export function ProductGrid({
             </div>
 
             <div className="p-3">
-              <h3 className="font-medium text-sm text-gray-900 line-clamp-2 mb-1">
+              <h3 className="font-medium text-sm text-gray-900 dark:text-gray-100 line-clamp-2 mb-1 transition-colors duration-200">
                 {product.name}
               </h3>
               {product.serialNumber && (
-                <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                <p className="text-xs text-gray-600 dark:text-gray-400 mb-2 transition-colors duration-200">
                   {product.serialNumber}
                 </p>
               )}
@@ -112,23 +112,23 @@ export function ProductGrid({
                 <Badge className={`text-xs ${getStatusColor(product.status)}`}>
                   {getStatusText(product.status)}
                 </Badge>
-                <span className="text-xs text-gray-600 dark:text-gray-400">
-                  คงเหลือ: {product.availableQuantity}
+                <span className="text-xs text-gray-700 dark:text-gray-300 transition-colors duration-200">
+                  คงเหลือ: {product.stock}
                 </span>
               </div>
 
-              <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+              <div className="text-xs text-gray-500 dark:text-gray-400 mb-2 transition-colors duration-200">
                 <p>{product.category.name}</p>
-                <p>{product.department.name}</p>
+                <p>{product.department?.name}</p>
               </div>
             </div>
           </div>
 
           <div className="px-3 pb-3">
-            {product.status === "AVAILABLE" && product.availableQuantity > 0 ? (
+            {product.status === "AVAILABLE" && product.stock > 0 ? (
               <Button
                 size="sm"
-                className="w-full bg-ku-green hover:bg-ku-green-dark text-xs"
+                className="w-full bg-ku-green hover:bg-ku-green-dark text-xs dark:bg-ku-green-dark dark:hover:bg-ku-green focus:ring-2 focus:ring-ku-green/40 dark:focus:ring-ku-green-dark/40 transition-colors duration-200"
                 onClick={() => onAddToCart(product)}
               >
                 <Plus className="w-3 h-3 mr-1" />
@@ -138,7 +138,7 @@ export function ProductGrid({
               <Button
                 size="sm"
                 variant="outline"
-                className="w-full text-xs"
+                className="w-full text-xs text-gray-400 dark:text-gray-500 border-gray-200 dark:border-slate-700 bg-gray-100 dark:bg-slate-800 cursor-not-allowed transition-colors duration-200"
                 disabled
               >
                 ไม่พร้อมใช้งาน

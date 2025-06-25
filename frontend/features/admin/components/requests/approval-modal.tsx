@@ -124,7 +124,7 @@ export function ApprovalModal({
           <Card>
             <CardContent className="p-4">
               <h4 className="font-semibold mb-2">วัตถุประสงค์</h4>
-              <p className="text-gray-700 bg-gray-50 p-3 rounded-lg">
+              <p className="text-gray-700 bg-gray-50 dark:bg-slate-800 dark:text-gray-100 p-3 rounded-lg">
                 {request.purpose}
               </p>
             </CardContent>
@@ -141,7 +141,7 @@ export function ApprovalModal({
                 {request.items.map((item) => (
                   <div
                     key={item.id}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                    className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-800 rounded-lg"
                   >
                     <div className="flex-1">
                       <p className="font-semibold">{item.product.name}</p>

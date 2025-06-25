@@ -19,14 +19,11 @@ import {
   Star,
   Bell,
   Shield,
-  QrCode,
   Camera,
   MapPin,
   Globe,
   Eye,
-  Zap,
   FileText,
-  History,
   ChevronRight,
   Users,
 } from "lucide-react";
@@ -169,14 +166,6 @@ export function UserProfile() {
             </div>
             <div className="flex items-center space-x-2">
               <SimpleThemeToggle />
-              <Button
-                size="sm"
-                variant="ghost"
-                className="w-9 h-9 p-0 bg-white/60 hover:bg-white/80 dark:bg-slate-800/60 dark:hover:bg-slate-800/80"
-                onClick={() => toast.info("QR Code สำหรับโปรไฟล์")}
-              >
-                <QrCode className="w-4 h-4" />
-              </Button>
             </div>
           </div>
         </div>
@@ -185,10 +174,10 @@ export function UserProfile() {
       <ScrollArea className="flex-1">
         <div className="px-4 py-6 space-y-6">
           {/* Hero Profile Section */}
-          <div className="bg-gradient-to-br from-ku-green/10 via-blue-50 to-indigo-50 dark:from-ku-green/20 dark:via-blue-900/50 dark:to-indigo-900/50 shadow-xl overflow-hidden rounded-2xl">
+          <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm shadow-xl rounded-2xl">
             {/* Cover Background */}
-            <div className="h-24 bg-gradient-to-r from-ku-green to-emerald-600 relative">
-              <div className="absolute inset-0 bg-black/10"></div>
+            <div className="h-24 bg-gradient-to-r from-ku-green to-emerald-600 relative rounded-t-2xl">
+              <div className="absolute inset-0 bg-black/10 rounded-t-2xl"></div>
             </div>
 
             <div className="px-6 pb-6 -mt-12 relative">
@@ -468,20 +457,24 @@ export function UserProfile() {
           </div>
 
           {/* Quick Actions - Enhanced */}
-          <div className="bg-white/60 backdrop-blur-sm shadow-xl rounded-2xl">
+          <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm shadow-xl rounded-2xl">
             <div className="px-6 pt-6">
-              <div className="text-lg font-bold text-gray-900 flex items-center">
-                <Zap className="w-5 h-5 mr-2 text-indigo-600" />
-                การดำเนินการ
+              <div className="text-lg font-bold text-gray-900 dark:text-white flex items-center justify-between">
+                <div className="flex items-center">
+                  <User className="w-5 h-5 mr-2 text-purple-600 dark:text-purple-400" />
+                  การดำเนินการ
+                </div>
               </div>
             </div>
             <div className="px-6 pb-6 space-y-3">
               {/* Edit Profile Button with Modal */}
               {userProfile && (
-                <EditProfileModal
-                  user={userProfile}
-                  onProfileUpdate={handleProfileUpdate}
-                />
+                <div className="w-full">
+                  <EditProfileModal
+                    user={userProfile}
+                    onProfileUpdate={handleProfileUpdate}
+                  />
+                </div>
               )}
 
               <Button
@@ -507,16 +500,6 @@ export function UserProfile() {
                 <Package className="w-5 h-5 mr-3 text-green-600 group-hover:scale-110 transition-transform" />
                 <span className="flex-1 text-left">เบิกครุภัณฑ์ใหม่</span>
                 <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-green-600" />
-              </Button>
-
-              <Button
-                variant="outline"
-                className="w-full justify-start bg-white/60 backdrop-blur-sm border-gray-200/50 hover:bg-purple-50/80 hover:border-purple-200 transition-all duration-200 group"
-                onClick={() => router.push("/history")}
-              >
-                <History className="w-5 h-5 mr-3 text-purple-600 group-hover:scale-110 transition-transform" />
-                <span className="flex-1 text-left">ประวัติการใช้งาน</span>
-                <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-purple-600" />
               </Button>
 
               <Separator className="my-4" />
@@ -564,31 +547,31 @@ export function UserProfile() {
           </div>
 
           {/* App Info & Version */}
-          <div className="bg-white/40 backdrop-blur-sm shadow-lg rounded-2xl">
+          <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm shadow-xl rounded-2xl">
             <div className="p-6 text-center">
               <div className="text-sm text-gray-600 space-y-2">
                 <div className="flex items-center justify-center space-x-2 mb-3">
                   <div className="w-8 h-8 bg-gradient-to-br from-ku-green to-emerald-600 rounded-lg flex items-center justify-center">
                     <span className="text-white font-bold text-xs">KU</span>
                   </div>
-                  <span className="font-bold text-gray-800">
+                  <span className="font-bold text-gray-800 dark:text-white">
                     Asset Management System
                   </span>
                 </div>
-                <div className="flex items-center justify-center space-x-4 text-xs">
+                <div className="flex items-center justify-center space-x-4 text-xs dark:text-gray-400">
                   <span>เวอร์ชัน 1.0.0-beta</span>
                   <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
                   <span>API Connected</span>
                   <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
                 </div>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                   © 2025 made with ❤️ for มหาวิทยาลัยเกษตรศาสตร์
                 </p>
-                <div className="flex items-center justify-center space-x-4 mt-3 pt-3 border-t border-gray-200/50">
+                <div className="flex items-center justify-center space-x-4 mt-3 pt-3 border-t border-gray-200/50 dark:border-slate-700/50">
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-xs text-gray-500 hover:text-gray-700"
+                    className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white"
                   >
                     <Globe className="w-3 h-3 mr-1" />
                     เว็บไซต์
@@ -596,7 +579,7 @@ export function UserProfile() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-xs text-gray-500 hover:text-gray-700"
+                    className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white"
                   >
                     <Users className="w-3 h-3 mr-1" />
                     ติดต่อ
@@ -604,7 +587,7 @@ export function UserProfile() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-xs text-gray-500 hover:text-gray-700"
+                    className="text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white"
                   >
                     <Eye className="w-3 h-3 mr-1" />
                     นโยบาย

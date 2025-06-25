@@ -28,7 +28,7 @@ export function CartItem({
 
   const handleQuantityChange = (delta: number) => {
     const newQuantity = item.quantity + delta;
-    if (newQuantity >= 1 && newQuantity <= item.product.availableQuantity) {
+    if (newQuantity >= 1 && newQuantity <= item.product.stock) {
       onUpdateQuantity(item.id, newQuantity);
     }
   };
@@ -57,7 +57,7 @@ export function CartItem({
               {item.product.name}
             </h3>
             <p className="text-sm text-gray-600 dark:text-gray-300">
-              {item.product.category.name}
+              {item.product.category?.name}
             </p>
             {item.product.code && (
               <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -100,7 +100,7 @@ export function CartItem({
                 variant="outline"
                 size="sm"
                 onClick={() => handleQuantityChange(1)}
-                disabled={item.quantity >= item.product.availableQuantity}
+                disabled={item.quantity >= item.product.stock}
                 className="h-8 w-8 p-0"
               >
                 <Plus className="w-3 h-3" />
@@ -173,23 +173,12 @@ export function CartItem({
             </h4>
             <div className="space-y-1 text-xs text-gray-600 dark:text-gray-300">
               <p>
-                <span className="font-medium">หน่วยงาน:</span>{" "}
-                {item.product.department.name}
-              </p>
-              <p>
                 <span className="font-medium">สถานะ:</span> พร้อมใช้งาน
               </p>
               <p>
                 <span className="font-medium">จำนวนที่มี:</span>{" "}
-                {item.product.availableQuantity} จาก{" "}
-                {item.product.totalQuantity}
+                {item.product.stock}
               </p>
-              {item.product.location && (
-                <p>
-                  <span className="font-medium">สถานที่:</span>{" "}
-                  {item.product.location}
-                </p>
-              )}
             </div>
           </div>
         </div>
