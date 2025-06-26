@@ -114,7 +114,23 @@ func (ctrl *AuthController) GoogleOAuthCallback(c *gin.Context) {
 	code := c.Query("code")
 	state := c.Query("state")
 
-	// Redirect ไปหน้า dashboard ของ frontend พร้อม code, state (ไม่แลก token ที่ backend)
-	redirectURL := "https://kukuyibyerm-production.up.railway.app/dashboard?code=" + code + "&state=" + state
-	c.Redirect(http.StatusFound, redirectURL)
+	req := dto.GoogleOAuthRequest{
+		Code:  code,
+		State: state,
+		// ถ้าต้องการ field อื่น ต้องไปแลกกับ Google API เพิ่มเติม
+	}
+
+	authResponse, err := ctrl.authService.FindOrCreateUserByGoogle(&req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success":       true,
+		"message":       "Google OAuth successful",
+		"user":          authResponse.User,
+		"access_token":  authResponse.AccessToken,
+		"refresh_token": authResponse.RefreshToken,
+	})
 }
