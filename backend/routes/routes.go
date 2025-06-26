@@ -20,6 +20,7 @@ func SetupRoutes(r *gin.Engine, controllers *controllers.Controllers) {
 
 	// เพิ่ม OAuth callback route สำหรับ Google
 	r.GET("/api/auth/callback/google", controllers.Auth.GoogleOAuthCallback)
+	r.POST("/api/auth/callback/google", controllers.Auth.GoogleOAuthCallback) // รองรับ POST ด้วย
 
 	// จัดกลุ่ม Route ทั้งหมดภายใต้ /api/v1
 	api := r.Group("/api/v1")
