@@ -17,10 +17,9 @@ func PanicRecoveryMiddleware() gin.HandlerFunc {
 				// A panic occurred. Log the error and stack trace.
 				log.Printf("‼️‼️‼️ A PANIC HAS OCCURRED ‼️‼️‼️")
 				log.Printf("Panic error: %v", err)
-				log.Printf("Stack trace: %s", string(debug.Stack()))
+				log.Printf("Stack trace: \n%s", string(debug.Stack())) // Adding a newline for readability
 
 				// Respond with a generic 500 error.
-				// It's important not to expose stack trace details to the client.
 				c.JSON(http.StatusInternalServerError, gin.H{
 					"success": false,
 					"error":   "An internal server error occurred. The incident has been logged.",

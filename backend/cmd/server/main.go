@@ -3,7 +3,7 @@ package main
 import (
 	"ku-asset/controllers"
 	"ku-asset/database"
-	"ku-asset/middleware" // 👈 1. เพิ่ม import ของ middleware
+	"ku-asset/middleware"
 	"ku-asset/migrations"
 	"ku-asset/routes"
 	"ku-asset/services"
@@ -37,18 +37,19 @@ func main() {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	router := gin.Default() // gin.Default() มี Logger ให้อยู่แล้ว
+	// --- ✅ THE FINAL FIX ---
+	// 1. Use gin.New() to create a blank engine
+	router := gin.New()
 
-	// -----------------------------------------------------------
-	// ✅ 2. แก้ไขตรงนี้: เรียกใช้ Middleware จากส่วนกลางที่เดียว
-	router.Use(middleware.CORSMiddleware())
-	// -----------------------------------------------------------
-
-	// 3. ไม่จำเป็นต้องเรียก router.Use(gin.Logger()) อีก เพราะ gin.Default() มีให้แล้ว
+	// 2. Add middleware MANUALLY in the correct order
+	router.Use(middleware.PanicRecoveryMiddleware()) // MUST BE FIRST!
+	router.Use(gin.Logger())                         // Add logger back
+	router.Use(middleware.CORSMiddleware())          // Then add our CORS
+	// -----------------------
 
 	services := services.NewServices(db)
 	controllers := controllers.NewControllers(services)
-	routes.SetupRoutes(router, controllers) // SetupRoutes ยังคงเรียกเหมือนเดิม
+	routes.SetupRoutes(router, controllers)
 
 	port := getEnv("PORT", "8080")
 	log.Printf("Server starting on port %s", port)
