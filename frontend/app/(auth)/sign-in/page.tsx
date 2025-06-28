@@ -264,6 +264,43 @@ function SignInContent() {
 
             {/* Footer */}
             <div className="text-center space-y-4">
+              {/* 🆕 Mock Users for Testing */}
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-left">
+                <h4 className="font-semibold text-amber-800 text-sm mb-2">
+                  🧪 บัญชีทดสอบ (Demo Users)
+                </h4>
+                <div className="space-y-2 text-xs text-amber-700">
+                  <div className="bg-white rounded p-2 border border-amber-200">
+                    <p className="font-medium">👑 Admin:</p>
+                    <p>
+                      Email:{" "}
+                      <code className="bg-amber-100 px-1 rounded">
+                        admin@ku.ac.th
+                      </code>
+                    </p>
+                    <p>
+                      Password:{" "}
+                      <code className="bg-amber-100 px-1 rounded">
+                        admin123
+                      </code>
+                    </p>
+                  </div>
+                  <div className="bg-white rounded p-2 border border-amber-200">
+                    <p className="font-medium">👤 User:</p>
+                    <p>
+                      Email:{" "}
+                      <code className="bg-amber-100 px-1 rounded">
+                        user@ku.ac.th
+                      </code>
+                    </p>
+                    <p>
+                      Password:{" "}
+                      <code className="bg-amber-100 px-1 rounded">user123</code>
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               <div className="text-sm text-gray-600">
                 <p>สำหรับบุคลากรและนิสิต</p>
                 <p>มหาวิทยาลัยเกษตรศาสตร์เท่านั้น</p>
