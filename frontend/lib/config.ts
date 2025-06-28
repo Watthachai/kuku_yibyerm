@@ -1,11 +1,22 @@
 // lib/config.ts
 export const CONFIG = {
-  // ⭐ Backend URLs with fallbacks
-  BACKEND_URL: process.env.NEXT_PUBLIC_BACKEND_URL || process.env.BACKEND_URL,
+  // ⭐ Backend URLs - ใช้ environment variables เท่านั้น
+  BACKEND_URL:
+    process.env.NEXT_PUBLIC_BACKEND_URL ||
+    process.env.BACKEND_URL ||
+    (process.env.NODE_ENV === "development"
+      ? "http://localhost:8080"
+      : undefined),
 
-  API_BASE_URL:
-    (process.env.NEXT_PUBLIC_BACKEND_URL || process.env.BACKEND_URL) +
-    "/api/v1",
+  API_BASE_URL: (() => {
+    const backendUrl =
+      process.env.NEXT_PUBLIC_BACKEND_URL ||
+      process.env.BACKEND_URL ||
+      (process.env.NODE_ENV === "development"
+        ? "http://localhost:8080"
+        : undefined);
+    return backendUrl ? `${backendUrl}/api/v1` : undefined;
+  })(),
 
   // ⭐ NextAuth URLs
   NEXTAUTH_URL: process.env.NEXTAUTH_URL,
@@ -25,6 +36,12 @@ export function validateConfig() {
     "GOOGLE_CLIENT_ID",
     "GOOGLE_CLIENT_SECRET",
   ];
+
+  // ⭐ ใน Production ต้องมี NEXT_PUBLIC_BACKEND_URL
+  if (CONFIG.IS_PRODUCTION && !process.env.NEXT_PUBLIC_BACKEND_URL) {
+    console.error("❌ NEXT_PUBLIC_BACKEND_URL is required in production!");
+    requiredVars.push("NEXT_PUBLIC_BACKEND_URL");
+  }
 
   const missing = requiredVars.filter((varName) => !process.env[varName]);
 
@@ -48,6 +65,11 @@ export function validateConfig() {
 // ⭐ Get API URL with fallback
 export function getApiUrl(endpoint: string = ""): string {
   const baseUrl = CONFIG.API_BASE_URL;
+  if (!baseUrl) {
+    throw new Error(
+      "❌ Backend URL not configured! Check environment variables."
+    );
+  }
   const cleanEndpoint = endpoint.startsWith("/") ? endpoint.slice(1) : endpoint;
   return cleanEndpoint ? `${baseUrl}/${cleanEndpoint}` : baseUrl;
 }

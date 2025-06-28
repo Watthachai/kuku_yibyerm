@@ -1,5 +1,6 @@
 import { getSession, signOut } from "next-auth/react";
 import { Session } from "next-auth";
+import { CONFIG } from "@/lib/config";
 
 // ⭐ Session Cache ป้องกันการเรียก getSession() บ่อยเกินไป
 let sessionCache: { session: Session | null; timestamp: number } | null = null;
@@ -43,7 +44,7 @@ async function refreshToken(): Promise<string | null> {
       return null;
     }
 
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+    const backendUrl = CONFIG.BACKEND_URL;
     const response = await fetch(`${backendUrl}/api/v1/auth/refresh`, {
       method: "POST",
       headers: {
