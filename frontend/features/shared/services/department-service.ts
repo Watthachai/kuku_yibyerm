@@ -41,7 +41,9 @@ export interface UpdateDepartmentData extends Partial<CreateDepartmentData> {
 }
 
 class DepartmentServiceClass {
-  private baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL + "/api/v1";
+  private baseUrl =
+    (process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080") +
+    "/api/v1";
 
   async getAllDepartments(): Promise<Department[]> {
     try {

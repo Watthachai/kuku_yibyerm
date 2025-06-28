@@ -16,7 +16,8 @@ export interface CategoryApiResponse {
 }
 
 export class CategoryService {
-  private static baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+  private static baseUrl =
+    process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
 
   private static async getAuthHeaders(): Promise<Record<string, string>> {
     const session = await getSession();

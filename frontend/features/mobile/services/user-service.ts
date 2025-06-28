@@ -42,7 +42,9 @@ export interface UserStats {
 }
 
 class UserService {
-  private baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL + "/api/v1";
+  private baseUrl =
+    (process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080") +
+    "/api/v1";
 
   // Get current user profile
   async getCurrentUser(): Promise<UserProfile> {

@@ -108,29 +108,3 @@ func (ctrl *AuthController) GoogleOAuth(c *gin.Context) {
 		"refresh_token": authResponse.RefreshToken,
 	})
 }
-
-// GoogleOAuthCallback handles Google OAuth callback (GET)
-func (ctrl *AuthController) GoogleOAuthCallback(c *gin.Context) {
-	code := c.Query("code")
-	state := c.Query("state")
-
-	req := dto.GoogleOAuthRequest{
-		Code:  code,
-		State: state,
-		// ถ้าต้องการ field อื่น ต้องไปแลกกับ Google API เพิ่มเติม
-	}
-
-	authResponse, err := ctrl.authService.FindOrCreateUserByGoogle(&req)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "message": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"success":       true,
-		"message":       "Google OAuth successful",
-		"user":          authResponse.User,
-		"access_token":  authResponse.AccessToken,
-		"refresh_token": authResponse.RefreshToken,
-	})
-}
