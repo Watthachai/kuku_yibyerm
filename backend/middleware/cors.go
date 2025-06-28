@@ -12,35 +12,24 @@ import (
 func CORSMiddleware() gin.HandlerFunc {
 	config := cors.DefaultConfig()
 
-	// --- ทำให้โค้ดทนทานและ Debug ง่ายขึ้น ---
+	// -----------------------------------------------------------------
+	// ‼️ DEBUGGING STEP: TEMPORARILY ALLOW ALL ORIGINS ‼️
+	// เรากำลังทดสอบว่าปัญหาอยู่ที่การนำ middleware ไปใช้หรือไม่
+	// ถ้าวิธีนี้แก้ปัญหาได้ แสดงว่าคุณต้องไปแก้ที่การตั้งค่า Gin Router
+	// และต้องลบบรรทัดนี้ออกใน Production เพื่อความปลอดภัย
+	config.AllowAllOrigins = true
+	log.Println("‼️ WARNING: CORS is temporarily set to allow all origins for debugging purposes.")
+	// -----------------------------------------------------------------
 
-	// 1. สร้างลิสต์ของ Origin ที่จะอนุญาต
-	var allowedOrigins []string
-
-	// 2. อนุญาต Localhost สำหรับการพัฒนาเสมอ
-	allowedOrigins = append(allowedOrigins, "http://localhost:3000")
-
-	// 3. อ่านค่า FRONTEND_URL จาก Environment Variable
+	// โค้ดเดิมยังคงอยู่เพื่อให้เห็นว่าปกติควรทำอย่างไร
 	frontendURL := os.Getenv("FRONTEND_URL")
 	if frontendURL != "" {
-		// ถ้าเจอ ให้เพิ่มเข้าไปในลิสต์
 		log.Printf("✅ Found FRONTEND_URL environment variable: %s", frontendURL)
-		allowedOrigins = append(allowedOrigins, frontendURL)
+		// ปกติเราจะใช้บรรทัดนี้ แต่ตอนนี้เราใช้ AllowAllOrigins แทน
+		// config.AllowOrigins = []string{"http://localhost:3000", frontendURL}
 	} else {
-		// ถ้าไม่เจอ ให้แสดงคำเตือนใน Log
 		log.Println("⚠️ WARNING: FRONTEND_URL environment variable is not set or is empty.")
 	}
-
-	// 4. เพิ่ม URL ที่ Hardcode ไว้อีกชั้นเพื่อความปลอดภัย
-	// เผื่อกรณีการตั้งค่าผิดพลาดหรือปัญหาตอน Deploy
-	hardcodedURL := "https://kukuyibyerm-production.up.railway.app"
-	log.Printf("ℹ️ Adding hardcoded fallback origin for safety: %s", hardcodedURL)
-	allowedOrigins = append(allowedOrigins, hardcodedURL)
-
-	config.AllowOrigins = allowedOrigins
-
-	// Log ลิสต์ของ Origin ทั้งหมดที่อนุญาตสุดท้าย
-	log.Printf("➡️ Final list of allowed origins for CORS: %v", config.AllowOrigins)
 
 	config.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
 	config.AllowHeaders = []string{
