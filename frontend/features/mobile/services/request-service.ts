@@ -1,4 +1,5 @@
 import { getAuthHeaders } from "@/lib/api";
+import { CONFIG } from "@/lib/config";
 
 export interface CreateRequestData {
   purpose: string;
@@ -33,8 +34,7 @@ export interface RequestResponse {
 }
 
 export class RequestService {
-  private static baseUrl =
-    process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
+  private static baseUrl = CONFIG.BACKEND_URL;
 
   static async createRequest(
     data: CreateRequestData
