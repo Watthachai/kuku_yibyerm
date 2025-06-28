@@ -12,27 +12,17 @@ import (
 func CORSMiddleware() gin.HandlerFunc {
 	config := cors.DefaultConfig()
 
-	// -----------------------------------------------------------------
-	// ‼️ DEBUGGING STEP: TEMPORARILY ALLOW ALL ORIGINS ‼️
-	// เรากำลังทดสอบว่าปัญหาอยู่ที่การนำ middleware ไปใช้หรือไม่
-	// ถ้าวิธีนี้แก้ปัญหาได้ แสดงว่าคุณต้องไปแก้ที่การตั้งค่า Gin Router
-	// และต้องลบบรรทัดนี้ออกใน Production เพื่อความปลอดภัย
-	config.AllowAllOrigins = true
-	log.Println("‼️ WARNING: CORS is temporarily set to allow all origins for debugging purposes.")
-	// -----------------------------------------------------------------
-
-	// โค้ดเดิมยังคงอยู่เพื่อให้เห็นว่าปกติควรทำอย่างไร
+	// Configure allowed origins
 	frontendURL := os.Getenv("FRONTEND_URL")
 	if frontendURL != "" {
 		log.Printf("✅ Found FRONTEND_URL environment variable: %s", frontendURL)
-		// ปกติเราจะใช้บรรทัดนี้ แต่ตอนนี้เราใช้ AllowAllOrigins แทน
-		// config.AllowOrigins = []string{"http://localhost:3000", frontendURL}
+		config.AllowOrigins = []string{"http://localhost:3000", frontendURL}
 	} else {
 		log.Println("⚠️ WARNING: FRONTEND_URL environment variable is not set or is empty.")
-	}
-
-	config.AllowOrigins = []string{
-		"https://kukuyibyerm-production.up.railway.app", // Frontend URL
+		config.AllowOrigins = []string{
+			"http://localhost:3000",                         // Development
+			"https://kukuyibyerm-production.up.railway.app", // Production
+		}
 	}
 	config.AllowCredentials = true
 	config.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
