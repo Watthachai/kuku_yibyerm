@@ -44,6 +44,12 @@ func main() {
 	router.Use(gin.Logger())
 	router.Use(middleware.CORSMiddleware())
 
+	// ⭐ เพิ่ม Database Middleware เพื่อให้ AuthMiddleware ใช้งานได้
+	router.Use(func(c *gin.Context) {
+		c.Set("db", db)
+		c.Next()
+	})
+
 	services := services.NewServices(db)
 	controllers := controllers.NewControllers(services)
 	routes.SetupRoutes(router, controllers)
