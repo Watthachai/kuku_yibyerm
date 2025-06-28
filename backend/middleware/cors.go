@@ -5,6 +5,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// TODO: ใช้ ENV หรือ config แทน hardcode URL
+// ⭐ ควรใช้ ENV หรือ config แทน hardcode URL เพื่อความยื
 // CORSMiddleware returns a CORS middleware with appropriate configuration
 func CORSMiddleware() gin.HandlerFunc {
 	config := cors.DefaultConfig()
