@@ -1,4 +1,24 @@
 import { getSession, signOut } from "next-auth/react";
+import { Session } from "next-auth";
+
+// ⭐ Session Cache ป้องกันการเรียก getSession() บ่อยเกินไป
+let sessionCache: { session: Session | null; timestamp: number } | null = null;
+const SESSION_CACHE_DURATION = 30000; // 30 วินาที
+
+async function getCachedSession() {
+  const now = Date.now();
+
+  // ถ้ามี cache และยังไม่หมดอายุ
+  if (sessionCache && now - sessionCache.timestamp < SESSION_CACHE_DURATION) {
+    return sessionCache.session;
+  }
+
+  // ดึง session ใหม่และ cache ไว้
+  const session = await getSession();
+  sessionCache = { session, timestamp: now };
+
+  return session;
+}
 
 // ⭐ ตรวจสอบว่า token ใกล้หมดอายุหรือไม่
 function isTokenExpiringSoon(token: string): boolean {
@@ -18,21 +38,20 @@ function isTokenExpiringSoon(token: string): boolean {
 // ⭐ ฟังก์ชัน refresh token
 async function refreshToken(): Promise<string | null> {
   try {
-    const session = await getSession();
+    const session = await getCachedSession();
     if (!session?.refreshToken) {
       return null;
     }
 
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/auth/refresh`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.refreshToken}`,
-        },
-      }
-    );
+    const backendUrl =
+      process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080";
+    const response = await fetch(`${backendUrl}/api/v1/auth/refresh`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.refreshToken}`,
+      },
+    });
 
     if (!response.ok) {
       // ถ้า refresh ไม่ได้ ให้ logout
@@ -50,7 +69,7 @@ async function refreshToken(): Promise<string | null> {
 }
 
 export async function getAuthHeaders() {
-  const session = await getSession();
+  const session = await getCachedSession();
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
   };
@@ -74,7 +93,7 @@ export async function getAuthHeaders() {
 }
 
 export async function getAuthHeadersForFormData() {
-  const session = await getSession();
+  const session = await getCachedSession();
   // เมื่อใช้ FormData, browser จะตั้ง Content-Type เองโดยอัตโนมัติ
   const headers: Record<string, string> = {};
 
@@ -85,7 +104,9 @@ export async function getAuthHeadersForFormData() {
       if (newToken) {
         headers.Authorization = `Bearer ${newToken}`;
       } else {
-        window.location.href = "/auth/signin";
+        if (typeof window !== "undefined") {
+          window.location.href = "/auth/signin";
+        }
         return headers;
       }
     } else {

@@ -1,4 +1,6 @@
 import { getAuthHeaders } from "@/lib/api";
+import { retryFetch, safeApiCall, NetworkError } from "@/lib/error-handling";
+import { CONFIG } from "@/lib/config";
 
 export interface DepartmentRaw {
   id: string;
@@ -41,18 +43,22 @@ export interface UpdateDepartmentData extends Partial<CreateDepartmentData> {
 }
 
 class DepartmentServiceClass {
-  private baseUrl =
-    (process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080") +
-    "/api/v1";
+  private baseUrl = CONFIG.API_BASE_URL;
 
   async getAllDepartments(): Promise<Department[]> {
-    try {
+    return safeApiCall(async () => {
       const headers = await getAuthHeaders();
-      const response = await fetch(`${this.baseUrl}/departments`, {
+      const response = await retryFetch(`${this.baseUrl}/departments`, {
         method: "GET",
         headers,
       });
-      if (!response.ok) throw new Error("Failed to fetch departments");
+
+      if (!response.ok) {
+        throw new NetworkError(
+          `Failed to fetch departments: ${response.status}`
+        );
+      }
+
       const result = await response.json();
       const rawData: DepartmentRaw[] = result.data || result;
 
@@ -80,10 +86,7 @@ class DepartmentServiceClass {
             ? dept.name_th
             : undefined,
       }));
-    } catch (error) {
-      console.error("Failed to get departments:", error);
-      return [];
-    }
+    }, []);
   }
 
   async createDepartment(data: CreateDepartmentData): Promise<Department> {

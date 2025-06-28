@@ -302,6 +302,7 @@ export class ProductManagementService {
   }
 
   // ⭐ Helper Methods
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private static mapProductResponse(data: any): Product {
     return {
       id: data.id?.toString() || "0",
