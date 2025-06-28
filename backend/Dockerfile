@@ -17,6 +17,9 @@ RUN go mod download
 # Copy โค้ดทั้งหมด
 COPY . .
 
+# ⭐ Add cache buster for fresh builds
+RUN echo "Backend build at: $(date)" > /tmp/build-time
+
 # Build Go application
 RUN CGO_ENABLED=0 go build -o /app/server ./cmd/server
 
