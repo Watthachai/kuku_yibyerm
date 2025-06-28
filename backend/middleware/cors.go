@@ -1,6 +1,8 @@
 package middleware
 
 import (
+	"os"
+
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
@@ -11,11 +13,9 @@ import (
 func CORSMiddleware() gin.HandlerFunc {
 	config := cors.DefaultConfig()
 	config.AllowOrigins = []string{
-		"http://localhost:3000",
-		"http://localhost:3001",
-		"https://kukuyibyerm-production.up.railway.app",      // ⭐ Frontend URL
-		"https://kuku-yipyerm-app-production.up.railway.app", // ⭐ Alternative frontend URL
-		"https://backend-go-production-2ba8.up.railway.app",  // ⭐ Backend URL (for internal calls)
+		os.Getenv("FRONTEND_URL"),             // ⭐ ใช้ Environment Variable
+		os.Getenv("ALTERNATIVE_FRONTEND_URL"), // ⭐ Alternative Frontend URL
+		os.Getenv("BACKEND_URL"),              // ⭐ Backend URL
 	}
 	config.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
 	config.AllowHeaders = []string{
