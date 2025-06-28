@@ -12,6 +12,9 @@ import (
 // and returns a generic error message. This helps to debug hidden panics.
 func PanicRecoveryMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// เพิ่ม Log สำหรับการทดสอบ
+		log.Printf("--> PanicRecoveryMiddleware is ACTIVE for request: %s", c.Request.URL.Path)
+
 		defer func() {
 			if err := recover(); err != nil {
 				// A panic occurred. Log the error and stack trace.

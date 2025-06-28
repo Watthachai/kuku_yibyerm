@@ -15,6 +15,9 @@ import (
 )
 
 func main() {
+	// ✅ เพิ่ม Log สำหรับการทดสอบ
+	log.Println("--- RUNNING main.go (Final Debug Version) ---")
+	log.Fatal("!!! FORCED CRASH TO TEST DEPLOYMENT !!!") // <--- เพิ่มบรรทัดนี้
 	log.Println("🚀 Starting KU Asset Backend Server...")
 
 	if err := godotenv.Load(); err != nil {
@@ -37,15 +40,11 @@ func main() {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	// --- ✅ THE FINAL FIX ---
-	// 1. Use gin.New() to create a blank engine
 	router := gin.New()
 
-	// 2. Add middleware MANUALLY in the correct order
 	router.Use(middleware.PanicRecoveryMiddleware()) // MUST BE FIRST!
-	router.Use(gin.Logger())                         // Add logger back
-	router.Use(middleware.CORSMiddleware())          // Then add our CORS
-	// -----------------------
+	router.Use(gin.Logger())
+	router.Use(middleware.CORSMiddleware())
 
 	services := services.NewServices(db)
 	controllers := controllers.NewControllers(services)
