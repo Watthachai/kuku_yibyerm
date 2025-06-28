@@ -11,8 +11,9 @@ func CORSMiddleware() gin.HandlerFunc {
 	config.AllowOrigins = []string{
 		"http://localhost:3000",
 		"http://localhost:3001",
-		"https://kukuyibyerm-production.up.railway.app", // ⭐ ใช้ frontend URL ที่ถูกต้อง
-		"https://*.up.railway.app",                      // ⭐ Allow all Railway domains
+		"https://kukuyibyerm-production.up.railway.app",      // ⭐ Frontend URL
+		"https://kuku-yipyerm-app-production.up.railway.app", // ⭐ Alternative frontend URL
+		"https://backend-go-production-2ba8.up.railway.app",  // ⭐ Backend URL (for internal calls)
 	}
 	config.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
 	config.AllowHeaders = []string{
