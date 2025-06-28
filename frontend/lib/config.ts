@@ -1,22 +1,29 @@
 // lib/config.ts
-export const CONFIG = {
-  // ⭐ Backend URLs - ใช้ environment variables เท่านั้น
-  BACKEND_URL:
+
+// ⭐ Get backend URL with proper client/server handling
+function getBackendUrl(): string {
+  // On client-side, only NEXT_PUBLIC_* variables are available
+  if (typeof window !== "undefined") {
+    return (
+      process.env.NEXT_PUBLIC_BACKEND_URL ||
+      "https://backend-go-production-2ba8.up.railway.app" // ⭐ Production fallback for client
+    );
+  }
+
+  // On server-side, both variables are available
+  return (
     process.env.NEXT_PUBLIC_BACKEND_URL ||
     process.env.BACKEND_URL ||
-    (process.env.NODE_ENV === "development" // เช็ค development แทน
+    (process.env.NODE_ENV === "development"
       ? "http://localhost:8080"
-      : undefined),
+      : "https://backend-go-production-2ba8.up.railway.app")
+  );
+}
 
-  API_BASE_URL: (() => {
-    const backendUrl =
-      process.env.NEXT_PUBLIC_BACKEND_URL ||
-      process.env.BACKEND_URL ||
-      (process.env.NODE_ENV === "development"
-        ? "http://localhost:8080"
-        : undefined);
-    return backendUrl ? `${backendUrl}/api/v1` : undefined;
-  })(),
+export const CONFIG = {
+  // ⭐ Backend URLs with client/server awareness
+  BACKEND_URL: getBackendUrl(),
+  API_BASE_URL: `${getBackendUrl()}/api/v1`,
 
   // ⭐ NextAuth URLs
   NEXTAUTH_URL: process.env.NEXTAUTH_URL,
@@ -28,6 +35,17 @@ export const CONFIG = {
   IS_DEVELOPMENT: process.env.NODE_ENV === "development",
   IS_PRODUCTION: process.env.NODE_ENV === "production",
 } as const;
+
+// ⭐ Debug configuration in browser
+if (typeof window !== "undefined") {
+  console.log("🌐 CLIENT CONFIG DEBUG:", {
+    NEXT_PUBLIC_BACKEND_URL: process.env.NEXT_PUBLIC_BACKEND_URL,
+    BACKEND_URL: process.env.BACKEND_URL,
+    NODE_ENV: process.env.NODE_ENV,
+    COMPUTED_BACKEND_URL: CONFIG.BACKEND_URL,
+    COMPUTED_API_BASE_URL: CONFIG.API_BASE_URL,
+  });
+}
 
 // ⭐ Validate required environment variables
 export function validateConfig() {
