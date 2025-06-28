@@ -83,7 +83,7 @@ export const CDN_CONFIGS: Record<string, CDNConfig> = {
   development: {
     enabled: false,
     provider: "local",
-    baseUrl: CONFIG.BACKEND_URL,
+    baseUrl: CONFIG.BACKEND_URL || "",
     uploadEndpoint: "/api/v1/upload/product-image",
   },
 
