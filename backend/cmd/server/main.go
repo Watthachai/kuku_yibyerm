@@ -1,16 +1,15 @@
-// main.go
 package main
 
 import (
 	"ku-asset/controllers"
 	"ku-asset/database"
-	"ku-asset/migrations" // 👈 import migration
+	"ku-asset/middleware" // 👈 1. เพิ่ม import ของ middleware
+	"ku-asset/migrations"
 	"ku-asset/routes"
 	"ku-asset/services"
 	"log"
 	"os"
 
-	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
@@ -20,8 +19,6 @@ func main() {
 
 	if err := godotenv.Load(); err != nil {
 		log.Println("Warning: .env file not found")
-	} else {
-		log.Println("✅ .env file loaded successfully")
 	}
 
 	dbConfig := database.NewConfigFromEnv()
@@ -31,30 +28,27 @@ func main() {
 	}
 	log.Println("✅ Database connected successfully")
 
-	// ⭐ Run migrations using the new system
 	if err := migrations.RunMigrations(db); err != nil {
 		log.Fatalf("Could not run migrations: %v", err)
 	}
 
-	// --- ส่วนที่เหลือเหมือนเดิม ---
 	ginMode := getEnv("GIN_MODE", "debug")
 	if ginMode == "release" {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	router := gin.Default()
-	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:3000"},
-		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
-		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: true,
-	}))
-	router.Use(gin.Logger())
+	router := gin.Default() // gin.Default() มี Logger ให้อยู่แล้ว
+
+	// -----------------------------------------------------------
+	// ✅ 2. แก้ไขตรงนี้: เรียกใช้ Middleware จากส่วนกลางที่เดียว
+	router.Use(middleware.CORSMiddleware())
+	// -----------------------------------------------------------
+
+	// 3. ไม่จำเป็นต้องเรียก router.Use(gin.Logger()) อีก เพราะ gin.Default() มีให้แล้ว
 
 	services := services.NewServices(db)
 	controllers := controllers.NewControllers(services)
-	routes.SetupRoutes(router, controllers)
+	routes.SetupRoutes(router, controllers) // SetupRoutes ยังคงเรียกเหมือนเดิม
 
 	port := getEnv("PORT", "8080")
 	log.Printf("Server starting on port %s", port)
