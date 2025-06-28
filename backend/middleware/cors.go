@@ -31,16 +31,12 @@ func CORSMiddleware() gin.HandlerFunc {
 		log.Println("⚠️ WARNING: FRONTEND_URL environment variable is not set or is empty.")
 	}
 
-	config.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
-	config.AllowHeaders = []string{
-		"Origin",
-		"Content-Type",
-		"Accept",
-		"Authorization",
-		"Cache-Control",
+	config.AllowOrigins = []string{
+		"https://kukuyibyerm-production.up.railway.app", // Frontend URL
 	}
-	config.ExposeHeaders = []string{"Content-Length"}
 	config.AllowCredentials = true
+	config.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
+	config.AllowHeaders = []string{"Origin", "Content-Type", "Accept", "Authorization"}
 
 	return cors.New(config)
 }
