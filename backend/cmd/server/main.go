@@ -15,9 +15,7 @@ import (
 )
 
 func main() {
-	// ✅ เพิ่ม Log สำหรับการทดสอบ
-	log.Println("--- RUNNING main.go (Final Debug Version) ---")
-	log.Fatal("!!! FORCED CRASH TO TEST DEPLOYMENT !!!") // <--- เพิ่มบรรทัดนี้
+	// เอา log.Fatal ออกแล้ว
 	log.Println("🚀 Starting KU Asset Backend Server...")
 
 	if err := godotenv.Load(); err != nil {
@@ -40,9 +38,9 @@ func main() {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
+	// ใช้ gin.New() และเรียงลำดับ Middleware เอง
 	router := gin.New()
-
-	router.Use(middleware.PanicRecoveryMiddleware()) // MUST BE FIRST!
+	router.Use(middleware.PanicRecoveryMiddleware()) // 👈 MUST BE FIRST!
 	router.Use(gin.Logger())
 	router.Use(middleware.CORSMiddleware())
 
