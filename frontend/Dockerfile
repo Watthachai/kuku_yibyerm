@@ -10,6 +10,9 @@ FROM node:24-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+# ⭐ Clear any existing .next directory to prevent cache issues
+RUN rm -rf .next
+# ⭐ Build with fresh environment
 RUN npm run build
 
 FROM node:24-alpine AS runner

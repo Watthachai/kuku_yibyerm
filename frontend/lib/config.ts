@@ -4,7 +4,7 @@ export const CONFIG = {
   BACKEND_URL:
     process.env.NEXT_PUBLIC_BACKEND_URL ||
     process.env.BACKEND_URL ||
-    (process.env.NODE_ENV === "development"
+    (process.env.NODE_ENV === "development" // เช็ค development แทน
       ? "http://localhost:8080"
       : undefined),
 
