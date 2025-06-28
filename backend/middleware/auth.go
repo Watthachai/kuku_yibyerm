@@ -52,11 +52,29 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		// --- ✅ FIX STARTS HERE ---
-		// 1. Validate 'user_id'
-		userID, ok := claims["user_id"].(float64) // JWT numbers are often float64
-		if !ok {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "user_id not found or invalid in token"})
+		// --- ✅ FIX STARTS HERE: More robust type checking ---
+
+		// 1. Validate 'user_id' with flexible type handling
+		var userIDUint uint
+		userIDClaim, idExists := claims["user_id"]
+		if !idExists {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "user_id not found in token"})
+			c.Abort()
+			return
+		}
+		switch v := userIDClaim.(type) {
+		case float64:
+			userIDUint = uint(v)
+		case int:
+			userIDUint = uint(v)
+		case int32:
+			userIDUint = uint(v)
+		case int64:
+			userIDUint = uint(v)
+		case uint:
+			userIDUint = v
+		default:
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "user_id in token has an unexpected type"})
 			c.Abort()
 			return
 		}
@@ -78,7 +96,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		}
 
 		// All claims are valid, set them in the context
-		c.Set("userID", uint(userID))
+		c.Set("userID", userIDUint)
 		c.Set("userRole", userRole)
 		c.Set("email", email)
 		// --- ✅ FIX ENDS HERE ---
