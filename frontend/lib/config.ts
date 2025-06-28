@@ -1,21 +1,17 @@
 // lib/config.ts
 export const CONFIG = {
   // ⭐ Backend URLs with fallbacks
-  BACKEND_URL:
-    process.env.NEXT_PUBLIC_BACKEND_URL ||
-    process.env.BACKEND_URL ||
-    "http://localhost:8080",
+  BACKEND_URL: process.env.NEXT_PUBLIC_BACKEND_URL || process.env.BACKEND_URL,
 
   API_BASE_URL:
-    (process.env.NEXT_PUBLIC_BACKEND_URL ||
-      process.env.BACKEND_URL ||
-      "http://localhost:8080") + "/api/v1",
+    (process.env.NEXT_PUBLIC_BACKEND_URL || process.env.BACKEND_URL) +
+    "/api/v1",
 
   // ⭐ NextAuth URLs
-  NEXTAUTH_URL: process.env.NEXTAUTH_URL || "http://localhost:3000",
+  NEXTAUTH_URL: process.env.NEXTAUTH_URL,
 
   // ⭐ Frontend URL
-  FRONTEND_URL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000",
+  FRONTEND_URL: process.env.NEXT_PUBLIC_API_URL,
 
   // ⭐ Development flags
   IS_DEVELOPMENT: process.env.NODE_ENV === "development",
