@@ -25,21 +25,11 @@ services:
   backend:
     build:
       context: ./backend
-      dockerfile: Dockerfile.dev # ใช้ Dockerfile สำหรับ Development ที่มี air
+      dockerfile: Dockerfile
     ports:
       - "8080:8080"
-    environment:
-      # --- นี่คือส่วนที่แก้ไขให้ตรงกับ db.go ของคุณ ---
-      - DB_HOST=postgres # ใช้ชื่อ service 'postgres' เป็น host name
-      - DB_USER=kuku_yibyerm_admin
-      - DB_PASSWORD=kuku_yibyerm_passw0rd
-      - DB_NAME=kuku_yibyerm_db
-      - DB_PORT=5432
-      - DB_SSLMODE=disable # สำหรับ local development
-      - DB_TIMEZONE=Asia/Bangkok
-      - PORT=8080
-    volumes:
-      - ./backend:/app # Mount code เพื่อให้ air live-reload ทำงาน
+    env_file:
+      - ./backend/.env
     depends_on:
       postgres:
         condition: service_healthy # รอจนกว่า Postgres จะพร้อมจริงๆ
@@ -51,7 +41,7 @@ services:
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile # สมมติว่ามี Dockerfile สำหรับ Next.js
+      dockerfile: Dockerfile
     ports:
       - "3000:3000"
     environment:

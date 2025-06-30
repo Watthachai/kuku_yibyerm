@@ -11,11 +11,9 @@ import {
   FileText,
   Users,
   Building2,
-  BarChart,
   Settings,
   LogOut,
   X,
-
 } from "lucide-react";
 import Link from "next/link";
 
@@ -44,13 +42,16 @@ export function Sidebar({ isOpen, onClose, session }: SidebarProps) {
   if (status === "loading") {
     return (
       <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-64 lg:flex-col">
-        <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-white px-6 border-r border-gray-200">
+        <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-white dark:bg-slate-800 px-6 border-r border-gray-200 dark:border-gray-700">
           <div className="animate-pulse space-y-4 py-6">
-            <div className="h-8 bg-gray-200 rounded"></div>
-            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+            <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded"></div>
+            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
             <div className="space-y-2">
               {[...Array(5)].map((_, i) => (
-                <div key={i} className="h-10 bg-gray-200 rounded"></div>
+                <div
+                  key={i}
+                  className="h-10 bg-gray-200 dark:bg-gray-700 rounded"
+                ></div>
               ))}
             </div>
           </div>
@@ -73,7 +74,7 @@ export function Sidebar({ isOpen, onClose, session }: SidebarProps) {
     },
     {
       name: "คลังครุภัณฑ์",
-      href: "/inventory",
+      href: "/products",
       icon: Package,
       roles: ["ADMIN"],
     },
@@ -93,12 +94,6 @@ export function Sidebar({ isOpen, onClose, session }: SidebarProps) {
       name: "จัดการหน่วยงาน",
       href: "/management/departments",
       icon: Building2,
-      roles: ["ADMIN"],
-    },
-    {
-      name: "รายงาน",
-      href: "/reports",
-      icon: BarChart,
       roles: ["ADMIN"],
     },
     {
@@ -147,7 +142,7 @@ export function Sidebar({ isOpen, onClose, session }: SidebarProps) {
       {/* Mobile sidebar */}
       <div
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-64 transform bg-white transition-transform duration-300 ease-in-out lg:hidden",
+          "fixed inset-y-0 left-0 z-50 w-64 transform bg-white dark:bg-slate-800 transition-transform duration-300 ease-in-out lg:hidden",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
@@ -194,7 +189,8 @@ export function Sidebar({ isOpen, onClose, session }: SidebarProps) {
           <nav className="flex-1 p-4 space-y-2">
             {filteredNavigation.map((item) => {
               const Icon = item.icon;
-              const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+              const isActive =
+                pathname === item.href || pathname.startsWith(item.href + "/");
 
               return (
                 <Link
@@ -231,7 +227,7 @@ export function Sidebar({ isOpen, onClose, session }: SidebarProps) {
 
       {/* Desktop sidebar */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-64 lg:flex-col">
-        <div className="flex grow flex-col bg-white border-r border-gray-200">
+        <div className="flex grow flex-col bg-white dark:bg-slate-800 border-r border-gray-200 dark:border-gray-700">
           {/* Desktop Header */}
           <div className="flex h-16 shrink-0 items-center px-6">
             <div className="flex items-center space-x-3">
@@ -239,14 +235,18 @@ export function Sidebar({ isOpen, onClose, session }: SidebarProps) {
                 <span className="text-white font-bold text-sm">KU</span>
               </div>
               <div>
-                <h1 className="font-bold text-gray-900">KU Asset</h1>
-                <p className="text-xs text-gray-600">Admin Panel</p>
+                <h1 className="font-bold text-gray-900 dark:text-white">
+                  KU Asset
+                </h1>
+                <p className="text-xs text-gray-600 dark:text-gray-400">
+                  Admin Panel
+                </p>
               </div>
             </div>
           </div>
 
           {/* Desktop User Info */}
-          <div className="px-6 py-4 border-b bg-gray-50">
+          <div className="px-6 py-4 border-b bg-gray-50 dark:bg-slate-700/50 dark:border-gray-700">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-ku-green rounded-full flex items-center justify-center">
                 <span className="text-white font-semibold">
@@ -254,10 +254,10 @@ export function Sidebar({ isOpen, onClose, session }: SidebarProps) {
                 </span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">
+                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                   {session?.user?.name || "ผู้ดูแลระบบ"}
                 </p>
-                <p className="text-xs text-gray-600 truncate">
+                <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
                   {session?.user?.email}
                 </p>
                 <Badge variant="default" className="mt-1 text-xs">
@@ -272,7 +272,9 @@ export function Sidebar({ isOpen, onClose, session }: SidebarProps) {
             <div className="space-y-1">
               {filteredNavigation.map((item) => {
                 const Icon = item.icon;
-                const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+                const isActive =
+                  pathname === item.href ||
+                  pathname.startsWith(item.href + "/");
 
                 return (
                   <Link
@@ -282,13 +284,15 @@ export function Sidebar({ isOpen, onClose, session }: SidebarProps) {
                       "group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold transition-colors",
                       isActive
                         ? "bg-ku-green text-white"
-                        : "text-gray-700 hover:text-ku-green hover:bg-gray-50"
+                        : "text-gray-700 dark:text-gray-300 hover:text-ku-green dark:hover:text-emerald-400 hover:bg-gray-50 dark:hover:bg-slate-700"
                     )}
                   >
                     <Icon
                       className={cn(
                         "h-6 w-6 shrink-0",
-                        isActive ? "text-white" : "text-gray-400 group-hover:text-ku-green"
+                        isActive
+                          ? "text-white"
+                          : "text-gray-400 group-hover:text-ku-green"
                       )}
                     />
                     {item.name}
@@ -299,11 +303,11 @@ export function Sidebar({ isOpen, onClose, session }: SidebarProps) {
           </nav>
 
           {/* Desktop Footer - ปรับให้ใกล้เมนูมากขึ้น */}
-          <div className="px-6 py-4 border-t">
+          <div className="px-6 py-4 border-t dark:border-gray-700">
             <Button
               variant="ghost"
               onClick={handleSignOut}
-              className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
+              className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/20"
             >
               <LogOut className="h-4 w-4 mr-3" />
               ออกจากระบบ

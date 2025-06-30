@@ -70,7 +70,10 @@ export default function SettingsPage() {
     }
   };
 
-  const updateSetting = (key: string, value: any) => {
+  const updateSetting = (
+    key: keyof typeof settings,
+    value: string | boolean
+  ) => {
     setSettings((prev) => ({ ...prev, [key]: value }));
   };
 

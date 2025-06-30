@@ -1,4 +1,3 @@
-// models/product.go
 package models
 
 import (
@@ -7,29 +6,38 @@ import (
 	"gorm.io/gorm"
 )
 
-// Product represents an item in the master catalog.
-// It does not contain stock information.
 type Product struct {
-	ID          string `json:"id" gorm:"primaryKey;type:varchar(50)"`
-	Name        string `json:"name" gorm:"size:255;not null"`
-	Description string `json:"description" gorm:"type:text"`
-	ImageURL    string `json:"image_url" gorm:"size:255"`
+	gorm.Model // ID, CreatedAt, UpdatedAt, DeletedAt
 
-	CategoryID string   `json:"category_id" gorm:"type:varchar(50);not null"`
-	Category   Category `json:"category,omitempty" gorm:"foreignKey:CategoryID"`
+	// ⭐ เพิ่ม ImageURL field
+	ImageURL *string `json:"image_url" gorm:"type:varchar(255)"` // URL ของรูปภาพ
 
-	// A Product can have many assets.
-	Assets []Asset `json:"assets,omitempty" gorm:"foreignKey:ProductID"`
+	// ข้อมูลพื้นฐาน
+	Code         string   `json:"code" gorm:"unique;not null"`
+	Name         string   `json:"name" gorm:"not null"`
+	Description  string   `json:"description"`
+	CategoryID   uint     `json:"category_id" gorm:"not null"`
+	Category     Category `json:"category" gorm:"foreignKey:CategoryID"`
+	Brand        string   `json:"brand"`
+	ProductModel string   `json:"product_model"`
 
-	// gorm.Model is not used here because you have a custom string ID
+	// จำนวนและสต็อก
+	Stock    int           `json:"stock" gorm:"default:0"`
+	MinStock int           `json:"min_stock" gorm:"default:0"`
+	Unit     string        `json:"unit" gorm:"size:20;default:'ชิ้น'"`
+	Status   ProductStatus `json:"status" gorm:"default:'ACTIVE'"`
+
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`
 	DeletedAt gorm.DeletedAt `json:"deleted_at" gorm:"index"`
 }
 
-// You might need a function to check if a product is available based on its assets.
-func (p *Product) IsAvailableForBorrow(quantity int) bool {
-	// This logic should now likely live in the Asset service
-	// For now, we assume it's possible.
-	return true
-}
+// Product Status Enum
+type ProductStatus string
+
+const (
+	ProductStatusActive       ProductStatus = "ACTIVE"
+	ProductStatusInactive     ProductStatus = "INACTIVE"
+	ProductStatusOutOfStock   ProductStatus = "OUT_OF_STOCK"
+	ProductStatusDiscontinued ProductStatus = "DISCONTINUED"
+)

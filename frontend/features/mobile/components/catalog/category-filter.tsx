@@ -15,24 +15,24 @@ interface CategoryFilterProps {
   onCategoryChange: (categoryId: string) => void;
 }
 
-export function CategoryFilter({ 
-  categories, 
-  selectedCategory, 
-  onCategoryChange 
+export function CategoryFilter({
+  categories,
+  selectedCategory,
+  onCategoryChange,
 }: CategoryFilterProps) {
   return (
-    <div className="bg-white border-b">
+    <div className="bg-white dark:bg-slate-800 border-b dark:border-slate-700">
       <div className="p-4">
         <div className="flex gap-2 overflow-x-auto pb-2">
           <Button
             variant={!selectedCategory ? "default" : "outline"}
             size="sm"
-            onClick={() => onCategoryChange('')}
+            onClick={() => onCategoryChange("")}
             className="whitespace-nowrap"
           >
             ทั้งหมด
           </Button>
-          
+
           {categories.map((category) => (
             <Button
               key={category.id}

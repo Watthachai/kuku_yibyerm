@@ -3,6 +3,7 @@
 package controllers
 
 import (
+	"fmt"
 	"ku-asset/dto"
 	"ku-asset/middleware"
 	"ku-asset/services"
@@ -37,15 +38,19 @@ func (ctrl *UserController) GetProfile(c *gin.Context) {
 func (ctrl *UserController) UpdateProfile(c *gin.Context) {
 	var req dto.UpdateProfileRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "Invalid input"})
+		fmt.Printf("🚫 JSON binding error: %v\n", err)
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "Invalid input", "details": err.Error()})
 		return
 	}
+	fmt.Printf("📝 Update profile request: %+v\n", req)
 	userID, _ := middleware.GetUserID(c)
 	updatedUser, err := ctrl.userService.UpdateUserProfile(userID, &req)
 	if err != nil {
+		fmt.Printf("🚫 Service error: %v\n", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": err.Error()})
 		return
 	}
+	fmt.Printf("✅ Profile updated successfully: %+v\n", updatedUser)
 	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Profile updated successfully", "data": updatedUser})
 }
 
@@ -62,6 +67,16 @@ func (ctrl *UserController) ChangePassword(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Password updated successfully"})
+}
+
+func (ctrl *UserController) GetUserStats(c *gin.Context) {
+	userID, _ := middleware.GetUserID(c)
+	stats, err := ctrl.userService.GetUserStats(userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true, "data": stats})
 }
 
 // --- Admin Endpoints ---

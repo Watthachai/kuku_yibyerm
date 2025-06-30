@@ -40,11 +40,12 @@ type RefreshTokenRequest struct {
 
 // GoogleOAuthRequest defines the structure for google oauth callback.
 type GoogleOAuthRequest struct {
-	Email string `json:"email" binding:"required,email"`
-	Name  string `json:"name" binding:"required"`
-	// เพิ่ม field อื่นๆ ที่ได้จาก Google ตามต้องการ
+	Email      string  `json:"email" binding:"required,email"`
+	Name       string  `json:"name" binding:"required"`
 	Avatar     *string `json:"avatar,omitempty"`
 	ProviderID string  `json:"providerId"`
+	Code       string  `json:"code"`
+	State      string  `json:"state"`
 }
 
 // AccessTokenResponse defines the response for a new access token.

@@ -26,7 +26,7 @@ type Request struct {
 	Status        RequestStatus `gorm:"type:varchar(20);default:'PENDING'"`
 	AdminNote     string        `gorm:"type:text"`
 
-	// ⭐️ เพิ่ม Field ที่ขาดไป
+	// วันที่
 	RequestDate   time.Time `gorm:"not null"`
 	ApprovedDate  *time.Time
 	IssuedDate    *time.Time

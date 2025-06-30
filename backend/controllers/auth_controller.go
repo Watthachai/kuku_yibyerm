@@ -65,18 +65,24 @@ func (ctrl *AuthController) Register(c *gin.Context) {
 
 // RefreshToken handles token refresh.
 func (ctrl *AuthController) RefreshToken(c *gin.Context) {
-	// ... (โค้ด RefreshToken เหมือนเดิม) ...
 	var req dto.RefreshTokenRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": err.Error()})
 		return
 	}
+
 	newAccessToken, err := ctrl.authService.RefreshToken(req.RefreshToken)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "message": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"success": true, "data": dto.AccessTokenResponse{AccessToken: newAccessToken}})
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data": gin.H{
+			"access_token": newAccessToken,
+		},
+	})
 }
 
 // GoogleOAuth handles Google OAuth login/registration.

@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { signIn, getSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { useTheme } from "next-themes";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,7 +31,8 @@ import {
 import { cn } from "@/lib/utils";
 import { loginSchema, type LoginInput } from "@/lib/validations/auth";
 
-export default function SignInPage() {
+function SignInContent() {
+  const { theme } = useTheme();
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
@@ -39,8 +41,13 @@ export default function SignInPage() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
 
-  //TODO // make if user has a session, redirect to dashboard
+  // Set mounted to true after the component has mounted
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   // Initialize form with zod validation
   const form = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
@@ -93,28 +100,40 @@ export default function SignInPage() {
     }
   };
 
+  // รอจนกว่าจะ mounted แล้วค่อย render UI ที่ขึ้นกับ theme
+  if (!mounted) {
+    // ให้ fallback เป็นพื้นหลังสีเดียวกับ SSR (เช่น สีขาว)
+    return <div className="min-h-screen bg-white" />;
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-ku-green via-green-600 to-ku-green-dark">
+    <div
+      className={cn(
+        "min-h-screen",
+        theme === "dark"
+          ? "bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900"
+          : "bg-gradient-to-br from-ku-green via-green-600 to-ku-green-dark"
+      )}
+    >
       <div className="flex items-center justify-center min-h-screen p-4">
-        <Card className="w-full max-w-md bg-white/95 backdrop-blur-sm border-white/20 shadow-2xl">
+        <Card className="w-full max-w-md backdrop-blur-sm border-white/20 shadow-2xl dark:bg-gray-900/95 dark:border-gray-700 dark:text-gray-100 bg-white/95">
           <CardHeader className="text-center space-y-4">
             <div className="flex items-center justify-center">
-              <div className="w-16 h-16 bg-ku-green rounded-full flex items-center justify-center shadow-lg">
-                <BookOpen className="w-8 h-8 text-white" />
+              <div className="w-16 h-16 rounded-full flex items-center justify-center shadow-lg bg-ku-green dark:bg-gray-800">
+                <BookOpen className="w-8 h-8 text-white dark:text-ku-green" />
               </div>
             </div>
             <div>
-              <CardTitle className="text-2xl font-bold text-gray-900">
+              <CardTitle className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                 KU Asset
               </CardTitle>
-              <p className="text-gray-600 mt-2">
+              <p className="mt-2 text-gray-600 dark:text-gray-400">
                 ระบบจัดการครุภัณฑ์
                 <br />
                 มหาวิทยาลัยเกษตรศาสตร์
               </p>
             </div>
           </CardHeader>
-
           <CardContent className="space-y-6">
             {/* Error Alert */}
             {error && (
@@ -266,5 +285,13 @@ export default function SignInPage() {
         </Card>
       </div>
     </div>
+  );
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <SignInContent />
+    </Suspense>
   );
 }

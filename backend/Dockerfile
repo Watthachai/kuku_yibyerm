@@ -1,30 +1,47 @@
-# Use a lean Go image
+# Dockerfile
+
+# --- STAGE 1: Build Stage ---
+# ใช้ Go image ตัวเต็มที่มีเครื่องมือครบครัน
 FROM golang:1.24.4 AS build
 
-# Set the working directory inside the container
+# ติดตั้ง CA-Certificates สำหรับการเชื่อมต่อ HTTPS
+RUN apt-get update && apt-get install -y ca-certificates
+
+# ตั้งค่า Working Directory
 WORKDIR /app
 
-# Copy the go.mod and go.sum files to download dependencies first
+# Copy และ download dependencies
 COPY go.mod go.sum ./
 RUN go mod download
 
-# Copy the rest of your application source code
+# Copy โค้ดทั้งหมด
 COPY . .
 
-# Build the application, targeting the main.go inside your cmd/server directory
-# This creates a static binary at /app/server
+# ⭐ Add cache buster for fresh builds
+RUN echo "Backend build at: $(date)" > /tmp/build-time
+
+# Build Go application
 RUN CGO_ENABLED=0 go build -o /app/server ./cmd/server
 
-# --- Final Stage ---
-# Use a minimal image for the final container to keep it small and secure
-FROM scratch
+# --- STAGE 2: Final Stage ---
+# ใช้ Alpine image ที่มีขนาดเล็กมากสำหรับ Production
+FROM alpine:latest
 
-# Copy the compiled binary from the build stage
+# ⭐⭐⭐ นี่คือ 2 บรรทัดที่เพิ่มเข้ามาเพื่อแก้ปัญหา TimeZone ⭐⭐⭐
+# 1. ติดตั้ง ca-certificates และ tzdata (timezone data)
+RUN apk --no-cache add ca-certificates tzdata
+
+# 2. ตั้งค่า Environment Variable สำหรับ TimeZone โดยตรง
+ENV TZ=Asia/Bangkok
+# ⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐⭐
+
+WORKDIR /app
+
+# Copy แค่โปรแกรมที่ build เสร็จแล้วจาก Stage 1 มาใช้งาน
 COPY --from=build /app/server /app/server
 
-# Expose the port that Railway will use.
-# Your Go app must listen on the $PORT environment variable.
+# บอกให้รู้ว่า Container จะทำงานที่ port 8080
 EXPOSE 8080
 
-# The command to run when the container starts
+# คำสั่งสุดท้ายในการรันโปรแกรม
 ENTRYPOINT ["/app/server"]

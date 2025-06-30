@@ -3,6 +3,7 @@ import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import { Role } from "@/features/auth/types";
+import { CONFIG } from "@/lib/config";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -33,7 +34,7 @@ export const authOptions: NextAuthOptions = {
 
         try {
           const response = await fetch(
-            `${process.env.BACKEND_URL}/api/v1/auth/login`,
+            `${CONFIG.BACKEND_URL}/api/v1/auth/login`,
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -73,7 +74,7 @@ export const authOptions: NextAuthOptions = {
     async signIn({ user, account }) {
       if (account?.provider === "google") {
         try {
-          const backendUrl = process.env.BACKEND_URL;
+          const backendUrl = CONFIG.BACKEND_URL;
           const response = await fetch(
             `${backendUrl}/api/v1/auth/oauth/google`,
             {

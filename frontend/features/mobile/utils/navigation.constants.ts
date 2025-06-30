@@ -10,9 +10,9 @@ export const BOTTOM_NAV_ITEMS: BottomNavItem[] = [
   },
   {
     id: "catalog",
-    label: "คลังครุภัณฑ์",
+    label: "เบิกครุภัณฑ์",
     icon: Search,
-    href: "/inventory",
+    href: "/products",
   },
   {
     id: "cart",
@@ -34,8 +34,4 @@ export const BOTTOM_NAV_ITEMS: BottomNavItem[] = [
   },
 ];
 
-export const PROTECTED_MOBILE_ROUTES = [
-  "/cart",
-  "/requests",
-  "/profile",
-];
+export const PROTECTED_MOBILE_ROUTES = ["/cart", "/requests", "/profile"];

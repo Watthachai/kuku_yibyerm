@@ -3,8 +3,9 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { CONFIG } from "@/lib/config";
 
-const API_BASE_URL = process.env.BACKEND_URL || "http://localhost:8080";
+const API_BASE_URL = CONFIG.BACKEND_URL;
 
 async function apiCall(endpoint: string, options: RequestInit = {}) {
   const cookieStore = await cookies();
@@ -33,10 +34,17 @@ async function apiCall(endpoint: string, options: RequestInit = {}) {
   return response.json();
 }
 
+export interface RequestItem {
+  productId: string;
+  quantity: number;
+  purpose?: string;
+  notes?: string;
+}
+
 export async function createRequest(formData: FormData) {
   const purpose = formData.get("purpose") as string;
   const notes = formData.get("notes") as string;
-  const items = JSON.parse(formData.get("items") as string);
+  const items = JSON.parse(formData.get("items") as string) as RequestItem[];
 
   const data = await apiCall("/requests", {
     method: "POST",
@@ -44,7 +52,7 @@ export async function createRequest(formData: FormData) {
       purpose,
       notes,
       priority: "NORMAL",
-      items: items.map((item: any) => ({
+      items: items.map((item) => ({
         product_id: item.productId,
         quantity: item.quantity,
         purpose: item.purpose,

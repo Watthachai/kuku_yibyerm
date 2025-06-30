@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"errors"
+	"log"
 
 	"ku-asset/auth"
 	"ku-asset/models"
@@ -13,15 +14,23 @@ import (
 func GetUserID(c *gin.Context) (uint, error) {
 	userID, exists := c.Get("userID")
 	if !exists {
+		log.Println("❌ userID not found in context")
 		return 0, errors.New("user ID not found in context")
 	}
 
 	id, ok := userID.(uint)
 	if !ok {
+		log.Printf("❌ userID type assertion failed. Got type: %T, value: %v", userID, userID)
 		return 0, errors.New("invalid user ID format")
 	}
 
+	log.Printf("✅ UserID extracted from context: %d", id)
 	return id, nil
+}
+
+// GetUserIDFromContext extracts user ID using the existing GetUserID function
+func GetUserIDFromContext(c *gin.Context) (uint, error) {
+	return GetUserID(c) // ใช้ function ที่มีอยู่แล้ว
 }
 
 // GetUserRole extracts user role from gin context
@@ -33,6 +42,10 @@ func GetUserRole(c *gin.Context) (models.Role, error) {
 
 	role, ok := userRole.(models.Role)
 	if !ok {
+		// ถ้าเป็น string ให้แปลงเป็น models.Role
+		if roleStr, ok := userRole.(string); ok {
+			return models.Role(roleStr), nil
+		}
 		return "", errors.New("invalid user role format")
 	}
 
@@ -63,8 +76,7 @@ func IsAuthenticated(c *gin.Context) bool {
 // RequireAuth is a helper function that returns an error if user is not authenticated
 func RequireAuth(c *gin.Context) (uint, error) {
 	if !IsAuthenticated(c) {
-		return 0, errors.New("authentication required")
+		return 0, errors.New("user not authenticated")
 	}
-
 	return GetUserID(c)
 }

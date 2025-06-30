@@ -2,7 +2,7 @@
 package dto
 
 type CategoryResponse struct {
-	ID          string `json:"id"`
+	ID          uint   `json:"id"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	IsActive    bool   `json:"is_active"`

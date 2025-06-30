@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,10 +15,9 @@ const errorMessages = {
   Default: "เกิดข้อผิดพลาดในการเข้าสู่ระบบ",
 } as const;
 
-export default function AuthErrorPage() {
+function ErrorContent() {
   const searchParams = useSearchParams();
   const error = searchParams.get("error") as keyof typeof errorMessages;
-
   const message = errorMessages[error] || errorMessages.Default;
 
   return (
@@ -38,7 +38,6 @@ export default function AuthErrorPage() {
           <CardContent className="space-y-6">
             <div className="text-center">
               <p className="text-gray-600 mb-4">{message}</p>
-
               {error === "AccessDenied" && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
                   <p className="text-sm text-blue-800">
@@ -68,5 +67,13 @@ export default function AuthErrorPage() {
         </Card>
       </div>
     </div>
+  );
+}
+
+export default function AuthErrorPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ErrorContent />
+    </Suspense>
   );
 }

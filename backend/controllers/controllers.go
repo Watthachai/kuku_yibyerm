@@ -13,7 +13,7 @@ type Controllers struct {
 	Category   *CategoryController
 	Department *DepartmentController
 	Dashboard  *DashboardController
-	Asset      *AssetController // ⭐️ เราใช้ชื่อ field ว่า 'Asset'
+	Upload     *UploadController
 }
 
 func NewControllers(s *services.Services) *Controllers {
@@ -25,6 +25,6 @@ func NewControllers(s *services.Services) *Controllers {
 		Category:   NewCategoryController(s.Category),
 		Department: NewDepartmentController(s.Department),
 		Dashboard:  NewDashboardController(s.Dashboard),
-		Asset:      NewAssetController(s.Asset), // ⭐️ สร้าง instance ใส่ใน field 'Asset'
+		Upload:     NewUploadController(),
 	}
 }

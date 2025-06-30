@@ -1,63 +1,36 @@
 export interface Product {
   id: string;
-  name: string;
   code: string;
-  description: string;
-  imageUrl?: string;
-  images?: string[];
-  status: ProductStatus;
-  availableQuantity: number;
-  totalQuantity: number;
-  category: Category;
-  department: Department;
-  specifications?: Record<string, string>;
-  tags?: string[];
-  rating?: number;
-  usageCount?: number;
-  location?: string;
-  lastMaintenanceDate?: string;
-  serialNumber?: string;
-  createdAt: string;
-  updatedAt?: string;
-}
-
-export interface Category {
-  id: string;
   name: string;
-  icon: string;
-  color: string;
   description?: string;
-  productCount?: number;
+  brand?: string;
+  productModel?: string;
+
+  // ⭐ ใช้แค่ stock
+  stock: number; // จำนวนคงเหลือ
+  minStock: number; // จำนวนขั้นต่ำ
+  unit: string; // หน่วยนับ
+  status: "ACTIVE" | "INACTIVE"; // ⭐ แก้ไขให้เป็น union type
+
+  // ⭐ เพิ่ม imageUrl field
+  imageUrl?: string;
+
+  category?: {
+    id: string;
+    name: string;
+  };
+
+  createdAt: string;
+  updatedAt: string;
 }
 
-export interface Department {
-  id: string;
+export interface CreateProductRequest {
   name: string;
-  code: string;
-  building?: string;
-  floor?: string;
-  contact?: string;
+  description?: string;
+  categoryId: number;
+  brand?: string;
+  productModel?: string;
+  stock: number; // ⭐ ใช้ stock แทน quantity
+  minStock?: number;
+  unit?: string;
 }
-
-export type ProductStatus = 
-  | 'AVAILABLE' 
-  | 'IN_USE' 
-  | 'MAINTENANCE' 
-  | 'DAMAGED' 
-  | 'RESERVED';
-
-export interface ProductFilters {
-  search: string;
-  categoryId?: string;
-  departmentId?: string;
-  status?: ProductStatus[];
-  sortBy: ProductSortBy;
-  sortOrder: 'asc' | 'desc';
-}
-
-export type ProductSortBy = 
-  | 'name' 
-  | 'popularity' 
-  | 'availability' 
-  | 'newest' 
-  | 'rating';
