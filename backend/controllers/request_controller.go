@@ -199,3 +199,27 @@ func (rc *RequestController) UpdateRequestStatus(c *gin.Context) {
 		"data":    request,
 	})
 }
+
+// ⭐ เพิ่มฟังก์ชันนี้ใน RequestController
+func (rc *RequestController) DownloadRequestPDF(c *gin.Context) {
+	requestID, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request ID"})
+		return
+	}
+
+	req, err := rc.requestService.GetRequestByID(uint(requestID))
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Request not found"})
+		return
+	}
+
+	pdfBytes, err := rc.requestService.GenerateRequestPDF(req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate PDF"})
+		return
+	}
+
+	c.Header("Content-Disposition", "attachment; filename=request_receipt.pdf")
+	c.Data(http.StatusOK, "application/pdf", pdfBytes)
+}

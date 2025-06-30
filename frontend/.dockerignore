@@ -1,0 +1,25 @@
+# Prevent copying cached build artifacts
+.next
+.next/*
+dist
+build
+
+# Dependencies (will be installed in container)
+node_modules
+
+# Development files
+.env.local
+.env.development
+*.log
+
+# IDE files
+.vscode
+.idea
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore

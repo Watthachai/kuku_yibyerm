@@ -40,7 +40,8 @@ export class PDFGenerator {
 
     // ⭐ Add Thai font (if needed)
     pdf.addFont("/fonts/THSarabunNew.ttf", "THSarabun", "normal");
-    pdf.setFont("THSarabun");
+    pdf.addFont("/fonts/THSarabunNew-Bold.ttf", "THSarabun", "bold");
+    pdf.setFont("THSarabun", "normal");
 
     let yPosition = opts.margin!;
     const pageWidth = pdf.internal.pageSize.getWidth();
@@ -130,12 +131,12 @@ export class PDFGenerator {
     margin: number
   ): void {
     // KU Logo (placeholder)
-    pdf.setFontSize(16);
     pdf.setFont("THSarabun", "bold");
+    pdf.setFontSize(16);
     pdf.text("มหาวิทยาลัยเกษตรศาสตร์", margin, y);
 
-    pdf.setFontSize(14);
     pdf.setFont("THSarabun", "normal");
+    pdf.setFontSize(14);
     pdf.text("ใบคำขอเบิกครุภัณฑ์", margin, y + 8);
 
     // Date
@@ -154,12 +155,13 @@ export class PDFGenerator {
     contentWidth: number,
     options: PDFOptions
   ): number {
-    pdf.setFontSize(12);
     pdf.setFont("THSarabun", "bold");
+    pdf.setFontSize(12);
     pdf.text("ข้อมูลคำขอ", options.margin!, y);
 
     y += 8;
     pdf.setFont("THSarabun", "normal");
+    pdf.setFontSize(12);
 
     const requestInfo = [
       `เลขที่คำขอ: ${request.requestNumber || request.id}`,
@@ -191,8 +193,8 @@ export class PDFGenerator {
     contentWidth: number,
     options: PDFOptions
   ): number {
-    pdf.setFontSize(12);
     pdf.setFont("THSarabun", "bold");
+    pdf.setFontSize(12);
     pdf.text("รายการครุภัณฑ์", options.margin!, y);
 
     y += 10;
@@ -203,6 +205,7 @@ export class PDFGenerator {
 
     let xPos = options.margin!;
     pdf.setFont("THSarabun", "bold");
+    pdf.setFontSize(12);
     headers.forEach((header, index) => {
       pdf.text(header, xPos, y);
       xPos += colWidths[index];
@@ -214,6 +217,7 @@ export class PDFGenerator {
 
     // Table Rows
     pdf.setFont("THSarabun", "normal");
+    pdf.setFontSize(12);
     items.forEach((item, index) => {
       xPos = options.margin!;
       const rowData = [
@@ -249,13 +253,13 @@ export class PDFGenerator {
     contentWidth: number,
     options: PDFOptions
   ): void {
-    // Summary
-    pdf.setFontSize(12);
     pdf.setFont("THSarabun", "bold");
+    pdf.setFontSize(12);
     pdf.text("สรุป", options.margin!, y);
 
     y += 8;
     pdf.setFont("THSarabun", "normal");
+    pdf.setFontSize(12);
 
     const totalItems = request.items.reduce(
       (sum, item) => sum + item.quantity,
@@ -309,8 +313,8 @@ export class PDFGenerator {
     const pageHeight = pdf.internal.pageSize.getHeight();
     const pageWidth = pdf.internal.pageSize.getWidth();
 
-    pdf.setFontSize(8);
     pdf.setFont("THSarabun", "normal");
+    pdf.setFontSize(8);
     pdf.text(
       "ระบบจัดการครุภัณฑ์ มหาวิทยาลัยเกษตรศาสตร์",
       margin,

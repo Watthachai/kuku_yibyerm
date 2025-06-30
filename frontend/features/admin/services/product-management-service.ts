@@ -1,4 +1,5 @@
 import { getSession } from "next-auth/react";
+import { CONFIG } from "@/lib/config";
 import {
   Product,
   CreateProductRequest,
@@ -17,7 +18,7 @@ import {
 } from "@/types/api";
 
 export class ProductManagementService {
-  private static baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+  private static baseUrl = CONFIG.BACKEND_URL;
 
   private static async getAuthHeaders(): Promise<Record<string, string>> {
     const session = await getSession();
@@ -301,6 +302,7 @@ export class ProductManagementService {
   }
 
   // ⭐ Helper Methods
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private static mapProductResponse(data: any): Product {
     return {
       id: data.id?.toString() || "0",

@@ -42,11 +42,11 @@ func Connect(cfg Config) (*gorm.DB, error) {
 // NewConfigFromEnv creates a database config from environment variables.
 func NewConfigFromEnv() Config {
 	return Config{
-		Host:     getEnv("DB_HOST", "localhost"),
-		Port:     getEnv("DB_PORT", "5432"),
-		User:     getEnv("DB_USER", "postgres"),
-		Password: getEnv("DB_PASSWORD", "mypassword"), // ใส่ default password ของคุณ
-		DBName:   getEnv("DB_NAME", "ku_asset_db"),    // ใส่ default db name ของคุณ
+		Host:     getEnv("DB_HOST", ""),
+		Port:     getEnv("DB_PORT", ""),
+		User:     getEnv("DB_USER", ""),
+		Password: getEnv("DB_PASSWORD", ""),
+		DBName:   getEnv("DB_NAME", ""),
 		SSLMode:  getEnv("DB_SSLMODE", "disable"),
 	}
 }

@@ -3,8 +3,9 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { CONFIG } from "@/lib/config";
 
-const API_BASE_URL = process.env.BACKEND_URL || "http://localhost:8080";
+const API_BASE_URL = CONFIG.BACKEND_URL;
 
 async function apiCall(endpoint: string, options: RequestInit = {}) {
   const cookieStore = await cookies();

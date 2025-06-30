@@ -1,4 +1,5 @@
 import { getAuthHeaders } from "@/lib/api";
+import { CONFIG } from "@/lib/config";
 
 // Department Types
 export interface Department {
@@ -37,7 +38,7 @@ interface BackendDepartment {
 }
 
 class DepartmentService {
-  private baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL + "/api/v1";
+  private baseUrl = CONFIG.API_BASE_URL;
 
   // Get all faculties with departments
   async getFaculties(): Promise<Faculty[]> {
