@@ -18,6 +18,7 @@ func GetAllMigrations() []*gormigrate.Migration {
 		M25680619123005CreateRequestsTables,         // 6. สร้างตาราง Requests
 		M25680621173000SeedCoreData,                 // 7. Seed ข้อมูลสุดท้าย
 		M25680624001SeedFacultiesAndDepartments,     // 8. 🆕 Seed Faculty และ Department data
+		M25680628001_seed_mock_users,                // 9. 🆕 Seed Mock Users สำหรับ Testing
 	}
 }
 

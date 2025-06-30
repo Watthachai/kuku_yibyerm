@@ -1,4 +1,6 @@
 import { getAuthHeaders, getAuthHeadersForFormData } from "@/lib/api";
+import { CONFIG } from "@/lib/config";
+import { retryFetch } from "@/lib/error-handling";
 
 // Types
 export interface UserProfile {
@@ -42,13 +44,13 @@ export interface UserStats {
 }
 
 class UserService {
-  private baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL + "/api/v1";
+  private baseUrl = CONFIG.API_BASE_URL;
 
   // Get current user profile
   async getCurrentUser(): Promise<UserProfile> {
     try {
       const headers = await getAuthHeaders();
-      const response = await fetch(`${this.baseUrl}/profile`, {
+      const response = await retryFetch(`${this.baseUrl}/profile`, {
         method: "GET",
         headers,
       });

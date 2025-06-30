@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // ⭐ แก้ไข DeprecationWarning สำหรับ url.parse
+  experimental: {
+    esmExternals: true,
+  },
   images: {
     domains: [
       "localhost",

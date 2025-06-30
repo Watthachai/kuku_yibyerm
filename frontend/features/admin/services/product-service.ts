@@ -1,4 +1,5 @@
 import { getAuthHeaders } from "@/lib/api";
+import { CONFIG } from "@/lib/config";
 import { Product } from "@/types/product";
 import { CreateProductFormData } from "@/features/admin/schemas/product-schema";
 
@@ -23,7 +24,7 @@ interface ProductApiResponse {
 }
 
 export class ProductService {
-  private static baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+  private static baseUrl = CONFIG.BACKEND_URL;
 
   static async getProducts(query: { search?: string }): Promise<Product[]> {
     const headers = await getAuthHeaders();

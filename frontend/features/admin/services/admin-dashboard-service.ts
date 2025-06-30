@@ -10,9 +10,10 @@ import {
   BackendApiResponse, // ⭐ เพิ่ม
 } from "@/types/admin-dashboard";
 import { getSession } from "next-auth/react";
+import { CONFIG } from "@/lib/config";
 
 export class AdminDashboardService {
-  private static baseUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+  private static baseUrl = CONFIG.BACKEND_URL;
 
   // ⭐ 1. แก้ไขและจัดระเบียบฟังก์ชันนี้ให้สะอาดขึ้น
   private static async getAuthHeaders(): Promise<Record<string, string>> {

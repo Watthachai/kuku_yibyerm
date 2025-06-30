@@ -1,3 +1,5 @@
+import { CONFIG } from "@/lib/config";
+
 // ⭐ CDN Configuration for production
 export interface CDNConfig {
   enabled: boolean;
@@ -81,7 +83,7 @@ export const CDN_CONFIGS: Record<string, CDNConfig> = {
   development: {
     enabled: false,
     provider: "local",
-    baseUrl: process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8080",
+    baseUrl: CONFIG.BACKEND_URL || "",
     uploadEndpoint: "/api/v1/upload/product-image",
   },
 

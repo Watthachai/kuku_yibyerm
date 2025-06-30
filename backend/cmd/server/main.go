@@ -1,27 +1,25 @@
-// main.go
 package main
 
 import (
 	"ku-asset/controllers"
 	"ku-asset/database"
-	"ku-asset/migrations" // 👈 import migration
+	"ku-asset/middleware"
+	"ku-asset/migrations"
 	"ku-asset/routes"
 	"ku-asset/services"
 	"log"
 	"os"
 
-	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
 
 func main() {
+	// เอา log.Fatal ออกแล้ว
 	log.Println("🚀 Starting KU Asset Backend Server...")
 
 	if err := godotenv.Load(); err != nil {
 		log.Println("Warning: .env file not found")
-	} else {
-		log.Println("✅ .env file loaded successfully")
 	}
 
 	dbConfig := database.NewConfigFromEnv()
@@ -31,26 +29,26 @@ func main() {
 	}
 	log.Println("✅ Database connected successfully")
 
-	// ⭐ Run migrations using the new system
 	if err := migrations.RunMigrations(db); err != nil {
 		log.Fatalf("Could not run migrations: %v", err)
 	}
 
-	// --- ส่วนที่เหลือเหมือนเดิม ---
 	ginMode := getEnv("GIN_MODE", "debug")
 	if ginMode == "release" {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	router := gin.Default()
-	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:3000"},
-		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
-		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: true,
-	}))
+	// ใช้ gin.New() และเรียงลำดับ Middleware เอง
+	router := gin.New()
+	router.Use(middleware.PanicRecoveryMiddleware()) // 👈 MUST BE FIRST!
 	router.Use(gin.Logger())
+	router.Use(middleware.CORSMiddleware())
+
+	// ⭐ เพิ่ม Database Middleware เพื่อให้ AuthMiddleware ใช้งานได้
+	router.Use(func(c *gin.Context) {
+		c.Set("db", db)
+		c.Next()
+	})
 
 	services := services.NewServices(db)
 	controllers := controllers.NewControllers(services)

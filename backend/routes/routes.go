@@ -62,6 +62,7 @@ func setupAdminRoutes(group *gin.RouterGroup, c *controllers.Controllers) {
 		// Admin Request Management
 		protected.GET("/requests", c.Request.GetAllRequests)
 		protected.PUT("/requests/:id/status", c.Request.UpdateRequestStatus)
+		protected.GET("/requests/:id/pdf", c.Request.DownloadRequestPDF) // ⭐ เพิ่มบรรทัดนี้
 
 		// Department Management
 		protected.GET("/departments", c.Department.GetDepartments)
@@ -114,9 +115,6 @@ func setupProtectedRoutes(group *gin.RouterGroup, c *controllers.Controllers) {
 			requests.POST("", c.Request.CreateRequest)   // ✅ User สร้างคำขอ
 			requests.GET("/my", c.Request.GetMyRequests) // ✅ User ดูคำขอของตัวเอง
 			requests.GET("/:id", c.Request.GetRequest)   // ✅ User ดูรายละเอียดคำขอของตัวเอง
-
-			// ⭐ ลบบรรทัดนี้ออก - เพราะมันซ้ำกับ Admin routes
-			// requests.GET("", c.Request.GetAllRequests) // ❌ ซ้ำกับ admin/requests
 		}
 
 		// --- Category & Department Routes ---

@@ -7,6 +7,7 @@ import { Upload, X, Image as ImageIcon, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { getAuthHeadersForFormData } from "@/lib/api";
+import { CONFIG } from "@/lib/config";
 
 interface ImageUploadProps {
   value?: string;
@@ -54,8 +55,7 @@ export function ImageUpload({
         const headers = await getAuthHeadersForFormData();
 
         // Use the correct API base URL for development
-        const baseURL =
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+        const baseURL = CONFIG.BACKEND_URL;
         const uploadURL = `${baseURL}/api/v1/upload/product-image`;
 
         const response = await fetch(uploadURL, {
